@@ -17,7 +17,6 @@ export default function Home() {
         <div className="grid grid-cols-2 sm:grid-cols-3 
         lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8">
           
-        
         </div>
         <div className="text-3xl font-bold text-black flex items-center justify-center pt-20">
           Ready to join the fun?
@@ -26,7 +25,7 @@ export default function Home() {
         <div className="flex justify-center mt-6">
           <Link href="/auction-items" legacyBehavior>
             <a className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
-              Start bidding now
+             Register Now
             </a>
           </Link>
         </div>
@@ -36,7 +35,8 @@ export default function Home() {
 }
 
 //for <ProductCard data={product}/ need to configure image from next.config,js
-/* {products.map((product: any) => { 
-  return <ProductCard data={product}/>;
-})}
-*/
+/** 
+          {products.map((product: any) => { 
+            return <ProductCard data={product}/>;
+          })}
+ */

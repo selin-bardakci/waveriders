@@ -8,9 +8,9 @@ const NavBar = () => {
                 <Link href="/" className="text-lg font-semibold">WaveRiders</Link>
                 
                 {/* Right side */}
-                <div className="flex items-center gap-8 md:gap-12">
+                <div className="flex items-center gap-8 md:gap-8">
                 <Link href="/auth/sign-in" className="px-4">Login</Link>
-                <Link href="/auth/register" className="px-4">Sign Up</Link>
+                <Link href="/auth/register" className="px-4">Signup</Link>
                 </div>
             </div>
         </div>

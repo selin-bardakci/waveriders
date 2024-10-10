@@ -10,7 +10,7 @@ const workSans = Work_Sans({ subsets: ["latin"], weight:
 //the title is the name on its tab
 export const metadata: Metadata = {
   title: 'WaveRiders',
-  description: 'Rental Site',
+  description: 'Boat rental site for everyone',
 }
 //start of the application (html and body tag)
 export default function RootLayout({
