@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 const NavBar = () => {
     
-    const [isLoggedIn, setIsLoggedIn] = useState(true); 
+    const [isLoggedIn, setIsLoggedIn] = useState(false); 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const toggleDropdown = () => {
