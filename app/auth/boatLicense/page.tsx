@@ -27,13 +27,16 @@ const UploadBoatLicense = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <div className="w-1/2 flex items-center justify-center">
-        <img src="/path/to/your/image.jpg" alt="WaveRiders" className="object-cover h-full w-full" />
-      </div>
+    <div className="relative min-h-screen flex flex-col">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-70"
+        style={{ backgroundImage: 'url(/images/deneme2.jpg)' }}  // Update the path as needed
+      ></div>
 
-      <div className="w-1/2 flex flex-col items-center justify-center">
-        <div className="w-full max-w-lg bg-white p-8 border border-blue-300 rounded-lg shadow-lg">
+      {/* Registration Container */}
+      <div className="relative flex-grow flex items-center justify-end z-10">
+        <div className="w-1/3 bg-white p-8 border border-blue-300 rounded-lg shadow-lg mr-10">
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
             <div
@@ -53,31 +56,59 @@ const UploadBoatLicense = () => {
                 Upload License
               </label>
               {/* Upload area design */}
-              <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 relative">
-                {/* Cloud Icon */}
+              <div
+                className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 relative"
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    setBoatLicense(e.dataTransfer.files[0]);
+                  }
+                }}
+                onDragOver={(e) => e.preventDefault()}
+              >
+                {/* Boat Icon */}
                 <div className="mb-4">
                   <svg
-                    aria-hidden="true"
-                    className="w-10 h-10 text-blue-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
                     xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="w-10 h-10 text-blue-500"
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M7 16V12a5 5 0 0110 0v4M5 13h14m-6 8v-2m4 2H9"
-                    ></path>
+                      d="M3 14s3-4 9-4 9 4 9 4H3z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 16h14M8 18h8M10 20h4"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 9V5l3-2 3 2v4"
+                    />
                   </svg>
                 </div>
                 {/* Dashed box for dragging or selecting files */}
-                <div className="mb-4 text-gray-600">
+                <div className="mb-4 text-gray-600 text-center">
                   <p>Choose a file or drag & drop it here</p>
                   <p className="text-xs text-gray-500">JPEG, PNG, PDF formats, up to 50MB</p>
                 </div>
-                {/* Browse File Button */}
+                {/* Browse File Button INSIDE the drag-and-drop box */}
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+                    onClick={() => document.querySelector('input[type="file"]').click()}
+                  >
+                    Choose File
+                  </button>
+                </div>
+                {/* Hidden File Input */}
                 <input
                   type="file"
                   accept=".pdf, .jpg, .png"
@@ -86,7 +117,7 @@ const UploadBoatLicense = () => {
                       setBoatLicense(e.target.files[0]);
                     }
                   }}
-                  className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+                  className="hidden"
                 />
                 {/* Upload feedback */}
                 {boatLicense ? (
@@ -94,16 +125,6 @@ const UploadBoatLicense = () => {
                 ) : (
                   <p className="text-sm text-gray-500 mt-2">No file uploaded</p>
                 )}
-                {/* Browse button */}
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                    onClick={() => document.querySelector('input[type="file"]').click()}
-                  >
-                    Browse File
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -116,7 +137,7 @@ const UploadBoatLicense = () => {
                 type="submit"
                 className="w-full bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition"
               >
-                Finish
+                Next
               </button>
             </div>
           </form>
