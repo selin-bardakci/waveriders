@@ -1,10 +1,9 @@
 'use client';
 import { useState } from 'react';
-import axios from 'axios';
 import { useRouter } from 'next/navigation'; // Import router
 
 const AccountSetup = () => {
-  const [selectedOption, setSelectedOption] = useState<string>('customer');
+  const [selectedOption, setSelectedOption] = useState('');
   const [error, setError] = useState('');
   const router = useRouter(); // Initialize router
 
@@ -18,20 +17,11 @@ const AccountSetup = () => {
     console.log('Selected option:', selectedOption);
 
     try {
-      // Post selected option to the API
-      const response = await axios.post('http://localhost:8081/api/auth/AccountSetup', { 
-        selectedOption,
-      });
-      
-      console.log(response);
-
-      // Redirect based on the selected option
-      if (selectedOption === 'customer') {
-        router.push('/auth/registerCustomer');
-      } else if (selectedOption === 'business') {
-        router.push('/auth/registerBusiness');
-      }
-      
+        if (selectedOption === 'customer') {
+          router.push('/auth/register');
+        } else if (selectedOption === 'business') {
+          router.push('/auth/registerBusiness');
+        }
     } catch (err) {
       setError('Something went wrong. Please try again.');
       console.error(err);
@@ -84,6 +74,7 @@ const AccountSetup = () => {
           <div className="text-center">
             <button
               type="submit"
+              disabled={!selectedOption}
               className="w-full bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition"
             >
               Continue
