@@ -32,13 +32,17 @@ const RegisterCaptain = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <div className="w-1/2 flex items-center justify-center">
-        <img src="/path/to/your/image.jpg" alt="WaveRiders" className="object-cover h-full w-full" />
-      </div>
+    <div className="relative min-h-screen flex flex-col">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-70"
+        style={{ backgroundImage: 'url(/images/deneme2.jpg)' }}  // Update the path as needed
+      ></div>
 
-      <div className="w-1/2 flex flex-col items-center justify-center">
-        <div className=" w-full max-w-lg bg-white p-8 border border-gray-300 rounded-lg shadow-md">
+      {/* Registration Container */}
+      <div className="relative flex-grow flex items-center justify-end z-10">
+        <div className="w-1/3 bg-white p-8 border border-gray-300 rounded-lg shadow-md mr-10">
+          {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
             <div
               className="bg-blue-600 h-2.5 rounded-full"
