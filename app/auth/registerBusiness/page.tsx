@@ -3,11 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const ports = [
-  'Port of Antwerp', 'Port of Zeebrugge', 'Port of Rotterdam', 
-  'Port of Hamburg', 'Port of Barcelona', 'Port of Lisbon'
-];
-
 const RegisterBusiness = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -16,7 +11,6 @@ const RegisterBusiness = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [port, setPort] = useState('');
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1); // Progress tracker
@@ -37,11 +31,6 @@ const RegisterBusiness = () => {
       return;
     }
 
-    if (!port) {
-      setError('Please select a port.');
-      return;
-    }
-
     if (!termsAgreed) {
       setError('You must agree to the terms and conditions to proceed.');
       return;
@@ -51,7 +40,7 @@ const RegisterBusiness = () => {
 
     // Simulate submission and navigate to the next step
     console.log({
-      firstName, lastName, businessName, email, phone, password, port, termsAgreed
+      firstName, lastName, businessName, email, phone, password, termsAgreed
     });
 
     router.push('/auth/registerBoat');  // Example of next step
@@ -153,22 +142,6 @@ const RegisterBusiness = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
-
-            {/* Port Selection Dropdown */}
-            <div className="mb-6">
-              <select
-                value={port}
-                onChange={(e) => setPort(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select a port</option>
-                {ports.map((port) => (
-                  <option key={port} value={port}>
-                    {port}
-                  </option>
-                ))}
-              </select>
             </div>
 
             {/* Terms and Conditions Checkbox */}
