@@ -12,6 +12,13 @@ const ports = [
   'Port of Lisbon'
 ];
 
+const tripTypes = [
+  { id: 1, name: 'Short Trips', description: '1–2 hours', image: '/images/icon1.png' },
+  { id: 2, name: 'Day Trips', description: '3–6 hours', image: '/images/icon2.png' },
+  { id: 3, name: 'Sunrise & Sunset Trips', description: '7–12 hours', image: '/images/icon3.png' },
+  { id: 4, name: 'Overnight Adventures', description: '1+ days', image: '/images/icon4.png' }
+];
+
 const RegisterBoat = () => {
   const [port, setPort] = useState('');
   const [boatName, setBoatName] = useState('');
@@ -19,7 +26,9 @@ const RegisterBoat = () => {
   const [boatDescription, setBoatDescription] = useState('');
   const [maxCapacity, setMaxCapacity] = useState('');
   const [rentalPrice, setRentalPrice] = useState('');
+  const [rentalPricePerDay, setRentalPricePerDay] = useState(''); // New rental price per day state
   const [photos, setPhotos] = useState<File[]>([]);
+  const [selectedTrips, setSelectedTrips] = useState<number[]>([]); // For trip selection
   const [error, setError] = useState('');
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [step, setStep] = useState(2); // Progress tracker
@@ -53,12 +62,22 @@ const RegisterBoat = () => {
     }
   };
 
+  const handleTripSelection = (tripId: number) => {
+    setSelectedTrips((prev) =>
+      prev.includes(tripId) ? prev.filter((id) => id !== tripId) : [...prev, tripId]
+    );
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
     if (!boatName || !boatDescription || !port) {
       setError('Please fill in all boat details.');
+      return;
+    }
+    if (selectedTrips.length === 0) {
+      setError('Please select at least one type of trip.');
       return;
     }
     if (!port) {
@@ -77,6 +96,11 @@ const RegisterBoat = () => {
       setError('Please enter a valid rental price (a positive number greater than 0).');
       return;
     }
+    // Validate rental price per day if Overnight Adventures is selected
+    if (selectedTrips.includes(4) && (!rentalPricePerDay || isNaN(Number(rentalPricePerDay)) || Number(rentalPricePerDay) <= 0)) {
+      setError('Please enter a valid rental price per day (a positive number greater than 0).');
+      return;
+    }
     if (photos.length === 0) {
       setError('Please upload at least 1 photo of the boat or yacht.');
       return;
@@ -89,7 +113,7 @@ const RegisterBoat = () => {
     setError('');
 
     // Simulate submission and navigate to the next step
-    console.log({ boatName, boatType, boatDescription, maxCapacity, rentalPrice, port, photos });
+    console.log({ boatName, boatType, boatDescription, maxCapacity, rentalPrice, rentalPricePerDay, port, photos, selectedTrips });
 
     router.push('/auth/boatLicense');
   };
@@ -199,6 +223,43 @@ const RegisterBoat = () => {
               </select>
             </div>
 
+            {/* Trip Type Selection */}
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Select Trip Types</h3>
+            <div className="mb-6">
+              {tripTypes.map((trip) => (
+                <label key={trip.id} className="flex items-center mb-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedTrips.includes(trip.id)}
+                    onChange={() => handleTripSelection(trip.id)}
+                    className="mr-2"
+                  />
+                  <div className="flex items-center space-x-3">
+                    <img src={trip.image} alt={trip.name} className="w-10 h-10" />
+                    <div>
+                      <p className="text-lg font-bold">{trip.name}</p>
+                      <p className="text-sm text-gray-600">{trip.description}</p>
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+
+            {/* Conditional Rental Price per Day Input */}
+            {selectedTrips.includes(4) && (
+              <div className="mb-4">
+                <input
+                  type="number"
+                  placeholder="Rental Price per Day (₺)"
+                  value={rentalPricePerDay}
+                  onChange={(e) => setRentalPricePerDay(e.target.value)}
+                  min="1"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
+
             {/* File Upload Section */}
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2">
@@ -210,7 +271,7 @@ const RegisterBoat = () => {
                 onDragOver={handleDragOver}
               >
                 <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 014-4h6a4 4 0 010 8h-6a4 4 0 01-4-4z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 014-4h6a4 4 010 8h-6a4 4 01-4-4z" />
                 </svg>
                 <p className="mt-2 text-gray-500">Drag & drop your files here</p>
                 <p className="text-xs text-gray-400">JPEG, PNG formats, up to 50MB</p>
@@ -221,7 +282,6 @@ const RegisterBoat = () => {
                   onChange={handlePhotoUpload}
                   className="hidden"
                 />
-                {/* Centered Choose a File Button Inside the Drag and Drop Box */}
                 <button
                   type="button"
                   onClick={() => document.querySelector('input[type="file"]')?.click()}
