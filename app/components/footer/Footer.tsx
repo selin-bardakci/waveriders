@@ -5,7 +5,7 @@ import {AiFillTwitterCircle, AiFillInstagram} from "react-icons/ai"
 
 const Footer = () => {
     return (
-        <footer className="text-slate-400 text-sm mt-16">
+        <footer className="text-slate-400 text-sm mt-0">
             <div className="container mx-auto px-4">
                 <div className="flex flex-col md:flex-row justify-center pt-16 pb-3 ">
                     <div className="flex flex-col md:flex-row space-x-20">
