@@ -3,34 +3,102 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const RegisterBusiness = () => {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [age, setAge] = useState('');
-  const [businessName, setBusinessName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [termsAgreed, setTermsAgreed] = useState(false);
+const ports = [
+  'Port of Antwerp',
+  'Port of Zeebrugge',
+  'Port of Rotterdam',
+  'Port of Hamburg',
+  'Port of Barcelona',
+  'Port of Lisbon'
+];
+
+const tripTypes = [
+  { id: 1, name: 'Short Trips', description: '1–2 hours', image: '/images/icon1.png' },
+  { id: 2, name: 'Day Trips', description: '3–6 hours', image: '/images/icon2.png' },
+  { id: 3, name: 'Sunrise & Sunset Trips', description: '7–12 hours', image: '/images/icon3.png' },
+  { id: 4, name: 'Overnight Adventures', description: '1+ days', image: '/images/icon4.png' }
+];
+
+const RegisterBoat = () => {
+  const [port, setPort] = useState('');
+  const [boatName, setBoatName] = useState('');
+  const [boatType, setBoatType] = useState('');
+  const [boatDescription, setBoatDescription] = useState('');
+  const [maxCapacity, setMaxCapacity] = useState('');
+  const [rentalPrice, setRentalPrice] = useState('');
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [selectedTrips, setSelectedTrips] = useState<number[]>([]); // For trip selection
   const [error, setError] = useState('');
-  const [step, setStep] = useState(1); // Progress tracker
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [step, setStep] = useState(2); // Progress tracker
 
   const router = useRouter();
+
+  const handleFiles = (files: FileList) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length > 10) {
+      setError('You can upload a maximum of 10 files.');
+      return;
+    }
+    setPhotos(fileArray);
+    setError('');
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFiles(e.target.files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handleTripSelection = (tripId: number) => {
+    setSelectedTrips((prev) =>
+      prev.includes(tripId) ? prev.filter((id) => id !== tripId) : [...prev, tripId]
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
-    if ((!firstName || !lastName) && !businessName) {
-      setError('Please provide either First Name and Last Name, or Business Name.');
+    if (!boatName || !boatDescription || !port) {
+      setError('Please fill in all boat details.');
       return;
     }
-
-    if (!email || !phone || !password) {
-      setError('Email, Phone Number, and Password are required.');
+    if (selectedTrips.length === 0) {
+      setError('Please select at least one type of trip.');
       return;
     }
-
+    if (!port) {
+      setError('Please select a port.');
+      return;
+    }
+    if (!boatType) {
+      setError('Please select a boat type.');
+      return;
+    }
+    if (!maxCapacity || isNaN(Number(maxCapacity)) || Number(maxCapacity) <= 0) {
+      setError('Please enter a valid max capacity (a positive number greater than 0).');
+      return;
+    }
+    if (!rentalPrice || isNaN(Number(rentalPrice)) || Number(rentalPrice) <= 0) {
+      setError('Please enter a valid rental price (a positive number greater than 0).');
+      return;
+    }
+    if (photos.length === 0) {
+      setError('Please upload at least 1 photo of the boat or yacht.');
+      return;
+    }
     if (!termsAgreed) {
       setError('You must agree to the terms and conditions to proceed.');
       return;
@@ -39,11 +107,9 @@ const RegisterBusiness = () => {
     setError('');
 
     // Simulate submission and navigate to the next step
-    console.log({
-      firstName, lastName, businessName, email, phone, password, termsAgreed
-    });
+    console.log({ boatName, boatType, boatDescription, maxCapacity, rentalPrice, port, photos, selectedTrips });
 
-    router.push('/auth/registerBoat');  // Example of next step
+    router.push('/auth/boatLicense');
   };
 
   return (
@@ -73,75 +139,150 @@ const RegisterBusiness = () => {
 
           {/* Registration Form */}
           <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">
-            Register as a Business
+            Register Boat Details
           </h2>
 
           <form onSubmit={handleSubmit}>
-            {/* First Name Input */}
+            {/* Boat Name Input */}
             <div className="mb-4">
               <input
                 type="text"
-                placeholder="First Name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Boat Name"
+                value={boatName}
+                onChange={(e) => setBoatName(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            {/* Last Name Input */}
+            {/* Boat Type Dropdown */}
             <div className="mb-4">
-              <input
-                type="text"
-                placeholder="Last Name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+              <select
+                value={boatType}
+                onChange={(e) => setBoatType(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select a boat type</option>
+                <option value="boat">Boat</option>
+                <option value="yacht">Yacht</option>
+              </select>
+            </div>
+
+            {/* Boat Description Input */}
+            <div className="mb-4">
+              <textarea
+                placeholder="Boat Description"
+                value={boatDescription}
+                onChange={(e) => setBoatDescription(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            {/* OR Business Name */}
+            {/* Max Capacity Input */}
             <div className="mb-4">
-              <h2 className="text font-bold text-gray-800 text-center mb-6">OR</h2>
               <input
-                type="text"
-                placeholder="Business Name"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
+                type="number"
+                placeholder="Max Capacity (Number of people)"
+                value={maxCapacity}
+                onChange={(e) => setMaxCapacity(e.target.value)}
+                min="1"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            {/* Email Input */}
+            {/* Rental Price per Hour Input */}
             <div className="mb-4">
               <input
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="number"
+                placeholder="Rental Price per Hour (₺)"
+                value={rentalPrice}
+                onChange={(e) => setRentalPrice(e.target.value)}
+                min="1"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            {/* Phone Number Input */}
-            <div className="mb-4">
-              <input
-                type="tel"
-                placeholder="Phone Number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+            {/* Port Selection Dropdown */}
+            <div className="mb-6">
+              <select
+                value={port}
+                onChange={(e) => setPort(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              >
+                <option value="">Select a port</option>
+                {ports.map((port) => (
+                  <option key={port} value={port}>
+                    {port}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Password Input */}
+            {/* Trip Type Selection */}
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Select Trip Types</h3>
+            <div className="mb-6">
+              {tripTypes.map((trip) => (
+                <label key={trip.id} className="flex items-center mb-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedTrips.includes(trip.id)}
+                    onChange={() => handleTripSelection(trip.id)}
+                    className="mr-2"
+                  />
+                  <div className="flex items-center space-x-3">
+                    <img src={trip.image} alt={trip.name} className="w-10 h-10" />
+                    <div>
+                      <p className="text-lg font-bold">{trip.name}</p>
+                      <p className="text-sm text-gray-600">{trip.description}</p>
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            {/* File Upload Section */}
             <div className="mb-4">
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Upload Boat Photos (1-10 photos)
+              </label>
+              <div
+                className="border-2 border-dashed border-gray-300 rounded-lg h-48 flex flex-col items-center justify-center cursor-pointer"
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+              >
+                <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 014-4h6a4 4 010 8h-6a4 4 01-4-4z" />
+                </svg>
+                <p className="mt-2 text-gray-500">Drag & drop your files here</p>
+                <p className="text-xs text-gray-400">JPEG, PNG formats, up to 50MB</p>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => document.querySelector('input[type="file"]')?.click()}
+                  className="mt-2 bg-blue-500 text-white rounded-lg px-3 py-2 hover:bg-blue-600 transition"
+                >
+                  Choose a file
+                </button>
+              </div>
+
+              {/* File List */}
+              {photos.length > 0 && (
+                <div className="mt-4">
+                  <ul className="list-disc list-inside text-sm">
+                    {photos.map((file, index) => (
+                      <li key={index}>{file.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {error && <p className="text-red-500 text-center mt-4">{error}</p>}
             </div>
 
             {/* Terms and Conditions Checkbox */}
@@ -158,9 +299,6 @@ const RegisterBusiness = () => {
                 </span>
               </label>
             </div>
-
-            {/* Error Message */}
-            {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
             {/* Submit Button */}
             <div className="text-center">
@@ -183,4 +321,4 @@ const RegisterBusiness = () => {
   );
 };
 
-export default RegisterBusiness;
+export default RegisterBoat;
