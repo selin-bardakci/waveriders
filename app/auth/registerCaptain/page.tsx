@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 const RegisterCaptain = () => {
@@ -11,8 +11,18 @@ const RegisterCaptain = () => {
   const [captainPhone, setCaptainPhone] = useState('');
   const [step, setStep] = useState(4); // Progress tracker
   const [error, setError] = useState(''); // Error state
+  const [maxBirthDate, setMaxBirthDate] = useState(''); // For restricting date input
 
   const router = useRouter();
+
+  // Calculate the maximum date allowed (18 years ago from today)
+  useEffect(() => {
+    const today = new Date();
+    const year = today.getFullYear() - 18;
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const day = String(today.getDate()).padStart(2, '0');
+    setMaxBirthDate(`${year}-${month}-${day}`);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,9 +89,10 @@ const RegisterCaptain = () => {
             <div className="mb-4">
               <input
                 type="date"
-                placeholder="Age"
+                placeholder="Date of Birth"
                 value={captainAge}
                 onChange={(e) => setCaptainAge(e.target.value)}
+                max={maxBirthDate} // Restrict the date to 18 years ago from today
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
