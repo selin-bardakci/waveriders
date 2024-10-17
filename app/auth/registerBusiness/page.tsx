@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 const RegisterBusiness = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [age, setAge] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -17,8 +16,30 @@ const RegisterBusiness = () => {
 
   const router = useRouter();
 
+  // Handler to manage mutual exclusivity between individual and business fields
+  const handleFirstNameLastNameChange = (field: string, value: string) => {
+    if (field === 'firstName') {
+      setFirstName(value);
+    } else {
+      setLastName(value);
+    }
+    // Clear business name if first or last name is entered
+    if (value) {
+      setBusinessName('');
+    }
+  };
+
+  const handleBusinessNameChange = (value: string) => {
+    setBusinessName(value);
+    // Clear first and last name if business name is entered
+    if (value) {
+      setFirstName('');
+      setLastName('');
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent default form submission behavior
 
     // Validation
     if ((!firstName || !lastName) && !businessName) {
@@ -43,6 +64,7 @@ const RegisterBusiness = () => {
       firstName, lastName, businessName, email, phone, password, termsAgreed
     });
 
+    // Navigate to the next step
     router.push('/auth/registerBoat');  // Example of next step
   };
 
@@ -76,39 +98,47 @@ const RegisterBusiness = () => {
             Register as a Business
           </h2>
 
+          {/* First Name, Last Name, or Business Name Box */}
           <form onSubmit={handleSubmit}>
-            {/* First Name Input */}
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="First Name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            <div className="p-4 mb-6 border border-blue-500 bg-blue-50 rounded-lg">
+              {/* First Name Input */}
+              <div className="mb-4">
+                <input
+                  type="text"
+                  placeholder="First Name"
+                  value={firstName}
+                  onChange={(e) => handleFirstNameLastNameChange('firstName', e.target.value)}
+                  disabled={!!businessName} // Disable if business name is entered
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
-            {/* Last Name Input */}
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="Last Name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+              {/* Last Name Input */}
+              <div className="mb-4">
+                <input
+                  type="text"
+                  placeholder="Last Name"
+                  value={lastName}
+                  onChange={(e) => handleFirstNameLastNameChange('lastName', e.target.value)}
+                  disabled={!!businessName} // Disable if business name is entered
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
-            {/* OR Business Name */}
-            <div className="mb-4">
-              <h2 className="text font-bold text-gray-800 text-center mb-6">OR</h2>
-              <input
-                type="text"
-                placeholder="Business Name"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              {/* OR separator */}
+              <div className="text-center font-bold text-gray-700 mb-4">OR</div>
+
+              {/* Business Name Input */}
+              <div className="mb-4">
+                <input
+                  type="text"
+                  placeholder="Business Name"
+                  value={businessName}
+                  onChange={(e) => handleBusinessNameChange(e.target.value)}
+                  disabled={!!firstName || !!lastName} // Disable if first or last name is entered
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
 
             {/* Email Input */}
