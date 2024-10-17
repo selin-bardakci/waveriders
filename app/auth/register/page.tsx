@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
@@ -10,11 +10,21 @@ const RegisterForm = () => {
   const [birthdate, setBirthDate] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [maxBirthDate, setMaxBirthDate] = useState('');
   const [phone, setPhone] = useState('');
   const [isChecked, setIsChecked] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const router = useRouter();
+
+
+  useEffect(() => {
+    const today = new Date();
+    const year = today.getFullYear() - 18;
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const day = String(today.getDate()).padStart(2, '0');
+    setMaxBirthDate(`${year}-${month}-${day}`);
+  }, []);
 
   const validateForm = () => {
     if (!name || !lastname || !birthdate || !email || !password || !phone) {
@@ -85,15 +95,15 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-100">
-      {/* Left Side Image */}
-      <div className="hidden md:flex w-full md:w-1/2 items-center justify-center">
-        <img src="/path/to/your/image.jpg" alt="WaveRiders" className="object-cover h-full w-full" />
-      </div>
-
-      {/* Right Side Form */}
-      <div className="w-full md:w-1/2 flex flex-col items-center justify-center overflow-y-auto max-h-screen">
-        <div className="w-full max-w-lg bg-white p-8 border border-gray-300 rounded-lg shadow-md">
+    <div className="relative min-h-screen flex">
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center opacity-70"
+        style={{ backgroundImage: 'url(/images/registerPhoto.png)' }}
+      ></div>
+      {/* Registration Container on the right */}
+      <div className="relative w-full flex justify-end items-center z-10">
+        <div className="w-full max-w-lg bg-white p-8 border border-gray-300 rounded-lg shadow-md mr-10">
           <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">
             Register as a Customer
           </h2>
@@ -105,6 +115,7 @@ const RegisterForm = () => {
                 placeholder="First Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                max={maxBirthDate}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
