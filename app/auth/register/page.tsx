@@ -115,7 +115,6 @@ const RegisterForm = () => {
                 placeholder="First Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                max={maxBirthDate}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -135,6 +134,7 @@ const RegisterForm = () => {
                 type="date"
                 value={birthdate}
                 onChange={(e) => setBirthDate(e.target.value)}
+                max={maxBirthDate}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
