@@ -36,8 +36,8 @@ const NavBar = () => {
                         </div>
                     ) : (
                         <>
-                            <Link href="/auth/sign-in" className="px-4">Login</Link>
-                            <Link href="/auth/register" className="px-4">Signup</Link>
+                            <Link href="/auth/sign-in" className="px-4">Log In</Link>
+                            <Link href="/auth/register" className="px-4">Sign Up</Link>
                         </>
                     )}
                 </div>
