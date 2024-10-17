@@ -3,11 +3,7 @@
 import axios from 'axios';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Work_Sans} from 'next/font/google';
 
-const workSans = Work_Sans({ subsets: ["latin"], weight:
-    ['400', '700'] });
-  
 const SignInPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,19 +14,18 @@ const SignInPage = () => {
     e.preventDefault();
     
     try {
-     
-       
       const response = await axios.post('http://localhost:8081/api/auth/login', { 
         email,
         password,
       });
-      
 
       if (response.status === 200) {
-        // Redirect to the previous page if login is successful
+        
+        localStorage.setItem('isLoggedIn', 'true'); 
+
+        // Redirect to home page after login
         router.push('/');
       } else {
-        // Handle login failure
         setError('Invalid email or password. Please try again.');
       }
     } catch (err) {
@@ -41,43 +36,43 @@ const SignInPage = () => {
 
   return (
     <div className="mt-20 flex justify-center">
-    <div className="w-full max-w-md bg-white p-8 border border-gray-300 rounded-lg shadow-md">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Welcome Back!</h2>
+      <div className="w-full max-w-md bg-white p-8 border border-gray-300 rounded-lg shadow-md">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Welcome Back!</h2>
+        </div>
+        <form onSubmit={handleSubmit}>
+          {/* Email Input */}
+          <div className="mb-4">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          {/* Password Input */}
+          <div className="mb-6">
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          {/* Sign In Button */}
+          <div className="text-center">
+            <button
+              type="submit"
+              className="w-full bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition"
+            >
+              Sign in
+            </button>
+          </div>
+        </form>
       </div>
-      <form onSubmit={handleSubmit}>
-        {/* Email Input */}
-        <div className="mb-4">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        {/* Password Input */}
-        <div className="mb-6">
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        {/* Sign In Button */}
-        <div className="text-center">
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition"
-          >
-            Sign in
-          </button>
-        </div>
-      </form>
     </div>
-  </div>
   );
 };
 
