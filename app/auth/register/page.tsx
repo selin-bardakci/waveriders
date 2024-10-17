@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
@@ -14,21 +14,23 @@ const RegisterForm = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [maxBirthDate, setMaxBirthDate] = useState('');
   const router = useRouter();
-
-  // Calculate the maximum date allowed (18 years ago from today)
-  useEffect(() => {
-    const today = new Date();
-    const year = today.getFullYear() - 18;
-    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
-    const day = String(today.getDate()).padStart(2, '0');
-    setMaxBirthDate(`${year}-${month}-${day}`);
-  }, []);
 
   const validateForm = () => {
     if (!name || !lastname || !birthdate || !email || !password || !phone) {
       setError('All fields are required.');
+      return false;
+    }
+    if (/\d/.test(name)) {
+      setError('First name must not contain numbers.');
+      return false;
+    }
+    if (/\d/.test(lastname)) {
+      setError('Last name must not contain numbers.');
+      return false;
+    }
+    if (name.length < 2 ) {
+      setError('First name must be at least 2 characters long.');
       return false;
     }
     if (password.length < 6) {
@@ -36,16 +38,16 @@ const RegisterForm = () => {
       return false;
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(birthdate)) {
-      setError('Invalid birthdate. Please use the format YYYY-MM-DD.');
+      setError('Invalid birthdate. Please use the format DD-MM-YYYY.');
       return false;
     }
-    if (!/^\d{11}$/.test(phone)) {
+    if(!/^\d{11}$/.test(phone)) {
       setError('Invalid phone number. Please use a 10-digit number.');
       return false;
     }
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       setError('Invalid email address.');
-      return false;
+      return false
     }
 
     return true;
@@ -63,15 +65,17 @@ const RegisterForm = () => {
     if (!validateForm()) return; // Validate the form
 
     try {
-      // Send a POST request to the server
-      const response = await axios.post('/auth/signup', {
-        name,
-        lastname,
-        email,
-        password,
-        phone,
-        birthdate
-      });
+
+
+     // Send a POST request to the server
+     const response = await axios.post('/auth/register', {
+      name,
+      lastname,
+      email,
+      password,
+      phone, 
+      birthdate
+    });
       setSuccessMessage('Registration successful. A verification email has been sent.');
       router.push('/auth/sign-in');
     } catch (err: any) {
@@ -81,16 +85,15 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center opacity-70"
-        style={{ backgroundImage: 'url(/images/deneme2.jpg)' }}
-      ></div>
+    <div className="flex flex-col md:flex-row h-screen bg-gray-100">
+      {/* Left Side Image */}
+      <div className="hidden md:flex w-full md:w-1/2 items-center justify-center">
+        <img src="/path/to/your/image.jpg" alt="WaveRiders" className="object-cover h-full w-full" />
+      </div>
 
-      {/* Registration Container on the right */}
-      <div className="relative w-full flex justify-end items-center z-10">
-        <div className="w-full max-w-lg bg-white p-8 border border-gray-300 rounded-lg shadow-md mr-10">
+      {/* Right Side Form */}
+      <div className="w-full md:w-1/2 flex flex-col items-center justify-center overflow-y-auto max-h-screen">
+        <div className="w-full max-w-lg bg-white p-8 border border-gray-300 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">
             Register as a Customer
           </h2>
@@ -121,7 +124,6 @@ const RegisterForm = () => {
                 type="date"
                 value={birthdate}
                 onChange={(e) => setBirthDate(e.target.value)}
-                max={maxBirthDate} // Set the max attribute to limit date input
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -180,16 +182,11 @@ const RegisterForm = () => {
                 disabled={!isChecked}
               >
                 Register
-              </button>
-            </div>
+            </button>
+           </div>
           </form>
         </div>
       </div>
-
-      {/* Footer Placeholder (if needed) */}
-      <footer className="z-10 bg-white shadow-md mt-auto">
-        {/* Add your footer content here */}
-      </footer>
     </div>
   );
 };
