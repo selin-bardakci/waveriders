@@ -73,7 +73,7 @@ const RegisterBoat = () => {
 
     // Validation
     if (!boatName || !boatDescription || !port) {
-      setError('Please fill in all boat details.');
+      setError('All fields are required.');
       return;
     }
     if (selectedTrips.length === 0) {
@@ -270,9 +270,12 @@ const RegisterBoat = () => {
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
               >
-                <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 014-4h6a4 4 010 8h-6a4 4 01-4-4z" />
+                {/* Camera Icon */}
+                <svg className="h-12 w-12 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7h2l2-2h10l2 2h2a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z" />
+                  <circle cx="12" cy="13" r="3" />
                 </svg>
+
                 <p className="mt-2 text-gray-500">Drag & drop your files here</p>
                 <p className="text-xs text-gray-400">JPEG, PNG formats, up to 50MB</p>
                 <input
