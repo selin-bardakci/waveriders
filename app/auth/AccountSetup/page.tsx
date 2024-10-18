@@ -27,7 +27,7 @@ const AccountSetup = () => {
 
       // Redirect based on the selected option
       if (selectedOption === 'customer') {
-        router.push('/auth/registerCustomer');
+        router.push('/auth/register');
       } else if (selectedOption === 'business') {
         router.push('/auth/registerBusiness');
       }
