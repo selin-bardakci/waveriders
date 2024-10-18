@@ -63,29 +63,33 @@ const RegisterForm = () => {
     return true;
   };
 
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(''); // Reset error message
-
+  
     if (!isChecked) {
       setError('You must accept the terms.');
       return;
     }
-
+  
     if (!validateForm()) return; // Validate the form
-
+  
+    // Format birthdate from DD.MM.YYYY to YYYY-MM-DD
+    const formattedBirthdate = birthdate.split('.').reverse().join('-');
+  
     try {
-
-
-     // Send a POST request to the server
-     const response = await axios.post('/auth/register', {
-      name,
-      lastname,
-      email,
-      password,
-      phone, 
-      birthdate
-    });
+     
+      const response = await axios.post('http://localhost:8081/api/auth/signup', {
+        name,
+        lastname,
+        email,
+        password,
+        phone, 
+        birthdate: formattedBirthdate, 
+        account_type: 'customer'
+      });
+      
       setSuccessMessage('Registration successful. A verification email has been sent.');
       router.push('/auth/sign-in');
     } catch (err: any) {
@@ -93,7 +97,7 @@ const RegisterForm = () => {
       setError(errorMessage);
     }
   };
-
+  
   return (
     <div className="relative min-h-screen flex">
       {/* Background Image */}
