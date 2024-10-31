@@ -1,79 +1,84 @@
 'use client';
 
-import axios from 'axios';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
-const SignInPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const router = useRouter();  // Initialize Next.js router
+const NavBar = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false); // Initially set to false
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    try {
-      const response = await axios.post('http://localhost:8081/api/auth/login', { 
-        email,
-        password,
-      });
+  // Listen for custom 'userLoggedIn' event or check localStorage on mount
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      const loggedIn = localStorage.getItem('isLoggedIn');
+      setIsLoggedIn(loggedIn === 'true');
+    };
 
-      if (response.status === 200) {
-        
-        localStorage.setItem('isLoggedIn', 'true'); 
+    // Listen to custom 'userLoggedIn' event
+    const handleUserLoggedIn = () => {
+      checkLoginStatus();
+    };
 
-        // Redirect to home page after login
-        router.push('/');
-      } else {
-        setError('Invalid email or password. Please try again.');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('An error occurred during login. Please try again.');
-    }
+    // Check login status on component mount
+    checkLoginStatus();
+
+    // Add event listener for login event
+    window.addEventListener('userLoggedIn', handleUserLoggedIn);
+
+    // Clean up the event listener when the component unmounts
+    return () => {
+      window.removeEventListener('userLoggedIn', handleUserLoggedIn);
+    };
+  }, []);
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen((prevState) => !prevState); // Toggle the dropdown state
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    setIsLoggedIn(false);
+    setIsDropdownOpen(false); // Close dropdown on logout
   };
 
   return (
-    <div className="mt-20 flex justify-center">
-      <div className="w-full max-w-md bg-white p-8 border border-gray-300 rounded-lg shadow-md">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Welcome Back!</h2>
+    <div className="sticky top-0 w-full mx-auto bg-white border-b-2 border-gray-300 shadow-md z-30 h-20 p-4 flex items-center rounded-tl-[1rem] rounded-tr-[1rem]">
+      <div className="flex w-full justify-between items-center px-6">
+        <Link href="/" className="text-lg font-semibold">WaveRiders</Link>
+
+        <div className="flex items-center gap-8 md:gap-8">
+          {isLoggedIn ? (
+            <div className="relative">
+              <img
+                src="/images/plac.png" 
+                alt="Profile"
+                className="w-10 h-10 rounded-full cursor-pointer"
+                onClick={toggleDropdown} // Only toggle on click
+              />
+
+              {isDropdownOpen && ( // Show dropdown only if isDropdownOpen is true
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+                  <Link href="/dashboard" className="block px-4 py-2 hover:bg-gray-100">Dashboard</Link>
+                  <Link href="/mylistings" className="block px-4 py-2 hover:bg-gray-100">My Listings</Link>
+                  <button
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                    onClick={handleLogout}
+                  >
+                    Log Out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <Link href="/auth/sign-in" className="px-4">Log In</Link>
+              <Link href="/auth/register" className="px-4">Sign Up</Link>
+            </>
+          )}
         </div>
-        <form onSubmit={handleSubmit}>
-          {/* Email Input */}
-          <div className="mb-4">
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          {/* Password Input */}
-          <div className="mb-6">
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          {/* Sign In Button */}
-          <div className="text-center">
-            <button
-              type="submit"
-              className="w-full bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition"
-            >
-              Sign in
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );
 };
 
-export default SignInPage;
+export default NavBar;
