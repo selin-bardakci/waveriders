@@ -2,44 +2,92 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
 
 const RegisterCaptain = () => {
   const [captainName, setCaptainName] = useState('');
   const [captainLastName, setCaptainLastName] = useState('');
-  const [captainAge, setCaptainAge] = useState('');
+  const [captainAge, setCaptainAge] = useState(''); // This will be the actual date of birth input
   const [experience, setExperience] = useState('');
   const [captainPhone, setCaptainPhone] = useState('');
+  const [businessId, setBusinessId] = useState(''); 
+  const [registrationPapers, setRegistrationPapers] = useState<File | null>(null);
   const [step, setStep] = useState(4); // Progress tracker
   const [error, setError] = useState(''); // Error state
   const [maxBirthDate, setMaxBirthDate] = useState(''); // For restricting date input
-
+  const [successMessage, setSuccessMessage] = useState('');
   const router = useRouter();
 
   // Calculate the maximum date allowed (18 years ago from today)
   useEffect(() => {
     const today = new Date();
     const year = today.getFullYear() - 18;
-    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     setMaxBirthDate(`${year}-${month}-${day}`);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setRegistrationPapers(e.target.files[0]);
+      console.log("Selected registration paper file:", e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
     if (!captainName || !captainLastName || !captainAge || !experience || !captainPhone) {
       setError('Please fill in all captain details.');
       return;
     }
 
-    setError('');
+    // Format the birthdate from DD.MM.YYYY to YYYY-MM-DD
+    const formattedBirthdate = captainAge.split('.').reverse().join('-');
 
-    // Simulate submission and navigate to the next step
-    console.log({ captainName, captainLastName, captainAge, experience, captainPhone });
+    try {
+      const formData = new FormData();
+      formData.append('first_name', captainName);
+      formData.append('last_name', captainLastName);
+      formData.append('experience_years', experience);
+      formData.append('phone_number', captainPhone);
+      formData.append('date_of_birth', formattedBirthdate); // Append formatted birthdate
+      formData.append('business_id', businessId);
 
-    router.push('/auth/captainLicense'); // Next step: Upload Captain's Boating License
+      if (registrationPapers) {
+        formData.append('registration_papers', registrationPapers);
+      }
+
+      console.log('Submitting captain registration data:', {
+        first_name: captainName,
+        last_name: captainLastName,
+        experience_years: experience,
+        phone_number: captainPhone,
+        date_of_birth: formattedBirthdate,
+        business_id: businessId,
+      });
+
+      formData.forEach((value, key) => {
+        console.log(`${key}: ${value}`);
+      });
+
+      const response = await axios.post('http://localhost:8081/api/auth/registerCaptain', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setSuccessMessage('Captain registration successful!');
+      console.log('Captain registration response:', response.data);
+
+      localStorage.setItem('captain_id', response.data.captain_id);
+      router.push('/auth/captainLicense'); // Redirect to the license upload page
+    } catch (err) {
+      console.error('Error during captain registration:', err);
+      setError('Failed to register captain. Please try again.');
+    }
   };
+
 
   return (
     <div className="relative min-h-screen flex flex-col">
