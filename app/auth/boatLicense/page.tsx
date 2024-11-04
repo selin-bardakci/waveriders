@@ -1,29 +1,90 @@
-'use client'
-import { useState } from 'react';
+'use client';
+
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useBoatContext } from '../../context/BoatContext';
+import axios from 'axios';
 
 const UploadBoatLicense = () => {
-  const [boatLicense, setBoatLicense] = useState<File | null>(null);
-  const [error, setError] = useState('');
-  const [step, setStep] = useState(3); // Progress tracker
-
+  const { boatId, setBoatId, businessId } = useBoatContext(); // Access boatId and setBoatId from context
+  const [license, setLicense] = useState<File | null>(null);
+  const [error, setError] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [step] = useState(2); 
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    // Retrieve and parse boat ID from localStorage on component mount
+    const storedBoatId = localStorage.getItem('boat_id');
+    console.log('Stored Boat ID:', storedBoatId);
+
+    if (storedBoatId) {
+      const parsedBoatId = parseInt(storedBoatId, 10);
+      console.log('Parsed Boat ID:', parsedBoatId);
+
+      if (isNaN(parsedBoatId)) {
+        setError('Invalid boat ID stored. Please try again.');
+      } else {
+        setBoatId(parsedBoatId); // Set boat ID in context
+      }
+    } else {
+      setError('Boat ID is not found. Please create a boat first.');
+    }
+  }, [setBoatId]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setLicense(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (!boatLicense) {
-      setError('Please upload the boat’s boating license.');
+    // Validate inputs
+    if (!license) {
+      setError('Please upload a license file');
       return;
     }
 
-    setError('');
+    if (!boatId) {
+      setError('Boat ID is required');
+      return;
+    }
 
-    // Simulate submission and navigate to a success page
-    console.log({ boatLicense });
+    try {
+      const formData = new FormData();
+      formData.append('boat_id', boatId.toString()); // Use parsed boatId
+      formData.append('license', license);
 
-    router.push('/auth/registerCaptain'); // Success page or final confirmation
+      // Send POST request to upload the license
+      const response = await axios.post('http://localhost:8081/api/auth/boatLicense', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Handle success
+      setSuccessMessage('License uploaded successfully!');
+      console.log('License upload response:', response.data);
+      router.push('/auth/registerCaptain'); // Redirect or show success message
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          console.error('Error uploading license:', err.response.data); // Log server error message
+          setError(`Failed to upload license: ${err.response.data.message}`);
+        } else if (err.request) {
+          console.error('Error uploading license (no response):', err.request); // No response from server
+          setError('No response from server. Please try again.');
+        } else {
+          console.error('Error uploading license:', err.message); // General error
+          setError('An unexpected error occurred. Please try again.');
+        }
+      } else {
+        console.error('Unexpected error:', err);
+        setError('An unexpected error occurred. Please try again.');
+      }
+    }
   };
 
   return (
