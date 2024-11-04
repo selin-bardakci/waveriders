@@ -71,7 +71,7 @@ const NavBar = () => {
           ) : (
             <>
               <Link href="/auth/sign-in" className="px-4">Log In</Link>
-              <Link href="/auth/register" className="px-4">Sign Up</Link>
+              <Link href="/auth/AccountSetup" className="px-4">Sign Up</Link>
             </>
           )}
         </div>
