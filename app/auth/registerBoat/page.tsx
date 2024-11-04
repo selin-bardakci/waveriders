@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
 const ports = [
@@ -29,9 +30,9 @@ const RegisterBoat = () => {
   const [rentalPricePerDay, setRentalPricePerDay] = useState(''); // New rental price per day state
   const [photos, setPhotos] = useState<File[]>([]);
   const [selectedTrips, setSelectedTrips] = useState<number[]>([]); // For trip selection
-  const [error, setError] = useState('');
   const [termsAgreed, setTermsAgreed] = useState(false);
-  const [step, setStep] = useState(2); // Progress tracker
+  const [error, setError] = useState(''); // Add error state
+  const [step] = useState(2); // Progress tracker
 
   const router = useRouter();
 
@@ -66,11 +67,12 @@ const RegisterBoat = () => {
     setSelectedTrips((prev) =>
       prev.includes(tripId) ? prev.filter((id) => id !== tripId) : [...prev, tripId]
     );
+
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent the default form submission
+  
     // Validation
     if (!boatName || !boatDescription || !port) {
       setError('All fields are required.');
@@ -109,15 +111,64 @@ const RegisterBoat = () => {
       setError('You must agree to the terms and conditions to proceed.');
       return;
     }
+  // Reset the error message
+setError('');
+const formData = new FormData();
+formData.append('boat_name', boatName);
+formData.append('description', boatDescription);
+formData.append('trip_types', JSON.stringify(selectedTrips));
+formData.append('price_per_hour', rentalPrice);
+formData.append('price_per_day', rentalPricePerDay); // Single entry
+formData.append('capacity', maxCapacity);
+formData.append('boat_type', boatType);
+formData.append('location', port);
 
-    setError('');
+photos.forEach((photo, index) => {
+  formData.append('photos', photo);
+});
 
-    // Simulate submission and navigate to the next step
-    console.log({ boatName, boatType, boatDescription, maxCapacity, rentalPrice, rentalPricePerDay, port, photos, selectedTrips });
+try {
+  // Debug statements to print out the received info
+  console.log('Boat Name:', boatName);
+  console.log('Boat Description:', boatDescription);
+  console.log('Selected Trips:', selectedTrips);
+  console.log('Rental Price per Hour:', rentalPrice);
+  console.log('Rental Price per Day:', rentalPricePerDay);
+  console.log('Max Capacity:', maxCapacity);
+  console.log('Boat Type:', boatType);
+  console.log('Port:', port);
+  console.log('Photos:', photos);
+  const response = await axios.post('http://localhost:8081/api/auth/registerBoat', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
 
-    router.push('/auth/boatLicense');
+  
+  // Log the full response to confirm structure
+  console.log("Full Response Data:", response.data);
+
+  // Access the boat_id
+  const boatId = response.data?.boat?.boat_id;// Ensure the path matches the response structure
+
+  // Log and store boat_id
+  if (boatId !== undefined) {
+    localStorage.setItem('boat_id', boatId.toString()); // Convert to string before storing
+    console.log('Boat ID successfully stored in localStorage:', boatId);
+  } else {
+    console.error('Boat ID not found in response:', response.data);
+    alert("Invalid boat ID stored. Please try again.");
+  }
+  console.log('Success:', response.data);
+
+  // Navigate to the next page
+  router.push('/auth/boatLicense');
+} catch (err) {
+  const errorMessage = (err as any).response?.data?.message || 'Registration failed. Please try again.';
+  setError(errorMessage);
+}
+
   };
-
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Background Image */}
