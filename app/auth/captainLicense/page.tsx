@@ -1,31 +1,68 @@
-'use client';
-
-import { useState } from 'react';
+"use client"
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
 
-const UploadCaptainLicense = () => {
-  const [captainLicense, setCaptainLicense] = useState<File | null>(null);
+
+const CaptainLicense = () => {
+  const [captainId, setCaptainId] = useState<string | null>(null);
+  const [registrationPapers, setRegistrationPapers] = useState<File | null>(null);
   const [error, setError] = useState('');
-  const [step, setStep] = useState(5); // Progress tracker
+  const [step, setStep] = useState(5);
+  const [successMessage, setSuccessMessage] = useState('');
+  const router = useRouter(); 
+  useEffect(() => {
+    const storedCaptainId = localStorage.getItem('captain_id');
+    if (storedCaptainId) {
+      setCaptainId(storedCaptainId);
+      console.log("Loaded captain ID:", storedCaptainId);
+    } else {
+      setError('Captain ID not found. Please complete registration first.');
+    }
+  }, []);
 
-  const router = useRouter();
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setRegistrationPapers(e.target.files[0]);
+      console.log("Selected registration paper file:", e.target.files[0]);
+    }
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Validation
-    if (!captainLicense) {
-      setError('Please upload the captain’s boating license.');
+    if (!registrationPapers) {
+      setError('Please upload registration papers');
       return;
     }
 
-    setError('');
+    if (!captainId) {
+      setError('Captain ID is not available. Please complete registration first.');
+      return;
+    }
 
-    // Simulate submission and navigate to a success page
-    console.log({ captainLicense });
+    try {
+      const formData = new FormData();
+      formData.append('captain_id', captainId || ''); // Convert captainId to an empty string if it's null
+      formData.append('registration_papers', registrationPapers); 
 
-    router.push('/auth/registrationSuccess'); // Success page or final confirmation
+      console.log('Submitting captain license data:', { captain_id: captainId, registration_papers: registrationPapers?.name });
+
+      const response = await axios.post('http://localhost:8081/api/auth/captainLicense', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setSuccessMessage('Registration papers uploaded successfully!');
+      router.push('/auth/emailVerification');
+      console.log('Captain license upload response:', response.data);
+    } catch (err) {
+      console.error('Error uploading registration papers:', err);
+      setError('Failed to upload registration papers. Please try again.');
+    }
   };
+
 
   return (
     <div className="relative min-h-screen flex flex-col">
