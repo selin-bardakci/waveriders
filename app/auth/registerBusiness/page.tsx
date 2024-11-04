@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
+import axios from 'axios';
 const RegisterBusiness = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -38,7 +38,7 @@ const RegisterBusiness = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent default form submission behavior
 
     // Validation
@@ -58,16 +58,29 @@ const RegisterBusiness = () => {
     }
 
     setError('');
+    
+    try {
+      const response = await axios.post('http://localhost:8081/api/auth/registerBusiness', {
+        first_name: firstName || null,
+        last_name: lastName || null,
+        business_name: businessName || null,
+        email,
+        phone_number: phone,
+        password,
+        date_of_birth: '1970-01-01', // Default date of birth
+        account_type: 'business' // Assuming account_type is required and set to 'business'
+      });
+      // Simulate submission and navigate to the next step
+      console.log({
+        firstName, lastName, businessName, email, phone, password, termsAgreed
+      });
 
-    // Simulate submission and navigate to the next step
-    console.log({
-      firstName, lastName, businessName, email, phone, password, termsAgreed
-    });
-
-    // Navigate to the next step
-    router.push('/auth/registerBoat');  // Example of next step
+      // Navigate to the next step
+      router.push('/auth/registerBoat');  // Example of next step
+    } catch (error) {
+      setError('An error occurred during registration. Please try again.');
+    }
   };
-
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Background Image */}
