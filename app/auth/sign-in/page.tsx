@@ -20,8 +20,8 @@ const SignInPage = () => {
       });
 
       if (response.status === 200) {
-        // Set the isLoggedIn flag in localStorage
-        localStorage.setItem('isLoggedIn', 'true');
+        
+        localStorage.setItem('isLoggedIn', 'true'); 
 
         // Redirect to home page after login
         router.push('/');
@@ -33,6 +33,7 @@ const SignInPage = () => {
       setError('An error occurred during login. Please try again.');
     }
   };
+
 
   return (
     <div className="mt-20 flex justify-center">
