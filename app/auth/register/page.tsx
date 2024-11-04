@@ -98,6 +98,7 @@ const RegisterForm = () => {
     }
   };
   
+  
   return (
     <div className="relative min-h-screen flex">
       {/* Background Image */}
