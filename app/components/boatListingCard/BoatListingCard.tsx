@@ -1,7 +1,9 @@
+import Link from 'next/link';
 
-const BoatListingCard = ({ imageUrl, price, rating, guests, minHours, description }) => {
-    return (
-      <div className="border rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200">
+const BoatListingCard = ({ id, imageUrl, price, rating, guests, minHours, description }) => {
+  return (
+    <Link href={`/listings/${id}`} passHref>
+      <div className="bg-white border rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 cursor-pointer">
         <img src={imageUrl} alt="Boat" className="w-full h-40 object-cover" />
         <div className="p-4">
           <div className="flex justify-between items-center">
@@ -12,8 +14,8 @@ const BoatListingCard = ({ imageUrl, price, rating, guests, minHours, descriptio
           <p className="text-gray-600">Min. hours: {minHours}</p>
         </div>
       </div>
-    );
-  };
-  
-  export default BoatListingCard;
-  
+    </Link>
+  );
+};
+
+export default BoatListingCard;
