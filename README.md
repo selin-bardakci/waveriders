@@ -12,9 +12,11 @@ yarn dev
 pnpm dev
 ```
 Install these libraries with these commands:
+```bash
 npm install swiper
+# and
 npm install react-slider
-
+```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
