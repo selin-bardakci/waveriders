@@ -60,7 +60,7 @@ export const registerBusiness = async (req, res) => {
           password: hashedPassword,
           phone_number,
           date_of_birth: "0000-00-00", // Default date for business registrations
-          account_type: 'business_owner'
+          account_type: 'business'
       }, (err, result) => {
           if (err) {
               console.error('Error creating user:', err);
