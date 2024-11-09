@@ -155,6 +155,13 @@ export const handleUploadBoatLicense = (req, res) => {
     return res.status(400).json({ message: 'No file uploaded' });
   }
 
+  const allowedExtensions = ['jpeg', 'jpg', 'pdf'];
+  const fileExtension = req.file.originalname.split('.').pop().toLowerCase();
+
+  if (!allowedExtensions.includes(fileExtension)) {
+    return res.status(400).json({ message: 'Invalid file type. Only jpeg, jpg, and pdf are allowed.' });
+  }
+
   const licensePath = path.join('uploads/boatlicenses', req.file.filename);
 
   // Update the boat entry with the license path
@@ -212,7 +219,14 @@ export const handleUploadCaptainLicense = (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No registration papers uploaded' });
   }
+  
+  const allowedExtensions = ['jpeg', 'jpg', 'pdf'];
+  const fileExtension = req.file.originalname.split('.').pop().toLowerCase();
 
+  if (!allowedExtensions.includes(fileExtension)) {
+    return res.status(301).json({ message: 'Invalid file type. Only jpeg, jpg, and pdf are allowed.' });
+  }
+  
   const registrationPapersPath = `uploads/captainlicenses/${req.file.filename}`;
 
   Captain.updateCaptainLicense(db, captain_id, registrationPapersPath, (err, result) => {
