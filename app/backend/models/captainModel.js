@@ -1,6 +1,6 @@
 export const Captain = {
   createCaptain: (db, captainData, callback) => {
-    const sql = 'INSERT INTO captains (first_name, last_name, experience_years, phone_number, date_of_birth, business_id, registration_papers) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const sql = 'INSERT INTO captains (first_name, last_name, experience_years, phone_number, date_of_birth, business_id, registration_papers,captain_registration_check) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
     const values = [
       captainData.first_name,
       captainData.last_name,
@@ -8,7 +8,8 @@ export const Captain = {
       captainData.phone_number,
       captainData.date_of_birth,
       captainData.business_id || null,
-      captainData.registration_papers || null
+      captainData.registration_papers || null,
+      captainData.captain_registration_check
     ];
     db.query(sql, values, callback);
   },
