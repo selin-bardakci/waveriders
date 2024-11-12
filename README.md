@@ -11,12 +11,15 @@ yarn dev
 # or
 pnpm dev
 ```
-Install these libraries with these commands:
+Install these libraries and packages with these commands:
 ```bash
 npm install swiper
 # and
 npm install react-slider
+# and
+npm install @babel/runtime
 ```
+
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
