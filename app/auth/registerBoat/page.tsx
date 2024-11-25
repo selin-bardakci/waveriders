@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-
 const ports = [
   'Port of Antwerp',
   'Port of Zeebrugge',
@@ -24,6 +23,7 @@ const RegisterBoat = () => {
   const [port, setPort] = useState('');
   const [boatName, setBoatName] = useState('');
   const [boatType, setBoatType] = useState('');
+  const [business_id, setBusinessId] = useState<number | null>(null);
   const [boatDescription, setBoatDescription] = useState('');
   const [maxCapacity, setMaxCapacity] = useState('');
   const [rentalPrice, setRentalPrice] = useState('');
@@ -70,9 +70,26 @@ const RegisterBoat = () => {
 
   };
   
+  useEffect(() => {
+    const storedbusinessid = localStorage.getItem('business_id');
+    console.log('Business ID:', storedbusinessid);
+    if (storedbusinessid) {
+      const parsedBusinessID = parseInt(storedbusinessid, 10);
+      console.log('Parsed Business ID:', parsedBusinessID);
+
+      if (isNaN(parsedBusinessID)) {
+        setError('Invalid Business ID stored. Please try again.');
+      } else {
+        setBusinessId(parsedBusinessID); // Set boat ID in context
+      }
+    } else {
+      setError('Business ID is not found. Please create a Business first.');
+    }
+  }, [setBusinessId]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent the default form submission
-  
+
+
     // Validation
     if (!boatName || !boatDescription || !port) {
       setError('All fields are required.');
@@ -122,7 +139,12 @@ formData.append('price_per_day', rentalPricePerDay); // Single entry
 formData.append('capacity', maxCapacity);
 formData.append('boat_type', boatType);
 formData.append('location', port);
-
+if (business_id !== null) {
+  formData.append('business_id', business_id.toString()); // Add business_id to the form data
+} else {
+  setError('Business ID is not found. Please create a boat first.');
+  return;
+}
 photos.forEach((photo, index) => {
   formData.append('photos', photo);
 });
