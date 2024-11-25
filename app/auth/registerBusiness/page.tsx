@@ -74,13 +74,14 @@ const RegisterBusiness = () => {
       console.log({
         firstName, lastName, businessName, email, phone, password, termsAgreed
       });
-
+      
       // Navigate to the next step
       router.push('/auth/registerBoat');  // Example of next step
     } catch (error) {
       setError('An error occurred during registration. Please try again.');
     }
   };
+
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Background Image */}
