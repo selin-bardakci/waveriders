@@ -61,7 +61,7 @@ const NavBar = () => {
 
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
-                  <Link href="/dashboard" className="block px-4 py-2 hover:bg-gray-100" onClick={closeDropdown}>Dashboard</Link>
+                  <Link href="/Customer/customerDasboard" className="block px-4 py-2 hover:bg-gray-100" onClick={closeDropdown}>Dashboard</Link>
                   <Link href="/mylistings" className="block px-4 py-2 hover:bg-gray-100" onClick={closeDropdown}>My Listings</Link>
                   <button
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100"
@@ -75,7 +75,7 @@ const NavBar = () => {
           ) : (
             <>
               <Link href="/auth/sign-in" className="px-4">Log In</Link>
-              <Link href="/auth/register" className="px-4">Sign Up</Link>
+              <Link href="/auth/AccountSetup" className="px-4">Sign Up</Link>
             </>
           )}
         </div>
