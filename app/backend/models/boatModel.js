@@ -75,6 +75,11 @@ export const Boat = {
       }
       callback(null, result);
     });
+  },
+  
+  getBoat: (db, callback) => {
+    const sql = 'SELECT * FROM boats';
+    db.query(sql, callback);
   }
   
 };
