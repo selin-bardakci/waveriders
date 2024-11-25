@@ -1,9 +1,10 @@
 'use client';
 import { useState } from 'react';
-import SearchBar from '@/app/components/SearchBar/SearchBar';
-import BoatListingCard from '@/app/components/boatListingCard/BoatListingCard';
-import FilterSidebar from '@/app/components/SideBar/FilterSidebar'; // Import the FilterSidebar component
+import SearchBar from '@/components/SearchBar/SearchBar';
+import BoatListingCard from '@/components/boatListingCard/BoatListingCard';
+import FilterSidebar from '@/components/SideBar/FilterSidebar'; // Import the FilterSidebar component
 import { IoIosFunnel } from 'react-icons/io';
+
 
 const ListingsPage = () => {
   // Mock data with a location attribute
@@ -36,12 +37,12 @@ const ListingsPage = () => {
   const [sortOption, setSortOption] = useState('');
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  const applyFilters = (filters) => {
+  const applyFilters = (filters: any) => {
     console.log('Filters applied:', filters);
     // Add your filtering logic here to update listings based on `filters`
   };
   // Sorting logic based on the selected option
-  const handleSortChange = (e) => {
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setSortOption(value);
     let sortedListings = [...listings];
@@ -105,7 +106,7 @@ const ListingsPage = () => {
         </div>
 
         {/* Sidebar Overlay */}
-        <FilterSidebar isOpen={isSidebarOpen} onClose={toggleSidebar} applyFilters={applyFilters} />
+        <FilterSidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
       </main>
     </div>
   );
