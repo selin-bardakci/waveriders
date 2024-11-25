@@ -87,6 +87,8 @@ const UploadBoatLicense = () => {
     }
   };
 
+
+  
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Background Image */}
@@ -122,7 +124,7 @@ const UploadBoatLicense = () => {
                 onDrop={(e) => {
                   e.preventDefault();
                   if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    setBoatLicense(e.dataTransfer.files[0]);
+                    setLicense(e.dataTransfer.files[0]);
                   }
                 }}
                 onDragOver={(e) => e.preventDefault()}
@@ -164,7 +166,7 @@ const UploadBoatLicense = () => {
                   <button
                     type="button"
                     className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                    onClick={() => document.querySelector('input[type="file"]').click()}
+                    onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
                   >
                     Choose File
                   </button>
@@ -175,14 +177,14 @@ const UploadBoatLicense = () => {
                   accept=".pdf, .jpg, .png"
                   onChange={(e) => {
                     if (e.target.files && e.target.files[0]) {
-                      setBoatLicense(e.target.files[0]);
+                      setLicense(e.target.files[0]);
                     }
                   }}
                   className="hidden"
                 />
                 {/* Upload feedback */}
-                {boatLicense ? (
-                  <p className="text-sm text-gray-700 mt-2">File Uploaded: {boatLicense.name}</p>
+                {license ? (
+                  <p className="text-sm text-gray-700 mt-2">File Uploaded: {license.name}</p>
                 ) : (
                   <p className="text-sm text-gray-500 mt-2">No file uploaded</p>
                 )}
