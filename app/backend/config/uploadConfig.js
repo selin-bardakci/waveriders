@@ -2,6 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import express from 'express';
 // Configure multer for file uploads
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads'); // Path where files will be saved
@@ -18,4 +19,3 @@ const upload = multer({ storage });
 const jsonParser = express.json();
 
 export { jsonParser, upload };
-
