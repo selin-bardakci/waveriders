@@ -22,5 +22,10 @@ export const User = {
       }
       callback(null, results);
     });
+  },
+
+  getUser: (db, user_type ,callback) => {
+    const sql = 'SELECT * FROM users WHERE account_type = ?';
+    db.query(sql, user_type,callback);
   }
 };
