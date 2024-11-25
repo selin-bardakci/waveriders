@@ -169,6 +169,7 @@ try {
 }
 
   };
+  
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Background Image */}
@@ -338,7 +339,7 @@ try {
                 />
                 <button
                   type="button"
-                  onClick={() => document.querySelector('input[type="file"]')?.click()}
+                  onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
                   className="mt-2 bg-blue-500 text-white rounded-lg px-3 py-2 hover:bg-blue-600 transition"
                 >
                   Choose a file
