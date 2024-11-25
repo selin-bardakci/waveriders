@@ -1,69 +1,56 @@
-import { connectDB } from '../config/db.js'; 
-import { Auction } from '../models/listingModel.js';
-
+import { connectDB } from '../config/db.js';
+import { Listing } from '../models/listingModel.js';
 
 const db = connectDB();
-export const createListing = async (req, res, db) => {
+
+// Controller for creating a new boat listing
+export const createListing = async (req, res) => {
   try {
     console.log('createListing method called');
-    const { productName, description, minPrice, duration} = req.body;
-    const id = req.users.id;
-    const images = req.files;
+    
+    const { boatName, boatType, capacity, pricePerHour, description, location } = req.body;
+    const businessId = req.user.id; 
+    const images = req.files; 
 
-    console.log('Request Body:', req.body); // Log request body
-    console.log('Uploaded Files:', req.files); // Log uploaded files
+    console.log('Request Body:', req.body);
+    console.log('Uploaded Files:', req.files);
 
-    // Validate input data
-    if (!productName || !description || !minPrice || !duration || !images || images.length === 0) {
+   
+    if (!boatName || !boatType || !capacity || !location || !pricePerHour || !description || !images || images.length === 0) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Correctly form the image paths to save in the database
     const imagePaths = images.map((file) => file.path);
+
     
-  
-    const auctionId = generateUniqueListingId(); // Assuming you have a function to generate unique IDs
+    const listingData = {
+      boatName,
+      boatType,
+      capacity,
+      pricePerHour,
+      description,
+      businessId,
+      location,     
+      imagePaths
+    };
 
-  const sql = `
-    INSERT INTO listings 
-    (listing_id, product_name, description, min_price, duration, images, user_id, created_at, updated_at) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-    `;
-
-const values = [
-  auctionId, 
-  productName,
-  description,
-  minPrice,
-  duration,
-  JSON.stringify(imagePaths), // Save images as a JSON string
-  id || 1, 
-];
-
-    db.query(sql, values, (err, result) => {
+    Listing.createListing(db, listingData, (err, result) => {
       if (err) {
-        console.error('Error inserting auction listing:', err);
+        console.error('Error creating boat listing:', err);
         return res.status(500).json({ error: 'Internal server error' });
       }
-      console.log('Auction created successfully:', result);
-      res.status(201).json({ message: 'Auction created successfully', id: result.insertId });
+      res.status(201).json({ message: 'Boat listing created successfully', id: result.insertId });
     });
   } catch (error) {
-    console.error('Error in createAuction controller:', error);
+    console.error('Error in createListing controller:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-
-function generateUniqueListingId() {
- 
-  return 'auction_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-}
-
-// Function to fetch all auctions
+// Controller for fetching all boat listings
 export const fetchListings = async (req, res) => {
   try {
-    Auction.findAllListings(db, (err, results) => {
+    Listing.findAllListings(db, (err, results) => {
       if (err) {
         console.error('Error fetching listings:', err);
         return res.status(500).json({ error: 'Internal server error' });
@@ -72,6 +59,83 @@ export const fetchListings = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching listings:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Controller for fetching a boat listing by ID
+export const fetchListingById = async (req, res) => {
+  const listingId = req.params.id;
+
+  try {
+    Listing.findListingById(db, listingId, (err, result) => {
+      if (err) {
+        console.error('Error fetching listing:', err);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+      if (!result.length) {
+        return res.status(404).json({ error: 'Listing not found' });
+      }
+      res.status(200).json(result[0]);
+    });
+  } catch (error) {
+    console.error('Error fetching listing by ID:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Controller for updating a boat listing by ID
+export const updateListing = async (req, res) => {
+  const listingId = req.params.id;
+  const { boatName, boatType, capacity, pricePerHour, description, location } = req.body;
+  const images = req.files; // Handling uploaded images
+
+  try {
+    const imagePaths = images ? images.map((file) => file.path) : [];
+
+    const updatedData = {
+      boatName,
+      boatType,
+      capacity,
+      pricePerHour,
+      description,
+      location,
+      imagePaths
+    };
+
+    Listing.updateListingById(db, listingId, updatedData, (err, result) => {
+      if (err) {
+        console.error('Error updating listing:', err);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Listing not found' });
+      }
+      res.status(200).json({ message: 'Listing updated successfully' });
+    });
+  } catch (error) {
+    console.error('Error in updateListing controller:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Controller for deleting a boat listing by ID
+export const deleteListing = async (req, res) => {
+  const listingId = req.params.id;
+
+  try {
+    Listing.deleteListingById(db, listingId, (err, result) => {
+      if (err) {
+        console.error('Error deleting listing:', err);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Listing not found' });
+      }
+      res.status(200).json({ message: 'Listing deleted successfully' });
+    });
+  } catch (error) {
+    console.error('Error in deleteListing controller:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
