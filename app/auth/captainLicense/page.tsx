@@ -63,13 +63,12 @@ const CaptainLicense = () => {
     }
   };
 
-
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center opacity-70"
-        style={{ backgroundImage: 'url(/images/deneme2.jpg)' }} // Update the path as needed
+        style={{ backgroundImage: 'url(/images/deneme2.jpg)' }}
       ></div>
 
       {/* Registration Container */}
@@ -93,18 +92,16 @@ const CaptainLicense = () => {
               <label className="block text-gray-700 text-sm font-bold mb-2">
                 Upload License
               </label>
-              {/* Upload area design */}
               <div
                 className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 relative"
                 onDrop={(e) => {
                   e.preventDefault();
                   if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    setCaptainLicense(e.dataTransfer.files[0]);
+                    setRegistrationPapers(e.dataTransfer.files[0]); // Use setRegistrationPapers here
                   }
                 }}
                 onDragOver={(e) => e.preventDefault()}
               >
-                {/* License Icon */}
                 <div className="mb-4">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -126,45 +123,35 @@ const CaptainLicense = () => {
                     />
                   </svg>
                 </div>
-                {/* Dashed box for dragging or selecting files */}
                 <div className="mb-4 text-gray-600 text-center">
                   <p>Choose a file or drag & drop it here</p>
                   <p className="text-xs text-gray-500">JPEG, PNG, PDF formats, up to 50MB</p>
                 </div>
-                {/* Browse File Button INSIDE the drag-and-drop box */}
                 <div className="mt-4">
                   <button
                     type="button"
                     className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                    onClick={() => document.querySelector('input[type="file"]').click()}
+                    onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
                   >
                     Choose File
                   </button>
                 </div>
-                {/* Hidden File Input */}
                 <input
                   type="file"
                   accept=".pdf, .jpg, .png"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setCaptainLicense(e.target.files[0]);
-                    }
-                  }}
+                  onChange={handleFileChange} // Correctly call handleFileChange here
                   className="hidden"
                 />
-                {/* Upload feedback */}
-                {captainLicense ? (
-                  <p className="text-sm text-gray-700 mt-2">File Uploaded: {captainLicense.name}</p>
+                {registrationPapers ? (
+                  <p className="text-sm text-gray-700 mt-2">File Uploaded: {registrationPapers.name}</p>
                 ) : (
                   <p className="text-sm text-gray-500 mt-2">No file uploaded</p>
                 )}
               </div>
             </div>
 
-            {/* Error Message */}
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-            {/* Submit Button */}
             <div className="text-center">
               <button
                 type="submit"
@@ -180,4 +167,4 @@ const CaptainLicense = () => {
   );
 };
 
-export default UploadCaptainLicense;
+export default CaptainLicense;
