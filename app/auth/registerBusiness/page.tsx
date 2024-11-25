@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { BusinessProvider } from '../../context/BusinessContext';
 const RegisterBusiness = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -70,6 +71,17 @@ const RegisterBusiness = () => {
         date_of_birth: '1970-01-01', // Default date of birth
         account_type: 'business' // Assuming account_type is required and set to 'business'
       });
+      //store business_id in context
+      const businessId = response.data?.business_id;
+      if(businessId !== undefined){
+        localStorage.setItem('business_id', businessId.toString());
+        console.log('Business ID successfully stored in localStorage:', businessId);
+      } else {
+        console.error('Business ID not found in response:', response.data);
+        alert("Invalid business ID stored. Please try again.");
+      }
+
+
       // Simulate submission and navigate to the next step
       console.log({
         firstName, lastName, businessName, email, phone, password, termsAgreed
