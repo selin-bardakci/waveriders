@@ -54,31 +54,40 @@ export const registerBusiness = async (req, res) => {
 
       // Create the user with account_type as 'business_owner'
       User.createUser(db, {
-          first_name: hasFirstNameAndLastName ? first_name : null,
-          last_name: hasFirstNameAndLastName ? last_name : null,
-          email,
-          password: hashedPassword,
-          phone_number,
-          date_of_birth: "0000-00-00", // Default date for business registrations
-          account_type: 'business'
-      }, (err, result) => {
-          if (err) {
-              console.error('Error creating user:', err);
-              return res.status(500).json({ message: 'Server error' });
-          }
-
-          const userId = result.insertId;
-
-      
-              Business.createBusiness(db, {
-             user_id: userId, business_name: hasBusinessName || null }, (err) => {
-              if (err) {
-                  console.error('Error creating business:', err);
-                  return res.status(500).json({ message: 'Error creating business' });
-              }
-              res.status(200).json({ message: 'Business registration successful' });
-          });
-      });
+        first_name: hasFirstNameAndLastName ? first_name : null,
+        last_name: hasFirstNameAndLastName ? last_name : null,
+        email,
+        password: hashedPassword,
+        phone_number,
+        date_of_birth: "0000-00-00", // Default date for business registrations
+        account_type: 'business'
+    }, (err, result) => {
+        if (err) {
+            console.error('Error creating user:', err);
+            return res.status(500).json({ message: 'Server error' });
+        }
+    
+        const userId = result.insertId;
+    
+        Business.createBusiness(db, {
+            user_id: userId, business_name: hasBusinessName || null 
+        }, (err) => {
+            if (err) {
+                console.error('Error creating business:', err);
+                return res.status(500).json({ message: 'Error creating business' });
+            }
+    
+            Business.searchBusiness(db, userId, (err, businessResult) => {
+                if (err) {
+                    console.error('Error searching business:', err);
+                    return res.status(500).json({ message: 'Error searching business' });
+                }
+    
+                const businessId = businessResult[0].business_id;
+                res.status(200).json({ message: 'Business registration successful', user_id: userId, business_id: businessId });
+            });
+        });
+    });
 
   } catch (err) {
       console.error('Error hashing password:', err);
