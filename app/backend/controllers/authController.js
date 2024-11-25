@@ -33,7 +33,7 @@ export const accountSetup = (req, res) => {
 export const registerBusiness = async (req, res) => {
   console.log("registerBusiness controller function hit");
   console.log("Request body:", req.body);
-  
+
   const { first_name, last_name, business_name, email, phone_number, password } = req.body;
 
   // Check for either full name or business name (mutual exclusivity)
@@ -60,7 +60,7 @@ export const registerBusiness = async (req, res) => {
           password: hashedPassword,
           phone_number,
           date_of_birth: "0000-00-00", // Default date for business registrations
-          account_type: 'business'
+          account_type: 'business_owner'
       }, (err, result) => {
           if (err) {
               console.error('Error creating user:', err);
@@ -68,7 +68,7 @@ export const registerBusiness = async (req, res) => {
           }
 
           const userId = result.insertId;
-    
+
       
               Business.createBusiness(db, {
              user_id: userId, business_name: hasBusinessName || null }, (err) => {
@@ -76,13 +76,10 @@ export const registerBusiness = async (req, res) => {
                   console.error('Error creating business:', err);
                   return res.status(500).json({ message: 'Error creating business' });
               }
-              const business_id = result.insertId;
-              Business.business_id = business_id;
-
-
-              res.status(200).json({ message: 'Business registration successful' , business_id: business_id});
+              res.status(200).json({ message: 'Business registration successful' });
           });
       });
+
   } catch (err) {
       console.error('Error hashing password:', err);
       return res.status(500).json({ message: 'Server error' });
@@ -173,8 +170,8 @@ export const handleUploadBoatLicense = (req, res) => {
 
 
 export const handleRegisterCaptain = (req, res) => {
-  const { first_name, last_name, experience_years, phone_number, date_of_birth } = req.body;
-  const business_id = req.body.business_id;
+  const { first_name, last_name, experience_years, phone_number, date_of_birth, business_id } = req.body;
+
   // Log the received data for debugging
   console.log('Received captain registration data:', req.body);
 
@@ -183,7 +180,7 @@ export const handleRegisterCaptain = (req, res) => {
     console.error('Captain registration error: Missing required fields');
     return res.status(400).json({ message: 'All fields are required' });
   }
-  captain_registration_check = 0;
+
   // Prepare data for insertion
   const captainData = {
     first_name,
@@ -192,8 +189,6 @@ export const handleRegisterCaptain = (req, res) => {
     phone_number,
     date_of_birth,
     business_id: business_id || null,
-    registration_papers: null,
-    captain_registration_check
   };
 
   console.log('Formatted captain data:', captainData);
@@ -207,6 +202,7 @@ export const handleRegisterCaptain = (req, res) => {
     res.status(201).json({ message: 'Captain registered successfully', captain_id: result.insertId });
   });
 };
+
 export const handleUploadCaptainLicense = (req, res) => {
   const { captain_id } = req.body;
 
@@ -214,15 +210,8 @@ export const handleUploadCaptainLicense = (req, res) => {
     return res.status(400).json({ message: 'Captain ID is required' });
   }
 
-
   if (!req.file) {
     return res.status(400).json({ message: 'No registration papers uploaded' });
-  }
-  const allowedExtensions = ['jpeg', 'jpg', 'pdf'];
-  const fileExtension = req.file.originalname.split('.').pop().toLowerCase();
-
-  if (!allowedExtensions.includes(fileExtension)) {
-    return res.status(301).json({ message: 'Invalid file type. Only jpeg, jpg, and pdf are allowed.' });
   }
 
   const registrationPapersPath = `uploads/captainlicenses/${req.file.filename}`;
@@ -302,26 +291,16 @@ function mapTripTypesToDatabaseStrings(tripTypeIds) {
 
 
 export const registerBoat = async (req, res) => {
-  const { boat_name, description, trip_types, price_per_hour, price_per_day, capacity, boat_type, location } = req.body;
-  const photos = req.files; // Photos are usually in req.files, not req.body
-  const business_id = req.body.business_id;
+  const { boat_name, description, trip_types, price_per_hour, price_per_day, capacity, boat_type, location, business_id } = req.body;
+  const photos = req.files;
 
   if (!boat_name || !description || !trip_types || !price_per_hour || !capacity || !boat_type || !location) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
-  if (!Array.isArray(trip_types)) {
-    return res.status(400).json({ message: 'trip_types must be an array' });
-  }
-
-  if (!photos || !Array.isArray(photos)) {
-    return res.status(400).json({ message: 'Photos must be an array' });
-  }
-
   try {
-    const imagePaths = photos.map((file) => file.path); // Now safely assuming photos is an array
+    const imagePaths = photos.map((file) => file.path);
     console.log("Received photos:", imagePaths);
-
     const formattedTripTypes = mapTripTypesToDatabaseStrings(trip_types);
 
     const newBoat = {
@@ -329,7 +308,7 @@ export const registerBoat = async (req, res) => {
       description,
       trip_types: formattedTripTypes.join(','),
       price_per_hour,
-      price_per_day: Array.isArray(price_per_day) ? price_per_day[1] : price_per_day || null,
+      price_per_day: Array.isArray(price_per_day) ? price_per_day[1] : price_per_day || null, 
       capacity,
       boat_type,
       location,
@@ -344,9 +323,9 @@ export const registerBoat = async (req, res) => {
         return res.status(500).json({ message: 'Error creating boat' });
       }
       const boatId = result.insertId;
-      newBoat.boat_id = boatId;
+      newBoat.boat_id = boatId; 
 
-      console.log("Full Response Data:", newBoat);
+      console.log("Full Response Data:", newBoat); 
       res.status(201).json({ message: 'Boat registration successful', boat: newBoat });
     });
   } catch (err) {
@@ -355,4 +334,42 @@ export const registerBoat = async (req, res) => {
   }
 };
 
+export const getBoat = (req, res) => {
+  Boat.getBoat(db, (err, results) => {
+    if (err) {
+      console.error('Error fetching boats:', err);
+      return res.status(500).json({ message: 'Error fetching boats' });
+    }
+    res.status(200).json({ boats: results });
+  });
+};
 
+export const getCaptain = (req, res) => {
+  Captain.getCaptain(db, (err, results) => {
+    if (err) {
+      console.error('Error fetching captains:', err);
+      return res.status(500).json({ message: 'Error fetching captains' });
+    }
+    res.status(200).json({ captains: results });
+  });
+};
+
+export const getBusiness = (req, res) => {
+  Business.getAllBusinesses(db, (err, results) => {
+    if (err) {
+      console.error('Error fetching businesses:', err);
+      return res.status(500).json({ message: 'Error fetching businesses' });
+    }
+    res.status(200).json({ businesses: results });
+  });
+};
+
+export const getUser = (req, res) => {
+  User.getUser(db, 'business', (err, results) => {
+    if (err) {
+      console.error('Error fetching users:', err);
+      return res.status(500).json({ message: 'Error fetching users' });
+    }
+    res.status(200).json({ users: results });
+  });
+};
