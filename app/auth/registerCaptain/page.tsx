@@ -168,6 +168,9 @@ const RegisterCaptain = () => {
             {/* Error Message */}
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
+            {/* Success Message */}
+            {successMessage && <p className="text-green-500 text-center mb-4">{successMessage}</p>}
+
             {/* Submit Button */}
             <div className="text-center">
               <button
