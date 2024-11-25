@@ -4,11 +4,11 @@ const PriceRangeFilter = () => {
   const [minPrice, setMinPrice] = useState(100); // Default min price
   const [maxPrice, setMaxPrice] = useState(1000); // Default max price
 
-  const handleMinChange = (event) => {
+  const handleMinChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setMinPrice(Number(event.target.value));
   };
 
-  const handleMaxChange = (event) => {
+  const handleMaxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setMaxPrice(Number(event.target.value));
   };
 
