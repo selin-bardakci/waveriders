@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -12,10 +13,27 @@ interface User {
   account_type: 'customer' | 'business';
   created_at: string;
   date_of_birth: string;
+  business_id?: number;
+}
+
+interface Boat {
+  boat_id: number;
+  name: string;
+  business_id: number;
+  // other boat details
+}
+
+interface Captain {
+  captain_id: number;
+  name: string;
+  business_id: number;
+  // other captain details
 }
 
 const AdminPage = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [boats, setBoats] = useState<Boat[]>([]);
+  const [captains, setCaptains] = useState<Captain[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,11 +57,29 @@ const AdminPage = () => {
     fetchUsers();
   }, []);
 
+  const fetchBoatsAndCaptains = async (businessId: number) => {
+    try {
+      const [boatResponse, captainResponse] = await Promise.all([
+        axios.get(`http://localhost:8081/api/auth/boat`),
+        axios.get(`http://localhost:8081/api/auth/captain`)
+      ]);
+
+      setBoats(boatResponse.data.boats);
+      setCaptains(captainResponse.data.captains);
+    } catch (error) {
+      console.error('Failed to fetch boats or captains:', error);
+    }
+  };
+
   const showUserDetails = (user: User): void => {
     setSelectedUser(user);
     setIsModalOpen(true);
-    setShowRejectTextBox(false); // Reset reject text box visibility on modal open
-    setRejectEmailContent(''); // Reset email content
+    setShowRejectTextBox(false);
+    setRejectEmailContent('');
+    
+    if (user.account_type === 'business' && user.business_id) {
+      fetchBoatsAndCaptains(user.business_id);
+    }
   };
 
   const handleApprove = async () => {
@@ -114,12 +150,35 @@ const AdminPage = () => {
             <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
               User Information
             </h2>
-            <p><strong>Name:</strong> {selectedUser.first_name} {selectedUser.last_name}</p>
+            <p><strong>First Name:</strong> {selectedUser.first_name} {selectedUser.last_name}</p>
             <p><strong>Email:</strong> {selectedUser.email}</p>
             <p><strong>Phone:</strong> {selectedUser.phone_number}</p>
             <p><strong>Account Type:</strong> {selectedUser.account_type}</p>
             <p><strong>Account Created:</strong> {new Date(selectedUser.created_at).toLocaleString()}</p>
             <p><strong>Date of Birth:</strong> {new Date(selectedUser.date_of_birth).toLocaleDateString()}</p>
+
+            {selectedUser.account_type === 'business' && (
+              <>
+                <h3 className="text-xl font-bold mt-6">Boats</h3>
+                {boats.length > 0 ? (
+                  boats.map((boat) => (
+                    <p key={boat.boat_id}>{boat.name}</p>
+                  ))
+                ) : (
+                  <p>No boats found.</p>
+                )}
+
+                <h3 className="text-xl font-bold mt-6">Captains</h3>
+                {captains.length > 0 ? (
+                  captains.map((captain) => (
+                    <p key={captain.captain_id}>{captain.name}</p>
+                  ))
+                ) : (
+                  <p>No captains found.</p>
+                )}
+              </>
+            )}
+
             <div className="flex justify-between mt-6">
               <button
                 onClick={handleApprove}
