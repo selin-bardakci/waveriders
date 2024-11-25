@@ -18,5 +18,15 @@ export const connectDB = () => {
     console.log('Connected to the database');
   });
 
+    
+  db.on('error', (err) => {
+    if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+      console.error('Database connection lost. Reconnecting...');
+      connectDB(); // Reconnect to the database
+    } else {
+      throw err;
+    }
+  });
+
   return db;
 };
