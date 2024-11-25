@@ -1,6 +1,16 @@
 import Link from 'next/link';
 
-const BoatListingCard = ({ id, imageUrl, price, rating, guests, minHours, description }) => {
+interface BoatListingCardProps {
+  id: string;
+  imageUrl: string;
+  price: number;
+  rating: number;
+  guests: number;
+  minHours: number;
+  description: string;
+}
+
+const BoatListingCard: React.FC<BoatListingCardProps> = ({ id, imageUrl, price, rating, guests, minHours, description }) => {
   return (
     <Link href={`/listings/${id}`} passHref>
       <div className="bg-white border rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 cursor-pointer">
