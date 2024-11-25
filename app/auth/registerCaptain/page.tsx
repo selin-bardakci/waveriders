@@ -17,7 +17,23 @@ const RegisterCaptain = () => {
   const [maxBirthDate, setMaxBirthDate] = useState(''); // For restricting date input
   const [successMessage, setSuccessMessage] = useState('');
   const router = useRouter();
+  
+  useEffect(() => {
+    const storedbusinessid = localStorage.getItem('business_id');
+    console.log('Business ID:', storedbusinessid);
+    if (storedbusinessid) {
+      const parsedBusinessID = parseInt(storedbusinessid, 10);
+      console.log('Parsed Business ID:', parsedBusinessID);
 
+      if (isNaN(parsedBusinessID)) {
+        setError('Invalid Business ID stored. Please try again.');
+      } else {
+        setBusinessId(parsedBusinessID.toString()); // Set boat ID in context
+      }
+    } else {
+      setError('Business ID is not found. Please create a Business first.');
+    }
+  }, [setBusinessId]);
   // Calculate the maximum date allowed (18 years ago from today)
   useEffect(() => {
     const today = new Date();
