@@ -30,10 +30,9 @@ const SignInPage = () => {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('An error occurred during login. Please try again.');
+      setError('Invalid email or password. Please try again.');
     }
   };
-
 
   return (
     <div className="mt-20 flex justify-center">
@@ -62,6 +61,12 @@ const SignInPage = () => {
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 text-red-500 text-center">
+              {error}
+            </div>
+          )}
           {/* Sign In Button */}
           <div className="text-center">
             <button
