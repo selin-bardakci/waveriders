@@ -18,6 +18,8 @@ npm install swiper
 npm install react-slider
 # and
 npm install @babel/runtime
+# and
+npm install react-chartjs-2 chart.js
 ```
 
 
