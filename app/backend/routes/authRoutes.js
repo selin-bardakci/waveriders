@@ -13,7 +13,8 @@ import {
   getBoat,
   getCaptain,
   getBusiness,
-  getUser
+  getUser,
+  getBusinessID
 } from '../controllers/authController.js';
 import { connectDB } from '../config/db.js'; // Import database connection
 const upload = multer({ dest: 'uploads/' });
@@ -60,6 +61,8 @@ router.get('/business', getBusiness);
 router.get('/captain', getCaptain);
 
 router.get('/user', getUser);
+
+router.get('/businessID', getBusinessID);
 
 console.log("Initializing authentication routes");
 // Account type selection route
