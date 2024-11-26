@@ -18,6 +18,7 @@ const BoatListingDetails = () => {
   const [endDate, setEndDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [numberOfGuests, setNumberOfGuests] = useState(1);
   const [showReview, setShowReview] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState(null);
 
@@ -53,25 +54,21 @@ const BoatListingDetails = () => {
     setSelectedImage(null);
   };
 
-  // Restrict date picker to future dates
   const today = new Date().toISOString().split("T")[0];
 
-  // Handle initial booking submission to show review modal
   const handleBookingSubmit = (e) => {
     e.preventDefault();
     setShowReview(true);
   };
 
-  // Confirm booking after user reviews details
   const confirmBooking = () => {
     const bookingDetails = selectedTripType === "Overnight adventure (1+ days)"
       ? `From ${selectedDate} to ${endDate}.`
       : `${selectedDate} from ${selectedTime} to ${endTime}.`;
-    setConfirmationMessage(`Your booking details:<br />${bookingDetails}<br />Have a great vacation!`);
+    setConfirmationMessage(`Your booking details:<br />${bookingDetails}<br />Total Guests: ${numberOfGuests}<br />Total Price: $${calculateTotalPrice()}<br />Have a great vacation!`);
     setShowReview(false);
   };
 
-  // Calculate maximum end time based on selected trip type
   const calculateMaxEndTime = (startTime) => {
     if (!startTime) return "";
     const [hours, minutes] = startTime.split(":").map(Number);
@@ -92,11 +89,28 @@ const BoatListingDetails = () => {
     }
     const endHours = maxHours > 23 ? 23 : maxHours;
     return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    
   };
+
   const calculateAverageRating = (attribute) => {
     const total = listing.reviews.reduce((sum, review) => sum + review[attribute], 0);
     return (total / listing.reviews.length).toFixed(1);
+  };
+
+  const calculateTotalPrice = () => {
+    if (selectedTripType === "Overnight adventure (1+ days)") {
+      const days = Math.ceil(
+        (new Date(endDate) - new Date(selectedDate)) / (1000 * 60 * 60 * 24)
+      );
+      return days * listing.pricePerDay;
+    } else {
+      const [startHours, startMinutes] = selectedTime.split(":").map(Number);
+      const [endHours, endMinutes] = endTime.split(":").map(Number);
+
+      const totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
+      const totalHours = totalMinutes / 60;
+
+      return Math.ceil(totalHours * listing.pricePerHour);
+    }
   };
 
   const generalAverage = calculateAverageRating("general");
@@ -106,7 +120,6 @@ const BoatListingDetails = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow p-4 relative">
-        {/* Back Button */}
         <button onClick={() => router.push('/auth/ListingsPage')} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-500 flex items-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -123,7 +136,6 @@ const BoatListingDetails = () => {
       </header>
 
       <main className="container mx-auto py-8">
-        {/* Image carousel */}
         <div className="mb-8 max-w-5xl mx-auto">
           <Swiper
             modules={[Navigation, Pagination]}
@@ -146,7 +158,6 @@ const BoatListingDetails = () => {
           </Swiper>
         </div>
 
-        {/* Modal for enlarged image */}
         {isOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="relative bg-white p-4 rounded-lg max-w-lg max-h-full">
@@ -162,53 +173,15 @@ const BoatListingDetails = () => {
           </div>
         )}
 
-        {/* Boat information */}
-        <section className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-2">About this experience</h2>
-          <p className="text-gray-700 mb-4">{listing.description}</p>
-
-          <h3 className="font-semibold mt-4 mb-2">Trip Types</h3>
-          <ul className="grid grid-cols-2 gap-2 text-gray-700">
-            {listing.tripTypes.map((type, index) => (
-              <li key={index}>✅ {type}</li>
-            ))}
-          </ul>
-
-          <h3 className="font-semibold mt-4 mb-2">Rate Details</h3>
-          <p className="text-gray-700">
-            {listing.tripTypes.includes("Overnight adventure (1+ days)")
-              ? `$${listing.pricePerDay} per day`
-              : `$${listing.pricePerHour} per hour`}
-          </p>
-        </section>
-
-        {/* Average Ranking */}
-        <section className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow">
-          <h3 className="text-xl font-semibold mb-4">Average Rankings</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <p><strong>General Rating:</strong> ⭐ {generalAverage}</p>
-            </div>
-            <div>
-              <p><strong>Driver Rating:</strong> ⭐ {driverAverage}</p>
-            </div>
-            <div>
-              <p><strong>Cleanliness & Comfort:</strong> ⭐ {cleanlinessAverage}</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Booking form */}
         <section className="bg-white p-6 rounded-lg shadow max-w-5xl mx-auto">
           <h3 className="text-xl font-semibold mb-4">Select a date, time, and trip type</h3>
           <form onSubmit={handleBookingSubmit}>
-            {/* Trip Type Selection */}
             <label className="block text-gray-700 font-medium mb-2">Choose Trip Type</label>
             <select
               value={selectedTripType}
               onChange={(e) => {
                 setSelectedTripType(e.target.value);
-                setEndDate(""); // Reset end date if trip type changes
+                setEndDate("");
               }}
               className="w-full p-2 mb-4 border rounded"
               required
@@ -218,8 +191,6 @@ const BoatListingDetails = () => {
                 <option key={index} value={type}>{type}</option>
               ))}
             </select>
-
-            {/* Date Picker */}
             <label className="block text-gray-700 font-medium mb-2">Select Start Date</label>
             <input
               type="date"
@@ -230,7 +201,6 @@ const BoatListingDetails = () => {
               required
             />
 
-            {/* End Date Picker (for Overnight Adventures) */}
             {selectedTripType === "Overnight adventure (1+ days)" ? (
               <>
                 <label className="block text-gray-700 font-medium mb-2">Select End Date</label>
@@ -245,7 +215,6 @@ const BoatListingDetails = () => {
               </>
             ) : (
               <>
-                {/* Start Time Picker */}
                 <label className="block text-gray-700 font-medium mb-2">Select Start Time</label>
                 <input
                   type="time"
@@ -257,8 +226,6 @@ const BoatListingDetails = () => {
                   }}
                   required
                 />
-
-                {/* End Time Picker */}
                 <label className="block text-gray-700 font-medium mb-2">Select End Time</label>
                 <input
                   type="time"
@@ -270,26 +237,25 @@ const BoatListingDetails = () => {
                 />
               </>
             )}
-
-            {/* Number of Guests */}
             <label className="block text-gray-700 font-medium mb-2">Select Number of Guests</label>
             <input
               type="number"
               className="w-full p-2 mb-4 border rounded"
               placeholder="Number of Guests"
               min="1"
+              value={numberOfGuests}
+              onChange={(e) => setNumberOfGuests(e.target.value)}
               required
             />
 
-        <div className="flex justify-center">
-          <button type="submit" className="w-1/2 bg-blue-500 text-white p-2 rounded">
-            Book the trip!
-          </button>
-        </div>
+            <div className="flex justify-center">
+              <button type="submit" className="w-1/2 bg-blue-500 text-white p-2 rounded">
+                Book the trip!
+              </button>
+            </div>
           </form>
         </section>
 
-        {/* Review Booking Details Modal */}
         {showReview && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
@@ -298,6 +264,10 @@ const BoatListingDetails = () => {
                 {selectedTripType === "Overnight adventure (1+ days)"
                   ? `From ${selectedDate} to ${endDate}`
                   : `${selectedDate} from ${selectedTime} to ${endTime}`}
+              </p>
+              <p className="mt-2">Guests: {numberOfGuests}</p>
+              <p className="mt-2 text-blue-600">
+                Total Price: ${calculateTotalPrice()}
               </p>
               <div className="mt-4 flex justify-between">
                 <button
@@ -317,7 +287,6 @@ const BoatListingDetails = () => {
           </div>
         )}
 
-        {/* Final Confirmation Message */}
         {confirmationMessage && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
