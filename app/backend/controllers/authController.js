@@ -344,21 +344,27 @@ export const registerBoat = async (req, res) => {
 };
 
 export const getBoat = (req, res) => {
-  Boat.getBoat(db, (err, results) => {
+  const { business_id } = req.query;
+  console.log("Business ID:", business_id);
+  Boat.getBoat(db, business_id ,(err, results) => {
     if (err) {
       console.error('Error fetching boats:', err);
       return res.status(500).json({ message: 'Error fetching boats' });
     }
+    console.log("Boat Results:", results);
     res.status(200).json({ boats: results });
   });
 };
 
 export const getCaptain = (req, res) => {
-  Captain.getCaptain(db, (err, results) => {
+  const { business_id } = req.query;
+  console.log("Business ID:", business_id);
+  Captain.getCaptain(db,business_id ,(err, results) => {
     if (err) {
       console.error('Error fetching captains:', err);
       return res.status(500).json({ message: 'Error fetching captains' });
     }
+    console.log("Captain Results:", results);
     res.status(200).json({ captains: results });
   });
 };
@@ -380,5 +386,20 @@ export const getUser = (req, res) => {
       return res.status(500).json({ message: 'Error fetching users' });
     }
     res.status(200).json({ users: results });
+  });
+};
+
+export const getBusinessID = (req, res) => {
+  const { user_id } = req.query; // Access the query parameter
+  if (!user_id) {
+    return res.status(400).json({ message: 'User ID is required' });
+  }
+
+  Business.searchBusiness(db, user_id, (err, result) => {
+    if (err) {
+      console.error('Error fetching business ID:', err);
+      return res.status(500).json({ message: 'Error fetching business ID' });
+    }
+      res.status(200).json({ business_id: result[0].business_id });
   });
 };
