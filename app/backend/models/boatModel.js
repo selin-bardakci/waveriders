@@ -77,9 +77,9 @@ export const Boat = {
     });
   },
   
-  getBoat: (db, callback) => {
-    const sql = 'SELECT * FROM boats';
-    db.query(sql, callback);
+  getBoat: (db, business_id, callback) => {
+    const sql = 'SELECT * FROM boats WHERE business_id = ?';
+    db.query(sql, [business_id], callback); // Wrap business_id in an array
   }
   
 };
