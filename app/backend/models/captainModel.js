@@ -35,8 +35,8 @@ export const Captain = {
       callback(null, result);
     });
   },
-  getCaptain: (db, callback) => {
-    const sql = 'SELECT * FROM captains';
-    db.query(sql, callback);
+  getCaptain: (db, business_id, callback) => {
+    const sql = 'SELECT * FROM captains WHERE business_id = ?';
+    db.query(sql, [business_id], callback);
   }
 };
