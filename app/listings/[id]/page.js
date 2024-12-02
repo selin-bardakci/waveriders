@@ -21,6 +21,7 @@ const BoatListingDetails = () => {
   const [numberOfGuests, setNumberOfGuests] = useState(1);
   const [showReview, setShowReview] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState(null);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const listing = {
     id,
@@ -42,6 +43,10 @@ const BoatListingDetails = () => {
       { general: 4.6, driver: 4.9, cleanliness: 4.7 },
       { general: 4.9, driver: 4.8, cleanliness: 4.8 }
     ]
+  };
+
+  const toggleFavorite = () => {
+    setIsFavorite(!isFavorite);
   };
 
   const openModal = (image) => {
@@ -118,7 +123,7 @@ const BoatListingDetails = () => {
   const cleanlinessAverage = calculateAverageRating("cleanliness");
 
   return (
-    <div className="min-h-screen bg-gray-100">
+     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow p-4 relative">
         <button onClick={() => router.push('/auth/ListingsPage')} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-500 flex items-center">
           <svg
@@ -132,7 +137,29 @@ const BoatListingDetails = () => {
           </svg>
           Back
         </button>
-        <h1 className="text-2xl font-semibold text-center">{listing.title} - {listing.year} • {listing.size}</h1>
+        <h1 className="text-2xl font-semibold text-center">
+          {listing.title} - {listing.year} • {listing.size}
+        </h1>
+        <button
+          onClick={toggleFavorite}
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-yellow-500 flex items-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill={isFavorite ? "currentColor" : "none"}
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            className="w-6 h-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l2.284 7.011h7.374c.969 0 1.371 1.24.588 1.81l-5.98 4.343 2.284 7.011c.3.921-.755 1.688-1.54 1.11L12 18.347l-5.88 4.154c-.784.578-1.84-.19-1.54-1.11l2.283-7.011-5.98-4.343c-.783-.57-.38-1.81.588-1.81h7.374l2.284-7.011z"
+            />
+          </svg>
+          <span className="ml-1">{isFavorite ? "Favorited" : "Add to Favorites"}</span>
+        </button>
       </header>
 
       <main className="container mx-auto py-8">
@@ -172,6 +199,42 @@ const BoatListingDetails = () => {
             </div>
           </div>
         )}
+
+                {/* Boat information */}
+                <section className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-2">About this experience</h2>
+          <p className="text-gray-700 mb-4">{listing.description}</p>
+
+          <h3 className="font-semibold mt-4 mb-2">Trip Types</h3>
+          <ul className="grid grid-cols-2 gap-2 text-gray-700">
+            {listing.tripTypes.map((type, index) => (
+              <li key={index}>✅ {type}</li>
+            ))}
+          </ul>
+
+          <h3 className="font-semibold mt-4 mb-2">Rate Details</h3>
+          <p className="text-gray-700">
+            {listing.tripTypes.includes("Overnight adventure (1+ days)")
+              ? `$${listing.pricePerDay} per day`
+              : `$${listing.pricePerHour} per hour`}
+          </p>
+        </section>
+
+        {/* Average Ranking */}
+        <section className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow">
+          <h3 className="text-xl font-semibold mb-4">Average Rankings</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p><strong>General Rating:</strong> ⭐ {generalAverage}</p>
+            </div>
+            <div>
+              <p><strong>Driver Rating:</strong> ⭐ {driverAverage}</p>
+            </div>
+            <div>
+              <p><strong>Cleanliness & Comfort:</strong> ⭐ {cleanlinessAverage}</p>
+            </div>
+          </div>
+        </section>
 
         <section className="bg-white p-6 rounded-lg shadow max-w-5xl mx-auto">
           <h3 className="text-xl font-semibold mb-4">Select a date, time, and trip type</h3>
