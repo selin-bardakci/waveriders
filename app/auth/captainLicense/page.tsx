@@ -1,67 +1,71 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 
-
 const CaptainLicense = () => {
-  const [captainId, setCaptainId] = useState<string | null>(null);
+  const [businessId, setBusinessId] = useState<string | null>(null);
   const [registrationPapers, setRegistrationPapers] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [step, setStep] = useState(5);
   const [successMessage, setSuccessMessage] = useState('');
-  const router = useRouter(); 
+  const router = useRouter();
+
+  // Load business ID from localStorage
   useEffect(() => {
-    const storedCaptainId = localStorage.getItem('captain_id');
-    if (storedCaptainId) {
-      setCaptainId(storedCaptainId);
-      console.log("Loaded captain ID:", storedCaptainId);
+    const storedBusinessId = localStorage.getItem('business_id');
+    if (storedBusinessId) {
+      setBusinessId(storedBusinessId);
+      console.log('Loaded business ID:', storedBusinessId);
     } else {
-      setError('Captain ID not found. Please complete registration first.');
+      setError('Business ID not found. Please complete registration first.');
     }
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setRegistrationPapers(e.target.files[0]);
-      console.log("Selected registration paper file:", e.target.files[0]);
+      console.log('Selected registration paper file:', e.target.files[0]);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+  
     if (!registrationPapers) {
       setError('Please upload registration papers');
       return;
     }
-
-    if (!captainId) {
-      setError('Captain ID is not available. Please complete registration first.');
+  
+    const id = businessId; // Ensure this matches your backend logic (use business_id for captain licenses)
+  
+    if (!id) {
+      setError('Business ID or Captain ID is not available. Please complete registration first.');
       return;
     }
-
+  
     try {
       const formData = new FormData();
-      formData.append('captain_id', captainId || ''); // Convert captainId to an empty string if it's null
-      formData.append('registration_papers', registrationPapers); 
-
-      console.log('Submitting captain license data:', { captain_id: captainId, registration_papers: registrationPapers?.name });
-
+      formData.append('id', id);
+      formData.append('registration_papers', registrationPapers);
+  
+      console.log('Submitting captain license data:', { id, registration_papers: registrationPapers?.name });
+  
       const response = await axios.post('http://localhost:8081/api/auth/captainLicense', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-
+  
       setSuccessMessage('Registration papers uploaded successfully!');
-      router.push('/auth/emailVerification');
+      router.push('/auth/emailVerification'); // Redirect to the next step
       console.log('Captain license upload response:', response.data);
     } catch (err) {
       console.error('Error uploading registration papers:', err);
       setError('Failed to upload registration papers. Please try again.');
     }
   };
+  
 
   return (
     <div className="relative min-h-screen flex flex-col">
