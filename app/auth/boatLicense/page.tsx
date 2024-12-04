@@ -2,35 +2,44 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useBoatContext } from '../../context/BoatContext';
 import axios from 'axios';
 
 const UploadBoatLicense = () => {
-  const { boatId, setBoatId, businessId } = useBoatContext(); // Access boatId and setBoatId from context
   const [license, setLicense] = useState<File | null>(null);
   const [error, setError] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
-  const [step] = useState(2); 
+  const [step] = useState(2);
+  const [businessId, setBusinessId] = useState<number | null>(null);
+  const [boatId, setBoatId] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Retrieve and parse boat ID from localStorage on component mount
+    // Retrieve IDs from localStorage
+    const storedBusinessId = localStorage.getItem('business_id');
     const storedBoatId = localStorage.getItem('boat_id');
-    console.log('Stored Boat ID:', storedBoatId);
+
+    if (storedBusinessId) {
+      const parsedBusinessId = parseInt(storedBusinessId, 10);
+      if (!isNaN(parsedBusinessId)) {
+        setBusinessId(parsedBusinessId);
+      } else {
+        setError('Invalid business ID stored. Please try again.');
+      }
+    } else {
+      setError('Business ID is not found. Please create a business first.');
+    }
 
     if (storedBoatId) {
       const parsedBoatId = parseInt(storedBoatId, 10);
-      console.log('Parsed Boat ID:', parsedBoatId);
-
-      if (isNaN(parsedBoatId)) {
-        setError('Invalid boat ID stored. Please try again.');
+      if (!isNaN(parsedBoatId)) {
+        setBoatId(parsedBoatId);
       } else {
-        setBoatId(parsedBoatId); // Set boat ID in context
+        setError('Invalid boat ID stored. Please try again.');
       }
     } else {
       setError('Boat ID is not found. Please create a boat first.');
     }
-  }, [setBoatId]);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -40,52 +49,41 @@ const UploadBoatLicense = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate inputs
+  
     if (!license) {
       setError('Please upload a license file');
       return;
     }
-
-    if (!boatId) {
-      setError('Boat ID is required');
+  
+    const storedBusinessId = localStorage.getItem('business_id');
+    console.log("Business ID from localStorage:", storedBusinessId); // Debug log
+  
+    if (!storedBusinessId) {
+      setError('Business ID is required');
       return;
     }
-
+  
     try {
       const formData = new FormData();
-      formData.append('boat_id', boatId.toString()); // Use parsed boatId
+      formData.append('id', storedBusinessId); // Ensure this matches the ID for boat photos
       formData.append('license', license);
-
-      // Send POST request to upload the license
+  
       const response = await axios.post('http://localhost:8081/api/auth/boatLicense', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-
-      // Handle success
+  
+      console.log("License upload response:", response.data); // Debug log
       setSuccessMessage('License uploaded successfully!');
-      console.log('License upload response:', response.data);
-      router.push('/auth/registerCaptain'); // Redirect or show success message
+      router.push('/auth/registerCaptain');
+
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        if (err.response) {
-          console.error('Error uploading license:', err.response.data); // Log server error message
-          setError(`Failed to upload license: ${err.response.data.message}`);
-        } else if (err.request) {
-          console.error('Error uploading license (no response):', err.request); // No response from server
-          setError('No response from server. Please try again.');
-        } else {
-          console.error('Error uploading license:', err.message); // General error
-          setError('An unexpected error occurred. Please try again.');
-        }
-      } else {
-        console.error('Unexpected error:', err);
-        setError('An unexpected error occurred. Please try again.');
-      }
+      console.error('Error uploading license:', err);
+      setError('Failed to upload license.');
     }
   };
+  
 
 
   
