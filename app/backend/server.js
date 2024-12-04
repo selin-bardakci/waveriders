@@ -1,22 +1,35 @@
+import dotenv from 'dotenv';
+dotenv.config(); 
 import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/db.js'; 
 import authRoutes from './routes/authRoutes.js';
+import listingRoutes from './routes/listingRoutes.js';
+import multer from 'multer'; // For file handling if needed
 
 const app = express();
+console.log('Loaded Environment Variables:', process.env);
+// Middleware for CORS and JSON parsing
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase JSON body size limit
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Increase URL-encoded body size limit
 
 // Initialize the database connection
 const db = connectDB();
 
-// Pass `db` to your routes or middleware if needed
-app.use('/api/auth', (req, res, next) => {
-  req.db = db; // Attach db to the request object
+// Middleware to attach the database instance
+app.use((req, res, next) => {
+  req.db = db; // Attach the database instance to the request object
   next();
-}, authRoutes);
+});
 
+// Route handlers
+app.use('/api/auth', authRoutes); // Authentication routes
+app.use('/api/listings', listingRoutes); // Listings routes
+
+// Start the server
 const PORT = process.env.PORT || 8081;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
