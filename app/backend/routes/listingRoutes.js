@@ -1,23 +1,11 @@
 import express from 'express';
-import { upload } from '../config/uploadConfig.js'; // Ensure upload is correctly exported
-import { createListing, fetchListing } from '../controllers/listingController.js';
-import { connectDB } from '../config/db.js'; // Import database connection
+import { createListing, fetchListings, fetchListingById, deleteListing, uploadPhotos } from '../controllers/listingController.js';
 
 const router = express.Router();
-const db = connectDB(); // Initialize database connection
 
-
-
-router.post('/create_listing', upload.array('images', 5), async (req, res) => {
-  try {
-    await createListing(req, res, db); // Pass the database connection as needed
-  } catch (error) {
-    console.error('Error handling /create_auction route:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.get('/auction-listings', fetchAuctions);
-
+router.post('/create_listing', uploadPhotos, createListing); // Ensure Multer middleware is included
+router.get('/listings', fetchListings);
+router.get('/listing/:id', fetchListingById);
+router.delete('/listing/:id', deleteListing);
 
 export default router;
