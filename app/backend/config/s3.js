@@ -6,8 +6,8 @@ import mime from 'mime';
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
     credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'AKIA4SDNVZHNCPZJRDQC',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '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',
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'AKIA4S',
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'BCyg',
     },
   });
   
