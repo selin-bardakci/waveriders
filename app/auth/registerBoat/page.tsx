@@ -72,24 +72,23 @@ const RegisterBoat = () => {
   
   useEffect(() => {
     const storedbusinessid = localStorage.getItem('business_id');
-    console.log('Business ID:', storedbusinessid);
     if (storedbusinessid) {
       const parsedBusinessID = parseInt(storedbusinessid, 10);
-      console.log('Parsed Business ID:', parsedBusinessID);
-
-      if (isNaN(parsedBusinessID)) {
-        setError('Invalid Business ID stored. Please try again.');
+      if (!isNaN(parsedBusinessID)) {
+        setBusinessId(parsedBusinessID);
+        console.log("Business ID retrieved from localStorage:", parsedBusinessID);
       } else {
-        setBusinessId(parsedBusinessID); // Set boat ID in context
+        setError("Invalid Business ID stored. Please try again.");
       }
     } else {
-      setError('Business ID is not found. Please create a Business first.');
+      setError("Business ID is not found. Please create a Business first.");
     }
-  }, [setBusinessId]);
+  }, []);
+  
+
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent the default form submission
-
-
+    e.preventDefault();
+  
     // Validation
     if (!boatName || !boatDescription || !port) {
       setError('All fields are required.');
@@ -99,99 +98,85 @@ const RegisterBoat = () => {
       setError('Please select at least one type of trip.');
       return;
     }
-    if (!port) {
-      setError('Please select a port.');
-      return;
-    }
     if (!boatType) {
       setError('Please select a boat type.');
       return;
     }
     if (!maxCapacity || isNaN(Number(maxCapacity)) || Number(maxCapacity) <= 0) {
-      setError('Please enter a valid max capacity (a positive number greater than 0).');
+      setError('Please enter a valid max capacity.');
       return;
     }
     if (!rentalPrice || isNaN(Number(rentalPrice)) || Number(rentalPrice) <= 0) {
-      setError('Please enter a valid rental price (a positive number greater than 0).');
-      return;
-    }
-    // Validate rental price per day if Overnight Adventures is selected
-    if (selectedTrips.includes(4) && (!rentalPricePerDay || isNaN(Number(rentalPricePerDay)) || Number(rentalPricePerDay) <= 0)) {
-      setError('Please enter a valid rental price per day (a positive number greater than 0).');
+      setError('Please enter a valid rental price.');
       return;
     }
     if (photos.length === 0) {
-      setError('Please upload at least 1 photo of the boat or yacht.');
+      setError('Please upload at least 1 photo.');
       return;
     }
     if (!termsAgreed) {
-      setError('You must agree to the terms and conditions to proceed.');
+      setError('You must agree to the terms and conditions.');
       return;
     }
-  // Reset the error message
-setError('');
-const formData = new FormData();
-formData.append('boat_name', boatName);
-formData.append('description', boatDescription);
-formData.append('trip_types', JSON.stringify(selectedTrips));
-formData.append('price_per_hour', rentalPrice);
-formData.append('price_per_day', rentalPricePerDay); // Single entry
-formData.append('capacity', maxCapacity);
-formData.append('boat_type', boatType);
-formData.append('location', port);
-if (business_id !== null) {
-  formData.append('business_id', business_id.toString()); // Add business_id to the form data
-} else {
-  setError('Business ID is not found. Please create a boat first.');
-  return;
-}
-photos.forEach((photo, index) => {
-  formData.append('photos', photo);
-});
-
-try {
-  // Debug statements to print out the received info
-  console.log('Boat Name:', boatName);
-  console.log('Boat Description:', boatDescription);
-  console.log('Selected Trips:', selectedTrips);
-  console.log('Rental Price per Hour:', rentalPrice);
-  console.log('Rental Price per Day:', rentalPricePerDay);
-  console.log('Max Capacity:', maxCapacity);
-  console.log('Boat Type:', boatType);
-  console.log('Port:', port);
-  console.log('Photos:', photos);
-  const response = await axios.post('http://localhost:8081/api/auth/registerBoat', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-
   
-  // Log the full response to confirm structure
-  console.log("Full Response Data:", response.data);
-
-  // Access the boat_id
-  const boatId = response.data?.boat?.boat_id;// Ensure the path matches the response structure
-
-  // Log and store boat_id
-  if (boatId !== undefined) {
-    localStorage.setItem('boat_id', boatId.toString()); // Convert to string before storing
-    console.log('Boat ID successfully stored in localStorage:', boatId);
-  } else {
-    console.error('Boat ID not found in response:', response.data);
-    alert("Invalid boat ID stored. Please try again.");
-  }
-  console.log('Success:', response.data);
-
-  // Navigate to the next page
-  router.push('/auth/boatLicense');
-} catch (err) {
-  const errorMessage = (err as any).response?.data?.message || 'Registration failed. Please try again.';
-  setError(errorMessage);
-}
-
+    if (!business_id) {
+      setError('Business ID is required. Please ensure you have registered a business.');
+      return;
+    }
+  
+    // Reset error state
+    setError('');
+  
+    // Prepare FormData
+    const formData = new FormData();
+    formData.append('business_id', business_id.toString()); // Ensure business_id is added
+    formData.append('boat_name', boatName);
+    formData.append('description', boatDescription);
+    formData.append('trip_types', JSON.stringify(selectedTrips));
+    formData.append('price_per_hour', rentalPrice);
+    if (rentalPricePerDay) formData.append('price_per_day', rentalPricePerDay);
+    formData.append('capacity', maxCapacity);
+    formData.append('boat_type', boatType);
+    formData.append('location', port);
+    photos.forEach((photo) => formData.append('photos', photo));
+  
+    try {
+      console.log('FormData contents:', {
+        business_id,
+        boatName,
+        boatDescription,
+        selectedTrips,
+        rentalPrice,
+        rentalPricePerDay,
+        maxCapacity,
+        boatType,
+        port,
+        photos,
+      });
+  
+      const response = await axios.post('http://localhost:8081/api/auth/registerBoat', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+  
+      console.log('API Response:', response.data);
+  
+      const boatId = response.data?.boat?.boat_id || response.data?.boat_id;
+      if (boatId) {
+        localStorage.setItem('boat_id', boatId.toString());
+        console.log('Boat ID successfully stored:', boatId);
+      } else {
+        console.warn('Boat ID not returned in response.');
+      }
+  
+      router.push('/auth/boatLicense');
+    } catch (err) {
+      console.error('Error during boat registration:', err);
+      const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
+      setError(errorMessage);
+    }
   };
   
+
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Background Image */}
