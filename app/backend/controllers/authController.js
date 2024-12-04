@@ -6,6 +6,9 @@ import { Boat } from '../models/boatModel.js';
 import { Captain } from '../models/captainModel.js';
 import multer from 'multer';
 import path from 'path';
+import { uploadToS3 } from '../config/s3.js';
+import fs from 'fs/promises';
+
 
 
 const db = connectDB();
@@ -153,28 +156,32 @@ const captainLicenseStorage = multer.diskStorage({
 const uploadCaptainLicense = multer({ storage: captainLicenseStorage }).single('registration_papers');
 
 // Upload boat license function
-export const handleUploadBoatLicense = (req, res) => {
-  const { boat_id } = req.body;
+export const handleUploadBoatLicense = async (req, res) => {
+  const { id } = req.body; // Expect dynamic ID
+  const boatLicenseFile = req.file;
 
-  if (!boat_id) {
-    return res.status(400).json({ message: 'Boat ID is required' });
+  console.log("ID received in handleUploadBoatLicense:", id); // Debug log
+
+  if (!id) {
+    return res.status(400).json({ message: 'Business ID or Boat ID is required' });
   }
 
-  if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
+  if (!boatLicenseFile) {
+    return res.status(400).json({ message: 'No boat license file uploaded' });
   }
 
-  const licensePath = path.join('uploads/boatlicenses', req.file.filename);
+  try {
+    const fullPath = path.resolve(boatLicenseFile.path);
+    console.log("Uploading to S3 with ID:", id); // Debug log
+    const boatLicensePath = await uploadToS3(fullPath, process.env.AWS_S3_BUCKET, id, 'boat-licenses');
 
-  // Update the boat entry with the license path
-  Boat.updateBoat(db, boat_id, licensePath, (err, result) => {
-    if (err) {
-      console.error('Error updating boat with license:', err);
-      return res.status(500).json({ message: 'Error updating boat with license' });
-    }
+    await fs.unlink(fullPath);
 
-    res.status(200).json({ message: 'Boat license uploaded successfully', licensePath });
-  });
+    res.status(200).json({ message: 'Boat license uploaded successfully', licensePath: boatLicensePath });
+  } catch (err) {
+    console.error('Error uploading boat license:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
 };
 
 
@@ -212,27 +219,34 @@ export const handleRegisterCaptain = (req, res) => {
   });
 };
 
-export const handleUploadCaptainLicense = (req, res) => {
-  const { captain_id } = req.body;
+export const handleUploadCaptainLicense = async (req, res) => {
+  const { id } = req.body; // Accept dynamic ID (business_id or captain_id)
+  const captainLicenseFile = req.file;
 
-  if (!captain_id) {
-    return res.status(400).json({ message: 'Captain ID is required' });
+  if (!id) {
+    return res.status(400).json({ message: 'Business ID or Captain ID is required' });
   }
 
-  if (!req.file) {
-    return res.status(400).json({ message: 'No registration papers uploaded' });
+  if (!captainLicenseFile) {
+    return res.status(400).json({ message: 'No captain license file uploaded' });
   }
 
-  const registrationPapersPath = `uploads/captainlicenses/${req.file.filename}`;
+  try {
+    const fullPath = path.resolve(captainLicenseFile.path);
+    const captainLicensePath = await uploadToS3(fullPath, process.env.AWS_S3_BUCKET, id, 'captain-licenses');
 
-  Captain.updateCaptainLicense(db, captain_id, registrationPapersPath, (err, result) => {
-    if (err) {
-      console.error('Error updating captain with registration papers:', err);
-      return res.status(500).json({ message: 'Failed to upload registration papers' });
-    }
-    res.status(200).json({ message: 'Registration papers uploaded successfully', registrationPapersPath });
-  });
+    await fs.unlink(fullPath);
+
+    res.status(200).json({ message: 'Captain license uploaded successfully', licensePath: captainLicensePath });
+  } catch (err) {
+    console.error('Error uploading captain license:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
 };
+
+
+
+
 
 // Login user (business owner or regular customer)
 export const loginUser = async (req, res) => {
@@ -303,13 +317,24 @@ export const registerBoat = async (req, res) => {
   const { boat_name, description, trip_types, price_per_hour, price_per_day, capacity, boat_type, location, business_id } = req.body;
   const photos = req.files;
 
+  if (!business_id) {
+    return res.status(400).json({ message: 'Business ID is required' });
+  }
+
   if (!boat_name || !description || !trip_types || !price_per_hour || !capacity || !boat_type || !location) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
   try {
-    const imagePaths = photos.map((file) => file.path);
-    console.log("Received photos:", imagePaths);
+    const s3Urls = [];
+    for (const file of photos) {
+      const fullPath = path.resolve(file.path);
+      const s3Url = await uploadToS3(fullPath, process.env.AWS_S3_BUCKET, business_id, 'boat-photos');
+      s3Urls.push(s3Url);
+
+      await fs.unlink(fullPath);
+    }
+
     const formattedTripTypes = mapTripTypesToDatabaseStrings(trip_types);
 
     const newBoat = {
@@ -317,31 +342,28 @@ export const registerBoat = async (req, res) => {
       description,
       trip_types: formattedTripTypes.join(','),
       price_per_hour,
-      price_per_day: Array.isArray(price_per_day) ? price_per_day[1] : price_per_day || null, 
+      price_per_day: price_per_day || null,
       capacity,
       boat_type,
       location,
       business_id,
-      photos: JSON.stringify(imagePaths),
+      photos: JSON.stringify(s3Urls),
       boat_license: null,
     };
 
     Boat.createBoat(db, newBoat, (err, result) => {
       if (err) {
-        console.error('Error creating boat:', err);
         return res.status(500).json({ message: 'Error creating boat' });
       }
-      const boatId = result.insertId;
-      newBoat.boat_id = boatId; 
 
-      console.log("Full Response Data:", newBoat); 
-      res.status(201).json({ message: 'Boat registration successful', boat: newBoat });
+      res.status(201).json({ message: 'Boat registered successfully', boat: result });
     });
   } catch (err) {
-    console.error('Error registering boat:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+
 
 export const getBoat = (req, res) => {
   const { business_id } = req.query;
