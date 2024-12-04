@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
-import SearchBar from '@/components/SearchBar/SearchBar';
-import BoatListingCard from '@/components/boatListingCard/BoatListingCard';
-import FilterSidebar from '@/components/SideBar/FilterSidebar'; // Import the FilterSidebar component
+import SearchBar from '../../components/SearchBar/SearchBar';
+import BoatListingCard from '../../components/boatListingCard/BoatListingCard';
+import FilterSidebar from '../../components/SideBar/FilterSidebar'; // Import the FilterSidebar component
 import { IoIosFunnel } from 'react-icons/io';
 
 
