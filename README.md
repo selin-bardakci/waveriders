@@ -20,6 +20,8 @@ npm install react-slider
 npm install @babel/runtime
 # and
 npm install react-chartjs-2 chart.js
+# and
+npm install jsonwebtoken
 ```
 
 
