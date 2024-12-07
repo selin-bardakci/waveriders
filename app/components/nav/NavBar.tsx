@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const NavBar = () => {
   const { user, setUser, isLoggedIn, setIsLoggedIn } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const router = useRouter();
 
 
   useEffect(() => {
@@ -46,10 +48,11 @@ const NavBar = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('token'); 
     setIsLoggedIn(false);
     setUser(null); 
     setIsDropdownOpen(false);
+    router.push('/'); 
   };
 
   const closeDropdown = () => {
