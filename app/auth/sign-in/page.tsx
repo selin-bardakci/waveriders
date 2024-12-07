@@ -1,36 +1,49 @@
 'use client';
 
-import axios from 'axios';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../context/AuthContext'; 
+import axios from 'axios';
 
 const SignInPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const router = useRouter();  // Initialize Next.js router
+  const [loading, setLoading] = useState(false);
+  const { setUser, setIsLoggedIn } = useAuth(); 
+  const router = useRouter();
+
+  
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      router.push('/');
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+    setLoading(true); 
+
     try {
-      const response = await axios.post('http://localhost:8081/api/auth/login', { 
+      const response = await axios.post('http://localhost:8081/api/auth/login', {
         email,
         password,
       });
 
       if (response.status === 200) {
-        
-        localStorage.setItem('isLoggedIn', 'true'); 
-
-        // Redirect to home page after login
-        router.push('/');
+        const { token, user } = response.data; 
+        localStorage.setItem('token', token); 
+        setUser(user); 
+        setIsLoggedIn(true); 
+        router.push('/'); 
       } else {
-        setError('Invalid email or password. Please try again.');
+        setError('Invalid email or password.');
       }
     } catch (err) {
-      console.error('Login error:', err);
-      setError('Invalid email or password. Please try again.');
+      setError(err.response?.data?.message || 'An unexpected error occurred.');
+    } finally {
+      setLoading(false); 
     }
   };
 
@@ -62,18 +75,15 @@ const SignInPage = () => {
             />
           </div>
           {/* Error Message */}
-          {error && (
-            <div className="mb-4 text-red-500 text-center">
-              {error}
-            </div>
-          )}
+          {error && <div className="mb-4 text-red-500 text-center">{error}</div>}
           {/* Sign In Button */}
           <div className="text-center">
             <button
               type="submit"
               className="w-full bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition"
+              disabled={loading}
             >
-              Sign in
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
         </form>
