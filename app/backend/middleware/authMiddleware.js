@@ -26,7 +26,7 @@ export const authenticateToken = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (err) {
-    console.error("Token verification failed:", err.message); // Hata mesajını logla
+    console.error("Token verification failed:", err.message); 
 
     if (err.name === 'TokenExpiredError') {
       return res.status(403).json({ message: 'Token expired' });
