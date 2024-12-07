@@ -7,6 +7,7 @@ import { Captain } from '../models/captainModel.js';
 import multer from 'multer';
 import path from 'path';
 import { uploadToS3 } from '../config/s3.js';
+import jwt from 'jsonwebtoken';
 import fs from 'fs/promises';
 
 
@@ -246,11 +247,8 @@ export const handleUploadCaptainLicense = async (req, res) => {
 
 
 
-
-
 // Login user (business owner or regular customer)
 export const loginUser = async (req, res) => {
-
   console.log("loginUser controller function hit");
   console.log("Request body:", req.body);
 
@@ -261,7 +259,6 @@ export const loginUser = async (req, res) => {
   }
 
   try {
-    // Fetch user from the database
     User.findUserByEmail(db, email, async (err, results) => {
       if (err) {
         console.error('Error executing SQL query:', err);
@@ -269,6 +266,7 @@ export const loginUser = async (req, res) => {
       }
 
       if (results.length === 0) {
+        console.log('Login failed: No user found with this email.');
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
@@ -276,16 +274,39 @@ export const loginUser = async (req, res) => {
       const isPasswordValid = await bcrypt.compare(password, user.password);
 
       if (!isPasswordValid) {
+        console.log('Login failed: Incorrect password.');
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
-      res.status(200).json({ message: 'Login successful', user: { id: user.user_id, email: user.email, account_type: user.account_type } });
+      const token = jwt.sign(
+        { id: user.user_id, email: user.email, account_type: user.account_type }, 
+        process.env.JWT_SECRET, 
+        { expiresIn: '1h' } 
+      );
+
+     
+      console.log('Login successful for user:', {
+        id: user.user_id,
+        email: user.email,
+        account_type: user.account_type,
+      });
+      console.log('Generated Token:', token);
+
+      res.status(200).json({
+        message: 'Login successful',
+        token, 
+        user: { id: user.user_id, email: user.email, account_type: user.account_type },
+      });
     });
+    
   } catch (err) {
     console.error('Unexpected error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+
+
 function mapTripTypesToDatabaseStrings(tripTypeIds) {
   // Check if tripTypeIds is already an array, if not, parse it
   if (typeof tripTypeIds === 'string') {
