@@ -1,12 +1,14 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { Navigation, Pagination } from 'swiper/modules';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const BoatListingDetails = () => {
   const { id } = useParams();
@@ -22,6 +24,27 @@ const BoatListingDetails = () => {
   const [showReview, setShowReview] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [unavailableDates, setUnavailableDates] = useState([]);
+
+  useEffect(() => {
+    const fetchUnavailableDates = async () => {
+      try {
+        const response = await fetch(`http://localhost:8081/api/rentals/unavailable-dates?boat_id=${id}`);
+        const data = await response.json();
+        if (response.ok) {
+          setUnavailableDates(data.unavailableDates);
+        } else {
+          console.error('Error fetching unavailable dates:', data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+
+    fetchUnavailableDates();
+  }, [id]);
+
+  console.log('Unavailable Dates:', unavailableDates); 
 
   const listing = {
     id,
@@ -66,13 +89,41 @@ const BoatListingDetails = () => {
     setShowReview(true);
   };
 
-  const confirmBooking = () => {
-    const bookingDetails = selectedTripType === "Overnight adventure (1+ days)"
-      ? `From ${selectedDate} to ${endDate}.`
-      : `${selectedDate} from ${selectedTime} to ${endTime}.`;
-    setConfirmationMessage(`Your booking details:<br />${bookingDetails}<br />Total Guests: ${numberOfGuests}<br />Total Price: $${calculateTotalPrice()}<br />Have a great vacation!`);
-    setShowReview(false);
+  const confirmBooking = async () => {
+    const rentalData = {
+      boat_id: id, 
+      start_date: selectedDate.toISOString().split('T')[0],
+      end_date: selectedTripType === "Overnight adventure (1+ days)" ? endDate.toISOString().split('T')[0] : null, 
+      rental_price: calculateTotalPrice(),
+      start_time: selectedTripType === "Overnight adventure (1+ days)" ? "00:00" : selectedTime,
+      end_time: selectedTripType === "Overnight adventure (1+ days)" ? "23:59" : endTime,
+    };
+
+    try {
+      const response = await fetch('http://localhost:8081/api/rentals/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`, 
+        },
+        body: JSON.stringify(rentalData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setConfirmationMessage(`Your booking was successful! `);
+      } else {
+        alert(result.message || 'Failed to create rental.');
+      }
+
+      setShowReview(false); 
+    } catch (error) {
+      console.error('Error creating rental:', error);
+      alert('An error occurred while creating the rental.');
+    }
   };
+
 
   const calculateMaxEndTime = (startTime) => {
     if (!startTime) return "";
@@ -96,18 +147,15 @@ const BoatListingDetails = () => {
     return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
-  const calculateAverageRating = (attribute) => {
-    const total = listing.reviews.reduce((sum, review) => sum + review[attribute], 0);
-    return (total / listing.reviews.length).toFixed(1);
-  };
-
   const calculateTotalPrice = () => {
     if (selectedTripType === "Overnight adventure (1+ days)") {
+      if (!selectedDate || !endDate) return 0; 
       const days = Math.ceil(
         (new Date(endDate) - new Date(selectedDate)) / (1000 * 60 * 60 * 24)
       );
       return days * listing.pricePerDay;
     } else {
+      if (!selectedTime || !endTime) return 0; // Saat seçilmemişse fiyat 0
       const [startHours, startMinutes] = selectedTime.split(":").map(Number);
       const [endHours, endMinutes] = endTime.split(":").map(Number);
 
@@ -118,12 +166,30 @@ const BoatListingDetails = () => {
     }
   };
 
+  const calculateAverageRating = (attribute) => {
+    const total = listing.reviews.reduce((sum, review) => sum + review[attribute], 0);
+    return (total / listing.reviews.length).toFixed(1);
+  };
+
+
+
+  const excludedDates = unavailableDates.flatMap(({ start_date, end_date }) => {
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+    const dates = [];
+    while (start <= end) {
+      dates.push(new Date(start));
+      start.setDate(start.getDate() + 1);
+    }
+    return dates;
+  });
+
   const generalAverage = calculateAverageRating("general");
   const driverAverage = calculateAverageRating("driver");
   const cleanlinessAverage = calculateAverageRating("cleanliness");
 
   return (
-     <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow p-4 relative">
         <button onClick={() => router.push('/auth/ListingsPage')} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-500 flex items-center">
           <svg
@@ -200,8 +266,8 @@ const BoatListingDetails = () => {
           </div>
         )}
 
-                {/* Boat information */}
-                <section className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow">
+        {/* Boat information */}
+        <section className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-2">About this experience</h2>
           <p className="text-gray-700 mb-4">{listing.description}</p>
 
@@ -254,25 +320,28 @@ const BoatListingDetails = () => {
                 <option key={index} value={type}>{type}</option>
               ))}
             </select>
+
             <label className="block text-gray-700 font-medium mb-2">Select Start Date</label>
-            <input
-              type="date"
+            <DatePicker
+              selected={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+              excludeDates={excludedDates} 
+              minDate={new Date()} 
+              dateFormat="yyyy-MM-dd"
               className="w-full p-2 mb-4 border rounded"
-              min={today}
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              required
+
             />
 
             {selectedTripType === "Overnight adventure (1+ days)" ? (
               <>
                 <label className="block text-gray-700 font-medium mb-2">Select End Date</label>
-                <input
-                  type="date"
+                <DatePicker
+                  selected={endDate} 
+                  onChange={(date) => setEndDate(date)} 
+                  minDate={selectedDate || new Date()} 
+                  excludeDates={excludedDates} 
+                  dateFormat="yyyy-MM-dd"
                   className="w-full p-2 mb-4 border rounded"
-                  min={selectedDate || today}
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
                   required
                 />
               </>
@@ -300,6 +369,7 @@ const BoatListingDetails = () => {
                 />
               </>
             )}
+
             <label className="block text-gray-700 font-medium mb-2">Select Number of Guests</label>
             <input
               type="number"
@@ -325,9 +395,10 @@ const BoatListingDetails = () => {
               <p>Your selected booking details:</p>
               <p>
                 {selectedTripType === "Overnight adventure (1+ days)"
-                  ? `From ${selectedDate} to ${endDate}`
-                  : `${selectedDate} from ${selectedTime} to ${endTime}`}
+                  ? `From ${selectedDate?.toLocaleDateString('tr-TR')} to ${endDate?.toLocaleDateString('tr-TR')}`
+                  : `${selectedDate?.toLocaleDateString('tr-TR')} from ${selectedTime} to ${endTime}`}
               </p>
+
               <p className="mt-2">Guests: {numberOfGuests}</p>
               <p className="mt-2 text-blue-600">
                 Total Price: ${calculateTotalPrice()}
