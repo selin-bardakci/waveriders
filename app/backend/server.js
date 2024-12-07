@@ -5,6 +5,7 @@ import cors from 'cors';
 import { connectDB } from './config/db.js'; 
 import authRoutes from './routes/authRoutes.js';
 import listingRoutes from './routes/listingRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import multer from 'multer'; // For file handling if needed
 
 const app = express();
@@ -26,6 +27,7 @@ app.use((req, res, next) => {
 // Route handlers
 app.use('/api/auth', authRoutes); // Authentication routes
 app.use('/api/listings', listingRoutes); // Listings routes
+app.use('/api/users', userRoutes);
 
 // Start the server
 const PORT = process.env.PORT || 8081;
