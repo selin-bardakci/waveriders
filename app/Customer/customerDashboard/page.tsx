@@ -121,7 +121,7 @@ const Dashboard: React.FC = () => {
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-2xl font-bold text-gray-800">Your Favorite Listings</h3>
                     <button
-                        onClick={() => router.push('http://localhost:3000/Customer/Favourites')}
+                        onClick={() => router.push('/Favourites')}
                         title="See all your favourites"
                         className="flex items-center bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
@@ -138,7 +138,7 @@ const Dashboard: React.FC = () => {
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-2xl font-bold text-gray-800">Your Recent Activities</h3>
                     <button
-                        onClick={() => router.push('http://localhost:3000/Customer/RecentActivities')}
+                        onClick={() => router.push('/RecentActivities')}
                         title="See all your recent activities"
                         className="flex items-center bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
