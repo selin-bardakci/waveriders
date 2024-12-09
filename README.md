@@ -24,6 +24,8 @@ npm install react-chartjs-2 chart.js
 npm install jsonwebtoken
 # and
 npm install moment
+# and
+npm install react-datepicker
 
 ```
 
