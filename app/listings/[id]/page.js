@@ -31,43 +31,53 @@ const BoatListingDetails = () => {
   const [numberOfGuests, setNumberOfGuests] = useState(1);
   const [showReview, setShowReview] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState(null);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false); 
   const [unavailableDates, setUnavailableDates] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  
+    useEffect(() => {
+      const fetchListingAndFavoriteStatus = async () => {
+        try {
+          const listingResponse = await axios.get(`http://localhost:8081/api/listings/${id}`);
+          if (listingResponse.status === 200) {
+            const fetchedListing = listingResponse.data;
+    
 
-  // Fetch listing data
-  useEffect(() => {
-    const fetchListing = async () => {
-      try {
-        const response = await axios.get(`http://localhost:8081/api/listings/${id}`);
-        if (response.status === 200) {
-          const fetchedListing = response.data;
-
-          // Handle trip_types: ensure it is an array
-          if (typeof fetchedListing.trip_types === 'string') {
-            fetchedListing.tripTypes = [fetchedListing.trip_types]; // Convert single string to array
-          } else if (Array.isArray(fetchedListing.trip_types)) {
-            fetchedListing.tripTypes = fetchedListing.trip_types; // Already an array
-          } else {
-            fetchedListing.tripTypes = []; // Fallback if unexpected format
+            if (typeof fetchedListing.trip_types === 'string') {
+              fetchedListing.tripTypes = [fetchedListing.trip_types]; 
+            } else if (Array.isArray(fetchedListing.trip_types)) {
+              fetchedListing.tripTypes = fetchedListing.trip_types; 
+            } else {
+              fetchedListing.tripTypes = []; 
+            }
+    
+            setListing(fetchedListing); 
           }
+    
 
-          setListing(fetchedListing);
-        } else {
-          throw new Error(`Unexpected status code: ${response.status}`);
+          const token = localStorage.getItem('token');
+          if (token) {
+            const favoriteResponse = await axios.get('http://localhost:8081/api/favorites', {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+    
+            const isFavoriteBoat = favoriteResponse.data.favorites.some((boat) => boat.boat_id === Number(id));
+            setIsFavorite(isFavoriteBoat); 
+          }
+        } catch (error) {
+          console.error('Error fetching boat details or checking favorites:', error);
+          setError(error.message || 'Failed to fetch boat details. Please try again.');
         }
-      } catch (error) {
-        console.error('Error fetching boat details:', error);
-        setError(error.message || 'Failed to fetch boat details. Please try again.');
-      }
-    };
+      };
+    
+      fetchListingAndFavoriteStatus(); 
+    
+    }, [id]); 
+    
+  
 
-    fetchListing();
-  }, [id]);
-
-  // Fetch unavailable dates
   useEffect(() => {
     const fetchUnavailableDates = async () => {
       try {
@@ -100,11 +110,11 @@ const BoatListingDetails = () => {
         setReviews([]);
       }
     };
-  
+
     fetchReviews();
   }, [id]);
-  
-  
+
+
 
   if (error) {
     return <p className="text-red-500">{error}</p>;
@@ -135,8 +145,30 @@ const BoatListingDetails = () => {
     }
     return dates;
   });
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
+  const toggleFavorite = async () => {
+    try {
+      const token = localStorage.getItem('token');
+
+      if (isFavorite) {
+        await axios.delete('http://localhost:8081/api/favorites', {
+          headers: { Authorization: `Bearer ${token}` },
+          data: { boat_id: id }, 
+        });
+        setIsFavorite(false);
+        alert('Boat removed from favorites.');
+      } else {
+        await axios.post(
+          'http://localhost:8081/api/favorites',
+          { boat_id: id },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setIsFavorite(true);
+        alert('Boat added to favorites.');
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      alert(error.response?.data?.message || 'An error occurred.');
+    }
   };
 
   const openModal = (image) => {
@@ -192,17 +224,17 @@ const BoatListingDetails = () => {
     if (!Array.isArray(reviews) || reviews.length === 0) {
       return "0.0";
     }
-  
+
     const total = reviews.reduce((sum, review) => sum + (review[attribute] || 0), 0);
     return (total / reviews.length).toFixed(1);
   };
-  
+
   // Use the function to calculate averages
   const generalAverage = calculateAverageRating("overall_rating");
   const driverAverage = calculateAverageRating("driver_rating");
   const cleanlinessAverage = calculateAverageRating("cleanliness_rating");
-  
-  
+
+
 
 
   const calculateTotalPrice = () => {
@@ -222,8 +254,12 @@ const BoatListingDetails = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow p-4 relative">
-        <button onClick={() => router.push('/auth/ListingsPage')} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-500 flex items-center">
+      <header className="bg-white shadow p-4 flex items-center justify-between">
+        {/* Back Button */}
+        <button
+          onClick={() => router.push('/auth/ListingsPage')}
+          className="text-blue-500 flex items-center"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -235,14 +271,18 @@ const BoatListingDetails = () => {
           </svg>
           Back
         </button>
-        <h1 className="text-2xl font-semibold text-center">{boat_name}</h1>
+
+        {/* Header */}
+        <h1 className="text-2xl font-semibold">{boat_name}</h1>
+
+        {/* Add to Favorites Button  */}
         <button
           onClick={toggleFavorite}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-yellow-500 flex items-center"
+          className="flex items-center text-yellow-500"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            fill={isFavorite ? "currentColor" : "none"}
+            fill={isFavorite ? 'currentColor' : 'none'}
             viewBox="0 0 24 24"
             stroke="currentColor"
             className="w-6 h-6"
@@ -254,63 +294,64 @@ const BoatListingDetails = () => {
               d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l2.284 7.011h7.374c.969 0 1.371 1.24.588 1.81l-5.98 4.343 2.284 7.011c.3.921-.755 1.688-1.54 1.11L12 18.347l-5.88 4.154c-.784.578-1.84-.19-1.54-1.11l2.283-7.011-5.98-4.343c-.783-.57-.38-1.81.588-1.81h7.374l2.284-7.011z"
             />
           </svg>
-          <span className="ml-1">{isFavorite ? "Favorited" : "Add to Favorites"}</span>
+          <span className="ml-1">{isFavorite ? 'Favorited' : 'Add to Favorites'}</span>
         </button>
       </header>
 
-      <main className="container mx-auto py-8">
-      <div className="mb-8 max-w-5xl mx-auto">
-  <Swiper
-    modules={[Navigation, Pagination]}
-    navigation
-    pagination={{ clickable: true }}
-    spaceBetween={10}
-    slidesPerView={1}
-    className="rounded-lg overflow-hidden"
-  >
-    {photos.map((url, index) => (
-      <SwiperSlide key={index}>
-        <img
-          src={url}
-          alt={`Boat Image ${index + 1}`}
-          className="w-full h-80 object-cover cursor-pointer rounded-lg shadow-md hover:shadow-lg transition-shadow"
-          onClick={() => openModal(url)}
-        />
-      </SwiperSlide>
-    ))}
-  </Swiper>
 
-  {isOpen && (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-      <div className="relative bg-white p-4 rounded-lg max-w-3xl w-full">
-        <button
-          onClick={closeModal}
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="w-6 h-6"
+      <main className="container mx-auto py-8">
+        <div className="mb-8 max-w-5xl mx-auto">
+          <Swiper
+            modules={[Navigation, Pagination]}
+            navigation
+            pagination={{ clickable: true }}
+            spaceBetween={10}
+            slidesPerView={1}
+            className="rounded-lg overflow-hidden"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-        <img
-          src={selectedImage}
-          alt="Enlarged Boat"
-          className="w-full h-auto object-contain rounded-lg shadow-md"
-        />
-      </div>
-    </div>
-  )}
-</div>
+            {photos.map((url, index) => (
+              <SwiperSlide key={index}>
+                <img
+                  src={url}
+                  alt={`Boat Image ${index + 1}`}
+                  className="w-full h-80 object-cover cursor-pointer rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                  onClick={() => openModal(url)}
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+
+          {isOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+              <div className="relative bg-white p-4 rounded-lg max-w-3xl w-full">
+                <button
+                  onClick={closeModal}
+                  className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+                <img
+                  src={selectedImage}
+                  alt="Enlarged Boat"
+                  className="w-full h-auto object-contain rounded-lg shadow-md"
+                />
+              </div>
+            </div>
+          )}
+        </div>
 
 
         <div className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow">
@@ -329,24 +370,24 @@ const BoatListingDetails = () => {
             {price_per_day && !isNaN(Number(price_per_day))
               ? `$${Number(price_per_day).toFixed(2)} per day`
               : price_per_hour && !isNaN(Number(price_per_hour))
-              ? `$${Number(price_per_hour).toFixed(2)} per hour`
-              : 'N/A'}
+                ? `$${Number(price_per_hour).toFixed(2)} per hour`
+                : 'N/A'}
           </p>
         </div>
         <section className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow">
-            <h3 className="text-xl font-semibold mb-4">Average Ratings</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p><strong>Overall Rating:</strong> ⭐ {generalAverage}</p>
-              </div>
-              <div>
-                <p><strong>Driver Rating:</strong> ⭐ {driverAverage}</p>
-              </div>
-              <div>
-                <p><strong>Cleanliness & Comfort Rating:</strong> ⭐ {cleanlinessAverage}</p>
-              </div>
+          <h3 className="text-xl font-semibold mb-4">Average Ratings</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p><strong>Overall Rating:</strong> ⭐ {generalAverage}</p>
             </div>
-          </section>
+            <div>
+              <p><strong>Driver Rating:</strong> ⭐ {driverAverage}</p>
+            </div>
+            <div>
+              <p><strong>Cleanliness & Comfort Rating:</strong> ⭐ {cleanlinessAverage}</p>
+            </div>
+          </div>
+        </section>
 
 
 
