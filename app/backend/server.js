@@ -10,6 +10,7 @@ import listingRoutes from './routes/listingRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import rentalRoutes from './routes/rentalRoutes.js';
 import boatRoutes from './routes/boatRoutes.js';
+import favoriteRoutes from './routes/favoriteRoutes.js';
 import multer from 'multer'; // For file handling if needed
 
 const app = express();
@@ -44,6 +45,7 @@ app.use('/api/auth', authRoutes); // Authentication routes
 app.use('/api/listings', listingRoutes); // Listings routes
 app.use('/api/users', userRoutes);
 app.use('/api/rentals', rentalRoutes);
+app.use("/api/favorites", favoriteRoutes);
 
 // Start the server
 const PORT = process.env.PORT || 8081;
