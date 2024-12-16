@@ -1,12 +1,13 @@
 "use client";
+import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import Map, { GeolocateControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { boatListings } from "@/app/utils/boatListings";
-import Container from "@/app/components/Container";
-import BoatListingCard from "@/app/components/boatListingCard/BoatListingCard";
-import SearchBar from "@/app/components/SearchBar/SearchBar";
-import WeatherComponent from "@/app/components/WeatherComponent"; // Import WeatherComponent
+import { boatListings } from "./utils/boatListings";
+import Container from "./components/Container";
+import BoatListingCard from "./components/boatListingCard/BoatListingCard";
+import SearchBar from "./components/SearchBar/SearchBar";
+import WeatherComponent from "./components/WeatherComponent"; // Import WeatherComponent
 import Link from 'next/link';
 import { FaArrowRight } from 'react-icons/fa';
 
@@ -18,8 +19,41 @@ export default function Home() {
         longitude: 28.9784,
         zoom: 12,
     });
-
+    const [boatListings, setBoatListings] = useState<BoatListing[]>([]); // Typed array
+    {boatListings.map((boat) => (
+        <BoatListingCard key={boat.boat_id} boat_id={boat.boat_id} />
+      ))}
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    interface BoatListing {
+        boat_id: number;
+        boat_name: string;
+        description: string;
+        trip_types: string;
+        price_per_hour?: string;
+        price_per_day?: string | null;
+        capacity?: number;
+        location: string;
+        photos: string[];
+    }
+    
     useEffect(() => {
+        // Fetch random boat listings
+        const fetchRandomListings = async () => {
+            try {
+                const response = await axios.get('http://localhost:8081/api/listings/random');
+                setBoatListings(response.data);
+            } catch (err) {
+                console.error("Error fetching random listings:", err);
+                setError("Failed to fetch random listings.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchRandomListings();
+
+        // Automatically set viewport to user's current location
         navigator.geolocation.getCurrentPosition((position) => {
             setViewport({
                 latitude: position.coords.latitude,
@@ -28,6 +62,7 @@ export default function Home() {
             });
         });
     }, []);
+
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -64,12 +99,18 @@ export default function Home() {
                     </Link>
                 </div>
                 
-                {/* Listings in a Single Row */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 mb-10">
-                    {boatListings.map((boat) => (
-                        <BoatListingCard key={boat.id} {...boat} />
-                    ))}
-                </div>
+                {/* Random Boat Listings */}
+                {loading ? (
+                    <p>Loading listings...</p>
+                ) : error ? (
+                    <p className="text-red-500">{error}</p>
+                ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 mb-10">
+                        {boatListings.map((boat) => (
+                            <BoatListingCard key={boat.boat_id} {...boat} />
+                        ))}
+                    </div>
+                )}
             </Container>
         </div>
     );
