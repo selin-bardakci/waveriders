@@ -1,63 +1,88 @@
 'use client';
-import { useState } from 'react';
+
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 import SearchBar from '../../components/SearchBar/SearchBar';
+import FilterSidebar from '../../components/SideBar/FilterSidebar';
 import BoatListingCard from '../../components/boatListingCard/BoatListingCard';
-import FilterSidebar from '../../components/SideBar/FilterSidebar'; // Import the FilterSidebar component
 import { IoIosFunnel } from 'react-icons/io';
 
-
 const ListingsPage = () => {
-  // Mock data with a location attribute
-  const listingsData = [
-    {
-      id: 1,
-      imageUrl: '/images/boat1.jpg',
-      price: 100,
-      rating: 4.98,
-      guests: 10,
-      minHours: 4,
-      description: 'Ocean view',
-      location: 'Istanbul', // New attribute for location
-    },
-    {
-      id: 2,
-      imageUrl: '/images/boat2.jpg',
-      price: 150,
-      rating: 4.95,
-      guests: 8,
-      minHours: 3,
-      description: 'Lakefront',
-      location: 'Istanbul', // New attribute for location
-    },
-    // More mock listings with Istanbul as the default location
-  ];
-
-  const [listings, setListings] = useState(listingsData);
+  const [boatIds, setBoatIds] = useState<number[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [seed, setSeed] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [sortOption, setSortOption] = useState('');
+  const [sortOption, setSortOption] = useState(''); // Sort seçeneğini takip etmek için
+
+
+  const listingsPerPage = 15;
+
+  // Veri çekme mantığı
+  useEffect(() => {
+    const fetchBoatIds = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const response = await axios.get(
+          `http://localhost:8081/api/listings/paginated?page=${currentPage}&limit=${listingsPerPage}${
+            seed ? `&seed=${seed}` : ''
+          }`
+        );
+
+        if (response.status === 200) {
+          const ids = response.data.rows.map((boat) => boat.boat_id);
+          setBoatIds(ids);
+
+          // İlk istekte seed'i backend'den al
+          if (!seed) setSeed(response.data.seed);
+
+          // Toplam sayfa sayısını hesapla
+          setTotalPages(Math.ceil(response.data.total / listingsPerPage));
+        } else {
+          throw new Error(`Unexpected status: ${response.status}`);
+        }
+      } catch (err) {
+        console.error('Error fetching paginated listings:', err);
+        setError('Failed to load listings. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBoatIds();
+  }, [currentPage, seed]);
+
+  // Sayfa kontrolleri
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  const applyFilters = (filters: any) => {
-    console.log('Filters applied:', filters);
-    // Add your filtering logic here to update listings based on `filters`
-  };
-  // Sorting logic based on the selected option
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setSortOption(value);
-    let sortedListings = [...listings];
-
+  
+    // Boat verilerini sıralamak için mevcut boatIds'i yeniden düzenle
+    let sortedBoatIds = [...boatIds];
+  
     if (value === 'price_hour') {
-      sortedListings.sort((a, b) => a.price - b.price); // Assuming 'price' field is per hour
+      sortedBoatIds.sort((a, b) => a.price - b.price); // Price'e göre artan sıralama
     } else if (value === 'ranking') {
-      sortedListings.sort((a, b) => b.rating - a.rating);
+      sortedBoatIds.sort((a, b) => b.rating - a.rating); // Rating'e göre azalan sıralama
     }
-
-    setListings(sortedListings);
+  
+    setBoatIds(sortedBoatIds);
   };
-
+  
   return (
-    
+
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white p-4 shadow-md flex justify-between items-center">
         {/* Sorting Dropdown on the Left */}
@@ -74,11 +99,6 @@ const ListingsPage = () => {
           <option value="ranking">Ranking</option>
         </select>
       </div>
-
-
-
-
-        {/* Centered SearchBar */}
         <div className="flex-grow flex justify-center">
           <SearchBar />
         </div>
@@ -95,17 +115,68 @@ const ListingsPage = () => {
       </header>
 
       <main className="relative flex">
-        {/* Main Content */}
         <div className="container mx-auto py-8 w-full md:w-3/4 lg:w-4/5">
-          <h2 className="text-2xl font-semibold mb-6">Boat rentals in Istanbul</h2> {/* Default to Istanbul */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.map((boat) => (
-              <BoatListingCard key={boat.id} {...boat} />
-            ))}
-          </div>
+          <h2 className="text-2xl font-semibold mb-6">Boat Rentals</h2>
+
+          {/* Yükleme veya hata durumu */}
+          {loading ? (
+            <p>Loading...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {boatIds.map((boat_id) => (
+                <BoatListingCard key={boat_id} boat_id={boat_id} />
+              ))}
+            </div>
+          )}
+
+<div className="flex justify-center items-center mt-6 gap-2 text-sm text-gray-700">
+  {/* Önceki Sayfa */}
+  <button
+    onClick={handlePreviousPage}
+    disabled={currentPage === 1}
+    className={`hover:text-blue-500 transition ${
+      currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
+    }`}
+  >
+    &lt;
+  </button>
+
+  {/* Sayfa Numaraları */}
+  {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+    <button
+      key={page}
+      onClick={() => setCurrentPage(page)}
+      className={`px-2 py-1 rounded transition ${
+        currentPage === page
+          ? 'bg-blue-100 text-blue-600' // Aktif sayfa: sadece mavi arka plan ve mavi yazı
+          : 'hover:bg-blue-50 text-gray-700' // Diğer sayfalar: hover'da açık mavi
+      }`}
+      style={{ outline: 'none', border: 'none' }} // Çizgileri tamamen kaldırıyoruz
+    >
+      {page}
+    </button>
+  ))}
+
+  {/* Sonraki Sayfa */}
+  <button
+    onClick={handleNextPage}
+    disabled={currentPage === totalPages}
+    className={`hover:text-blue-500 transition ${
+      currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''
+    }`}
+  >
+    &gt;
+  </button>
+</div>
+
+
+
+
         </div>
 
-        {/* Sidebar Overlay */}
+        {/* Filtre Sidebar */}
         <FilterSidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
       </main>
     </div>
