@@ -1,11 +1,16 @@
 import { connectDB } from '../config/db.js';
+import{ connectDBB } from '../config/dbb.js';
 import { Listing } from '../models/listingModel.js';
 import { uploadToS3 } from '../config/s3.js'; // S3 upload logic
+import  getSignedUrl  from '../../utils/s3utils.js';
 import path from 'path'; // Module for resolving file paths
+import AWS from 'aws-sdk';
 import multer from 'multer'; // Multer for handling file uploads
 import fs from 'fs/promises'; // File system for async operations
-
+let randomSeed;
+const bucketName = 'waveriders-boat-photos';
 const db = connectDB();
+const dbb = connectDBB();
 
 // Configure Multer for handling photos
 const storage = multer.diskStorage({
@@ -148,3 +153,105 @@ export const deleteListing = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+export const getListingByBoatId = async (req, res) => {
+  console.log('getListingByBoatId invoked'); // Initial log
+
+  try {
+    const boatId = req.params.boat_id; // Access the correct parameter
+    console.log(`Fetching details for boat_id: ${boatId}`); // Log ID
+
+    const [rows] = await req.dbb.query('SELECT * FROM boats WHERE boat_id = ?', [boatId]);
+    console.log(`Query result for boat_id ${boatId}:`, rows); // Log query result
+
+    if (rows.length === 0) {
+      console.warn(`Boat with id ${boatId} not found`);
+      return res.status(404).json({ error: 'Boat not found' });
+    }
+
+    const boat = rows[0];
+    console.log('Boat details:', boat);
+
+    // Handle the photos field
+    let photoKeys = [];
+    try {
+      photoKeys = Array.isArray(boat.photos) ? boat.photos : JSON.parse(boat.photos || '[]');
+    } catch (parseError) {
+      console.error('Error parsing photos field:', parseError);
+      return res.status(500).json({ error: 'Invalid photos data format' });
+    }
+    console.log('Photo keys:', photoKeys);
+
+    // Generate signed URLs for each photo
+    const signedUrls = photoKeys.map((key) => {
+      const s3Key = key.replace(/.*amazonaws\.com\//, '');
+      console.log(`Original Key: ${key}`);
+      console.log(`Processed Key for Signed URL: ${s3Key}`);
+      const signedUrl = getSignedUrl('waveriders-boat-photos', s3Key);
+      console.log(`Generated Signed URL: ${signedUrl}`);
+      return signedUrl;
+    });
+    
+
+    console.log('Signed URLs:', signedUrls);
+    res.json({ ...boat, photos: signedUrls });
+  } catch (error) {
+    console.error('Error in getListingByBoatId:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getListings = async (req, res) => {
+  try {
+    const [rows] = await req.dbb.query('SELECT * FROM boats');
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error('Error fetching listings:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Fetch random listings
+export const getRandomListings = async (req, res) => {
+  try {
+    const [rows] = await dbb.query("SELECT * FROM waveriders.boats ORDER BY RAND() LIMIT 4");
+    res.json(rows);
+  } catch (error) {
+    console.error("Error fetching random listings:", error);
+    res.status(500).json({ message: "Failed to fetch random listings" });
+  }
+};
+
+
+export const getPaginatedListings = async (req, res) => {
+  const { page = 1, limit = 15, seed } = req.query;
+  const offset = (page - 1) * limit;
+
+  const randomSeed = seed || Math.random(); // Seed yoksa yeni bir tane oluştur
+
+  try {
+    // 1. Toplam kayıt sayısını al
+    const [[{ total }]] = await dbb.query(`
+      SELECT COUNT(*) AS total FROM boats
+    `);
+
+    // 2. Sayfalama için verileri çek
+    const [rows] = await dbb.query(
+      `
+      SELECT * FROM boats 
+      ORDER BY SHA1(CONCAT(?, boat_id)) 
+      LIMIT ? OFFSET ?`,
+      [randomSeed, Number(limit), Number(offset)]
+    );
+
+    // Yanıtı seed, rows ve total ile dönüyoruz
+    res.json({ rows, seed: randomSeed, total });
+  } catch (error) {
+    console.error('Error fetching paginated listings:', error);
+    res.status(500).json({ message: 'Failed to fetch listings' });
+  }
+};
+
+
+
+
+
