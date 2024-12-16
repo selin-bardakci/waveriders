@@ -1,27 +1,74 @@
-import Link from 'next/link';
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import axios from "axios";
 
 interface BoatListingCardProps {
-  id: string;
-  imageUrl: string;
-  price: number;
-  rating: number;
-  guests: number;
-  minHours: number;
-  description: string;
+  boat_id: number;
 }
 
-const BoatListingCard: React.FC<BoatListingCardProps> = ({ id, imageUrl, price, rating, guests, minHours, description }) => {
+const BoatListingCard: React.FC<BoatListingCardProps> = ({ boat_id }) => {
+  const [boat, setBoat] = useState<any>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchBoatDetails = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8081/api/listings/${boat_id}`);
+        if (response.status === 200) {
+          setBoat(response.data);
+        } else {
+          throw new Error(`Unexpected response status: ${response.status}`);
+        }
+      } catch (err) {
+        console.error(`Error fetching boat details for ID ${boat_id}:`, err);
+        setError("Failed to load boat details.");
+      }
+    };
+
+    fetchBoatDetails();
+  }, [boat_id]);
+
+  if (error) {
+    console.error(`Error rendering card for ID ${boat_id}:`, error);
+    return <p className="text-red-500">{error}</p>;
+  }
+
+  if (!boat) {
+    return <p>Loading...</p>;
+  }
+
+  const { boat_name, price_per_hour, price_per_day, capacity, location, photos } = boat;
+
+  // Use the first photo URL directly (already signed)
+  const imageUrl = photos && photos.length > 0 ? photos[0] : null;
+
   return (
-    <Link href={`/listings/${id}`} passHref>
-      <div className="bg-white border rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 cursor-pointer">
-        <img src={imageUrl} alt="Boat" className="w-full h-40 object-cover" />
-        <div className="p-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">${price}/hr</h3>
-            <span className="text-sm text-gray-500">Rating: {rating} ({guests} guests)</span>
+    <Link href={`/listings/${boat_id}`} passHref>
+      <div className="bg-white border rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={`Image of ${boat_name}`}
+            className="w-full h-40 object-cover"
+          />
+        ) : (
+          <div className="w-full h-40 bg-gray-200 flex items-center justify-center text-gray-500">
+            No Image Available
           </div>
-          <p className="text-gray-600 mt-2">{description}</p>
-          <p className="text-gray-600">Min. hours: {minHours}</p>
+        )}
+        <div className="p-4">
+          <h3 className="text-lg font-semibold truncate">{boat_name || "Unknown Boat"}</h3>
+          <p className="text-sm text-gray-500">
+            {price_per_day
+              ? `$${Number(price_per_day).toFixed(2)}/day`
+              : price_per_hour
+              ? `$${Number(price_per_hour).toFixed(2)}/hour`
+              : "Price Unavailable"}{" "}
+            • {capacity || "N/A"} guests
+          </p>
+          <p className="text-sm text-gray-500">{location || "Location Unavailable"}</p>
         </div>
       </div>
     </Link>
