@@ -155,7 +155,7 @@ const BoatListingDetails = () => {
           data: { boat_id: id }, 
         });
         setIsFavorite(false);
-        alert('Boat removed from favorites.');
+        //alert('Boat removed from favorites.');
       } else {
         await axios.post(
           'http://localhost:8081/api/favorites',
@@ -163,7 +163,7 @@ const BoatListingDetails = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setIsFavorite(true);
-        alert('Boat added to favorites.');
+        //alert('Boat added to favorites.');
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
