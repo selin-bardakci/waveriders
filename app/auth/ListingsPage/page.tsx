@@ -15,110 +15,112 @@ const ListingsPage = () => {
   const [error, setError] = useState('');
   const [seed, setSeed] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [sortOption, setSortOption] = useState(''); // Sort seçeneğini takip etmek için
-
+  const [sortOption, setSortOption] = useState('');
+  
+  // activeFilters state is now used to store filters globally
+  const [activeFilters, setActiveFilters] = useState({
+    priceRange: [0, 5000],
+    tripType: '',
+    vehicleType: '',
+  });
 
   const listingsPerPage = 15;
 
-  // Veri çekme mantığı
-  useEffect(() => {
-    const fetchBoatIds = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const response = await axios.get(
-          `http://localhost:8081/api/listings/paginated?page=${currentPage}&limit=${listingsPerPage}${
-            seed ? `&seed=${seed}` : ''
-          }`
-        );
+  // Fetch boat ids with or without filters
+  const fetchBoatIds = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const queryString = new URLSearchParams({
+        price_min: activeFilters.priceRange[0].toString(),
+        price_max: activeFilters.priceRange[1].toString(),
+        trip_type: activeFilters.tripType,
+        vehicle_type: activeFilters.vehicleType,
+      }).toString();
 
-        if (response.status === 200) {
-          const ids = response.data.rows.map((boat) => boat.boat_id);
-          setBoatIds(ids);
-
-          // İlk istekte seed'i backend'den al
-          if (!seed) setSeed(response.data.seed);
-
-          // Toplam sayfa sayısını hesapla
-          setTotalPages(Math.ceil(response.data.total / listingsPerPage));
-        } else {
-          throw new Error(`Unexpected status: ${response.status}`);
-        }
-      } catch (err) {
-        console.error('Error fetching paginated listings:', err);
-        setError('Failed to load listings. Please try again later.');
-      } finally {
-        setLoading(false);
+      const response = await axios.get(
+        `http://localhost:8081/api/listings/paginated?page=${currentPage}&limit=${listingsPerPage}&${queryString}`
+      );
+      if (response.status === 200) {
+        const ids = response.data.rows.map((boat) => boat.boat_id);
+        setBoatIds(ids);
+        setTotalPages(Math.ceil(response.data.total / listingsPerPage));
+      } else {
+        throw new Error(`Unexpected status: ${response.status}`);
       }
-    };
+    } catch (err) {
+      console.error('Error fetching listings:', err);
+      setError('Failed to load listings. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // applyFilters sets the active filters
+  const applyFilters = ({ priceRange, selectedTrips, vehicleType }) => {
+    setActiveFilters({
+      priceRange,
+      tripType: selectedTrips.join(','), // Join trips into a string
+      vehicleType,
+    });
+
+    // Reset to the first page when filters are applied
+    setCurrentPage(1);
+  };
+
+  // Fetch filtered listings when currentPage or activeFilters change
+  useEffect(() => {
     fetchBoatIds();
-  }, [currentPage, seed]);
+  }, [currentPage, activeFilters]); // this ensures filtering is applied when these values change
 
-  // Sayfa kontrolleri
+  // Pagination handlers
   const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
   };
 
   const handlePreviousPage = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+    if (currentPage > 1) setCurrentPage(prev => prev - 1);
   };
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setSortOption(value);
-  
-    // Boat verilerini sıralamak için mevcut boatIds'i yeniden düzenle
-    let sortedBoatIds = [...boatIds];
-  
-    if (value === 'price_hour') {
-      sortedBoatIds.sort((a, b) => a.price - b.price); // Price'e göre artan sıralama
-    } else if (value === 'ranking') {
-      sortedBoatIds.sort((a, b) => b.rating - a.rating); // Rating'e göre azalan sıralama
-    }
-  
-    setBoatIds(sortedBoatIds);
-  };
-  
-  return (
 
+  return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white p-4 shadow-md flex justify-between items-center">
-        {/* Sorting Dropdown on the Left */}
+        {/* Sorting Dropdown */}
         <div className="flex items-center gap-2">
-        <select
-          id="sort"
-          value={sortOption}
-          onChange={handleSortChange}
-          className="p-2 pl-01 border rounded-md text-gray-700"  // Reduced left padding for the icon
-          style={{ width: '120px' }}  // Adjust width if needed
-        >
-          <option value="" disabled hidden>Sort by</option>
-          <option value="price_hour">Price per Hour</option>
-          <option value="ranking">Ranking</option>
-        </select>
-      </div>
+          <select
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value)}
+            className="p-2 pl-01 border rounded-md text-gray-700"
+            style={{ width: '120px' }}
+          >
+            <option value="" disabled hidden>Sort by</option>
+            <option value="price_hour">Price per Hour</option>
+            <option value="ranking">Ranking</option>
+          </select>
+        </div>
+        {/* Search Bar */}
         <div className="flex-grow flex justify-center">
           <SearchBar />
         </div>
 
-        {/* Filter Button on the Right */}
+        {/* Filter Button */}
         <button
             onClick={toggleSidebar}
             className="bg-gray-200 p-2 pl-4 pr-4 rounded-md flex items-center justify-between shadow-md hover:shadow-lg transition-all ml-auto"
             style={{ width: '120px' }}  // Adjust the width as needed
-          >
-            <IoIosFunnel className="text-gray-600" /> {/* Using a funnel icon */}
-            <span className="ml-auto">Filters</span> {/* Text aligned to the right */}
-          </button>
+            >
+          <IoIosFunnel className="text-gray-600" />
+          <span>Filters</span>
+        </button>
       </header>
 
       <main className="relative flex">
         <div className="container mx-auto py-8 w-full md:w-3/4 lg:w-4/5">
           <h2 className="text-2xl font-semibold mb-6">Boat Rentals</h2>
 
-          {/* Yükleme veya hata durumu */}
+          {/* Loading/Error States */}
           {loading ? (
             <p>Loading...</p>
           ) : error ? (
@@ -131,53 +133,46 @@ const ListingsPage = () => {
             </div>
           )}
 
-<div className="flex justify-center items-center mt-6 gap-2 text-sm text-gray-700">
-  {/* Önceki Sayfa */}
-  <button
-    onClick={handlePreviousPage}
-    disabled={currentPage === 1}
-    className={`hover:text-blue-500 transition ${
-      currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
-    }`}
-  >
-    &lt;
-  </button>
+          {/* Pagination Controls */}
+          <div className="flex justify-center items-center mt-6 gap-2 text-sm text-gray-700">
+            <button
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+              className={`hover:text-blue-500 transition ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              &lt;
+            </button>
 
-  {/* Sayfa Numaraları */}
-  {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-    <button
-      key={page}
-      onClick={() => setCurrentPage(page)}
-      className={`px-2 py-1 rounded transition ${
-        currentPage === page
-          ? 'bg-blue-100 text-blue-600' // Aktif sayfa: sadece mavi arka plan ve mavi yazı
-          : 'hover:bg-blue-50 text-gray-700' // Diğer sayfalar: hover'da açık mavi
-      }`}
-      style={{ outline: 'none', border: 'none' }} // Çizgileri tamamen kaldırıyoruz
-    >
-      {page}
-    </button>
-  ))}
+            {/* Page Numbers */}
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-2 py-1 rounded transition ${
+                  currentPage === page ? 'bg-blue-100 text-blue-600' : 'hover:bg-blue-50 text-gray-700'
+                }`}
+                style={{ outline: 'none', border: 'none' }}
+              >
+                {page}
+              </button>
+            ))}
 
-  {/* Sonraki Sayfa */}
-  <button
-    onClick={handleNextPage}
-    disabled={currentPage === totalPages}
-    className={`hover:text-blue-500 transition ${
-      currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''
-    }`}
-  >
-    &gt;
-  </button>
-</div>
-
-
-
-
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className={`hover:text-blue-500 transition ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              &gt;
+            </button>
+          </div>
         </div>
 
-        {/* Filtre Sidebar */}
-        <FilterSidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
+        {/* Filter Sidebar */}
+        <FilterSidebar
+          isOpen={isSidebarOpen}
+          onClose={toggleSidebar}
+          onApplyFilters={applyFilters}
+        />
       </main>
     </div>
   );
