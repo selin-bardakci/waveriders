@@ -1,32 +1,53 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactSlider from 'react-slider';
 import './FilterSidebar.css'; // Import your CSS file if you're using a module
+import axios from 'axios';
 
-const FilterSidebar = ({ isOpen, onClose }) => {
+interface FilterSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onApplyFilters: ({
+    priceRange,
+    selectedTrips,
+    vehicleType,
+  }: {
+    priceRange: [number, number];
+    selectedTrips: string[]; // Trip types will now be strings, not numbers
+    vehicleType: string;
+  }) => void;
+}
+
+const FilterSidebar: React.FC<FilterSidebarProps> = ({
+  isOpen,
+  onClose,
+  onApplyFilters,
+}) => {
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]); // Default price range
+  const [selectedTrips, setSelectedTrips] = useState<string[]>([]); // Store trip types as strings
+  const [vehicleType, setVehicleType] = useState<string>('');
+
+  // Sabit trip types listesi
   const tripTypes = [
-    { id: 1, name: 'Short Trips', description: '1–2 hours', image: '/images/icon1.png' },
-    { id: 2, name: 'Day Trips', description: '3–6 hours', image: '/images/icon2.png' },
-    { id: 3, name: 'Sunrise & Sunset Trips', description: '7–12 hours', image: '/images/icon3.png' },
-    { id: 4, name: 'Overnight Adventures', description: '1+ days', image: '/images/icon4.png' }
+    { id: 1, name: 'Short Trips', description: '1–2 hours', type: 'short' },
+    { id: 2, name: 'Day Trips', description: '3–6 hours', type: 'day' },
+    { id: 3, name: 'Sunrise & Sunset Trips', description: '7–12 hours', type: 'sunrise' },
+    { id: 4, name: 'Overnight Adventures', description: '1+ days', type: 'overnight' }
   ];
-  // State for price range
-  const [priceRange, setPriceRange] = useState([0, 5000]);
-  const [selectedTrips, setSelectedTrips] = useState<number[]>([]);
 
-  const handleSliderChange = (values) => {
+  const handleSliderChange = (values: [number, number]) => {
     setPriceRange(values);
   };
-  const handleTripSelection = (tripId: number) => {
+
+  const handleTripSelection = (tripType: string) => {
     setSelectedTrips((prev) =>
-      prev.includes(tripId) ? prev.filter((id) => id !== tripId) : [...prev, tripId]
+      prev.includes(tripType) ? prev.filter((type) => type !== tripType) : [...prev, tripType]
     );
   };
 
   const handleApplyFilters = () => {
-    applyFilters({ priceRange, selectedTrips });
+    onApplyFilters({ priceRange, selectedTrips, vehicleType });
     onClose(); // Close the sidebar after applying filters
   };
-
 
   return (
     <div
@@ -44,8 +65,22 @@ const FilterSidebar = ({ isOpen, onClose }) => {
         <div className="pb-6">
           <h3 className="text-lg font-semibold mb-2">Vehicle Type</h3>
           <div className="flex gap-2">
-            <button className="p-2 rounded-md bg-gray-100">Boat</button>
-            <button className="p-2 rounded-md bg-gray-100">Yacht</button>
+            <button
+              onClick={() => setVehicleType('boat')}
+              className={`p-2 rounded-md ${
+                vehicleType === 'boat' ? 'bg-blue-500 text-white' : 'bg-gray-100'
+              }`}
+            >
+              Boat
+            </button>
+            <button
+              onClick={() => setVehicleType('yacht')}
+              className={`p-2 rounded-md ${
+                vehicleType === 'yacht' ? 'bg-blue-500 text-white' : 'bg-gray-100'
+              }`}
+            >
+              Yacht
+            </button>
           </div>
         </div>
 
@@ -76,7 +111,6 @@ const FilterSidebar = ({ isOpen, onClose }) => {
               />
             )}
           />
-
         </div>
 
         {/* Trip Type Filter */}
@@ -87,12 +121,12 @@ const FilterSidebar = ({ isOpen, onClose }) => {
               <label key={trip.id} className="flex items-center mb-4">
                 <input
                   type="checkbox"
-                  checked={selectedTrips.includes(trip.id)}
-                  onChange={() => handleTripSelection(trip.id)}
+                  checked={selectedTrips.includes(trip.type)} // Use the type as the selected value
+                  onChange={() => handleTripSelection(trip.type)} // Pass the type here
                   className="mr-2"
                 />
                 <div className="flex items-center space-x-3">
-                  <img src={trip.image} alt={trip.name} className="w-10 h-10" />
+                  <img src={`/images/${trip.type}.png`} alt={trip.name} className="w-10 h-10" />
                   <div>
                     <p className="text-lg font-bold">{trip.name}</p>
                     <p className="text-sm text-gray-600">{trip.description}</p>
@@ -103,16 +137,15 @@ const FilterSidebar = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-          {/* Apply Filters Button */}
-          <div className="flex justify-center mt-48">
-            <button
-              onClick={handleApplyFilters}
-              className="bg-blue-500 text-white rounded-md p-3 hover:bg-blue-600 transition"
-            >
-              Apply Filters
-            </button>
-          </div>
-
+        {/* Apply Filters Button */}
+        <div className="flex justify-center mt-48">
+          <button
+            onClick={handleApplyFilters}
+            className="bg-blue-500 text-white rounded-md p-3 hover:bg-blue-600 transition"
+          >
+            Apply Filters
+          </button>
+        </div>
       </div>
     </div>
   );
