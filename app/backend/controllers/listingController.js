@@ -221,35 +221,50 @@ export const getRandomListings = async (req, res) => {
   }
 };
 
-
 export const getPaginatedListings = async (req, res) => {
-  const { page = 1, limit = 15, seed } = req.query;
-  const offset = (page - 1) * limit;
+  const { page = 1, limit = 15, price_min, price_max, trip_type, vehicle_type } = req.query;
 
-  const randomSeed = seed || Math.random(); // Seed yoksa yeni bir tane oluştur
+  console.log('Filters:', { price_min, price_max, trip_type, vehicle_type });
+  console.log('Pagination:', { page, limit });
 
   try {
-    // 1. Toplam kayıt sayısını al
-    const [[{ total }]] = await dbb.query(`
-      SELECT COUNT(*) AS total FROM boats
-    `);
+    const offset = (page - 1) * limit;
 
-    // 2. Sayfalama için verileri çek
-    const [rows] = await dbb.query(
-      `
-      SELECT * FROM boats 
-      ORDER BY SHA1(CONCAT(?, boat_id)) 
-      LIMIT ? OFFSET ?`,
-      [randomSeed, Number(limit), Number(offset)]
-    );
+    let query = 'SELECT * FROM boats WHERE 1=1';
+    const params = [];
 
-    // Yanıtı seed, rows ve total ile dönüyoruz
-    res.json({ rows, seed: randomSeed, total });
+    if (price_min) {
+      query += ' AND price_per_hour >= ?';
+      params.push(price_min);
+    }
+    if (price_max) {
+      query += ' AND price_per_hour <= ?';
+      params.push(price_max);
+    }
+    if (trip_type) {
+      query += ' AND trip_types LIKE ?';
+      params.push(`%${trip_type}%`);
+    }
+    if (vehicle_type) {
+      query += ' AND boat_type = ?';
+      params.push(vehicle_type);
+    }
+
+    query += ' LIMIT ? OFFSET ?';
+    params.push(Number(limit), Number(offset));
+
+    const [rows] = await dbb.query(query, params);
+    const [[{ total }]] = await dbb.query('SELECT COUNT(*) as total FROM boats WHERE 1=1', params);
+
+    res.json({ rows, total });
   } catch (error) {
     console.error('Error fetching paginated listings:', error);
     res.status(500).json({ message: 'Failed to fetch listings' });
   }
 };
+
+
+
 
 
 
