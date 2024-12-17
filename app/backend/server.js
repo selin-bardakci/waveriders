@@ -20,6 +20,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Increase JSON body size limit
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Increase URL-encoded body size limit
 app.use(attachDBMiddleware);
+app.use(tripTypesRoutes); 
 // Initialize the database connection
 const db = connectDB();
 const dbb = connectDBB();
