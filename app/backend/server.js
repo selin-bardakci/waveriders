@@ -11,6 +11,7 @@ import userRoutes from './routes/userRoutes.js';
 import rentalRoutes from './routes/rentalRoutes.js';
 import boatRoutes from './routes/boatRoutes.js';
 import favoriteRoutes from './routes/favoriteRoutes.js';
+import './scheduler.js'; 
 import multer from 'multer'; // For file handling if needed
 
 const app = express();
