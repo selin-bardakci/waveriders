@@ -46,10 +46,10 @@ export const createRental = async (req, res) => {
   }
 
   try {
-    // Status default "completed"
-    const status = 'completed';
+    // Status default "ongoing"
+    const status = 'ongoing';
 
-    const calculated_end_date = end_date || new Date(new Date(start_date).getTime() + 24 * 60 * 60 * 1000);
+    const calculated_end_date = end_date || start_date;
 
     const sql = `
       INSERT INTO rentals (customer_id, boat_id, start_date, end_date, rental_price, status, start_time, end_time)
