@@ -26,6 +26,8 @@ npm install jsonwebtoken
 npm install moment
 # and
 npm install react-datepicker
+# and
+npm install node-cron
 
 ```
 
