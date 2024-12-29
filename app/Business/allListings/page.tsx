@@ -1,83 +1,121 @@
 "use client";
-
-import { useState } from 'react';
-import { FaStar } from 'react-icons/fa'; // Yıldız ikonu için Font Awesome kullanıyoruz
-
-const listingsData = [
-  { id: 1, name: 'Sailboat', image: '/images/customerDashboard.png', rating: 4.8 },
-  { id: 2, name: 'Motorboat', image: '/images/motorboat.jpg', rating: 4.5 },
-  { id: 3, name: 'Yacht', image: '/images/yacht.jpg', rating: 4.9 },
-  { id: 4, name: 'Houseboat', image: '/images/houseboat.jpg', rating: 4.7 },
-  { id: 5, name: 'Fishing boat', image: '/images/fishingboat.jpg', rating: 4.6 },
-];
+import { useEffect, useState } from "react";
+import axios from "axios";
+import BoatListingCard from "../../components/boatListingCard/BoatListingCard";
 
 const AllListings = () => {
-  const [listings, setListings] = useState(listingsData);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedListing, setSelectedListing] = useState<number | null>(null);
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [currentBoatId, setCurrentBoatId] = useState<number | null>(null);
 
-  const handleDeleteClick = (id: number) => {
-    setSelectedListing(id);
-    setShowDeleteModal(true);
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get("http://localhost:8081/api/business/listings", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.status === 200) {
+          setListings(response.data.boats);
+        } else {
+          throw new Error("Failed to fetch listings");
+        }
+      } catch (err) {
+        console.error("Error fetching listings:", err);
+        setError("Failed to fetch listings.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchListings();
+  }, []);
+
+  const openConfirmModal = (boat_id: number) => {
+    setCurrentBoatId(boat_id);
+    setShowConfirmModal(true);
   };
 
-  const confirmDelete = () => {
-    setListings((prevListings) => prevListings.filter((listing) => listing.id !== selectedListing));
-    setShowDeleteModal(false);
-    setSelectedListing(null);
+  const closeConfirmModal = () => {
+    setShowConfirmModal(false);
+    setCurrentBoatId(null);
   };
 
-  const cancelDelete = () => {
-    setShowDeleteModal(false);
-    setSelectedListing(null);
+  const handleRemoveListing = async () => {
+    if (!currentBoatId) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:8081/api/boats/${currentBoatId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setListings((prev) => prev.filter((boat: any) => boat.boat_id !== currentBoatId));
+      alert("Listing removed successfully.");
+    } catch (err) {
+      console.error("Error removing listing:", err);
+      alert("Failed to remove listing.");
+    } finally {
+      closeConfirmModal();
+    }
   };
+
+  if (loading) return <p>Loading listings...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <h2 className="text-3xl font-bold text-gray-800 mb-8">Listings</h2>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-12 gap-x-6">
-        {listings.map((listing) => (
-          <div key={listing.id} className="flex flex-col items-center">
-            <div 
-              className="w-48 h-48 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center" 
-            >
-              <img src={listing.image} alt={listing.name} className="object-cover w-full h-full" />
-            </div>
-            <div className="mt-2 flex flex-col items-center w-full">
-              <h3 className="text-md font-semibold text-gray-800">{listing.name}</h3>
-              <div className="flex items-center mt-1">
-                <FaStar className="text-yellow-500 mr-1" /> {/* Yıldız ikonu */}
-                <span className="text-gray-800 font-medium">{listing.rating}</span>
+    <div className="min-h-screen bg-gray-100 py-4">
+      <div className="container mx-auto py-4 w-full md:w-3/4 lg:w-4/5">
+        <h2 className="text-2xl font-bold text-gray-800 mb-8">Your Listings</h2>
+        {/* grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+          {listings.length > 0 ? (
+            listings.map((boat: any) => (
+              <div key={boat.boat_id} className="relative">
+                <BoatListingCard boat_id={boat.boat_id} />
+                <button
+                  onClick={() => openConfirmModal(boat.boat_id)}
+                  className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 text-sm rounded hover:bg-red-600 transition"
+                >
+                  Remove Listing
+                </button>
+                <div className="flex justify-center mt-4">
+                  <button
+                    onClick={() => console.log("Edit listing functionality here!")}
+                    className="bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+                  >
+                    Edit Your Listing
+                  </button>
+                </div>
               </div>
-            </div>
-            <button
-              onClick={() => handleDeleteClick(listing.id)}
-              className="mt-2 bg-blue-500 text-white text-sm font-semibold py-1 px-4 rounded hover:bg-blue-600 transition"
-            >
-              Delete
-            </button>
-          </div>
-        ))}
+            ))
+          ) : (
+            <p className="text-center text-gray-700">No listings found.</p>
+          )}
+        </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-8 rounded-lg shadow-lg text-center">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Are you sure you want to delete this listing?</h3>
-            <div className="flex justify-center space-x-4">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center w-[400px] h-[150px]">
+            <p className="text-gray-800 mb-6">
+              Are you sure you want to remove this listing?
+            </p>
+            <div className="flex justify-around">
               <button
-                onClick={confirmDelete}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-              >
-                Delete
-              </button>
-              <button
-                onClick={cancelDelete}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+                onClick={closeConfirmModal}
+                className="bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-400 transition"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleRemoveListing}
+                className="bg-red-500 text-white text-sm px-4 py-2 rounded-lg hover:bg-red-600 transition"
+              >
+                Confirm
               </button>
             </div>
           </div>
