@@ -42,13 +42,11 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api/boats', boatRoutes);
-
-
 // Route handlers
 app.use('/api/auth', authRoutes); // Authentication routes
 app.use('/api/listings', listingRoutes); // Listings routes
 app.use('/api/users', userRoutes);
+app.use('/api/boats', boatRoutes);
 app.use('/api/rentals', rentalRoutes);
 app.use("/api/favorites", favoriteRoutes);
 app.use('/api/business', businessRoutes);
