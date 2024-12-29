@@ -5,6 +5,7 @@ import cors from 'cors';
 import { connectDB } from './config/db.js'; 
 import { connectDBB } from './config/dbb.js'; 
 import { attachDBMiddleware } from './middleware/attachDBMiddleware.js';
+import { checkAndUpdateRentalStatus } from './scheduler.js';
 import authRoutes from './routes/authRoutes.js';
 import listingRoutes from './routes/listingRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -48,6 +49,8 @@ app.use('/api/listings', listingRoutes); // Listings routes
 app.use('/api/users', userRoutes);
 app.use('/api/rentals', rentalRoutes);
 app.use("/api/favorites", favoriteRoutes);
+
+checkAndUpdateRentalStatus();
 
 // Start the server
 const PORT = process.env.PORT || 8081;
