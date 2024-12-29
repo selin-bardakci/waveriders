@@ -12,6 +12,7 @@ import userRoutes from './routes/userRoutes.js';
 import rentalRoutes from './routes/rentalRoutes.js';
 import boatRoutes from './routes/boatRoutes.js';
 import favoriteRoutes from './routes/favoriteRoutes.js';
+import businessRoutes from './routes/businessRoutes.js';
 import './scheduler.js'; 
 import multer from 'multer'; // For file handling if needed
 
@@ -23,6 +24,7 @@ app.use(express.json({ limit: '10mb' })); // Increase JSON body size limit
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Increase URL-encoded body size limit
 app.use(attachDBMiddleware);
 app.use(tripTypesRoutes); 
+
 // Initialize the database connection
 const db = connectDB();
 const dbb = connectDBB();
@@ -49,6 +51,7 @@ app.use('/api/listings', listingRoutes); // Listings routes
 app.use('/api/users', userRoutes);
 app.use('/api/rentals', rentalRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use('/api/business', businessRoutes);
 
 checkAndUpdateRentalStatus();
 
