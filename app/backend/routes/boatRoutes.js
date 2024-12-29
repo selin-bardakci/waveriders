@@ -1,5 +1,9 @@
 import express from 'express';
+import { removeBoatListing } from '../controllers/boatController.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 const router = express.Router();
+
+router.delete('/:boat_id', authenticateToken, removeBoatListing);
 
 // Route to fetch reviews for a specific boat
 router.get('/:id/reviews', async (req, res) => {
