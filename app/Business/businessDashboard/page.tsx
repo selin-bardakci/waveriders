@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Line } from 'react-chartjs-2';
+import { useAuth } from '../../context/AuthContext';
 import BoatListingCard from "../../components/boatListingCard/BoatListingCard";
 import BoatListingCard2 from "../../components/boatListingCard2/boatListingCard2";
 
@@ -38,6 +39,7 @@ interface Listing {
 }
 
 const BusinessDashboard = () => {
+  const { user, isLoggedIn, isLoading } = useAuth();
   const [businessOwner, setBusinessOwner] = useState<string>('');
   const [customerCounts, setCustomerCounts] = useState<number[]>([]);
   const [favoriteBoats, setFavoriteBoats] = useState<FavoriteBoat[]>([]);
@@ -46,6 +48,19 @@ const BusinessDashboard = () => {
   const router = useRouter();
   
   useEffect(() => {
+    if (isLoading) return; // Kullanıcı durumu yüklenirken bekle
+
+    if (!isLoggedIn) {
+      // Kullanıcı giriş yapmamışsa, giriş yapma sayfasına yönlendir
+      router.push('/auth/sign-in');
+      return;
+    }
+
+    if (user?.account_type !== 'business') {
+      // Kullanıcı giriş yapmış ama account_type 'business' değilse ana sayfaya yönlendir
+      router.push('/');
+      return;
+    }
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -129,8 +144,16 @@ const BusinessDashboard = () => {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [isLoading, isLoggedIn, user, router]);
 
+  
+  if (isLoading) {
+    return <p>Loading...</p>; // Yükleniyor ekranı
+  }
+
+  if (!isLoggedIn || user?.account_type !== 'business') {
+    return null; // Kullanıcı uygun değilse hiçbir şey render etme
+  }
 
   // Determine the months to display up to the current month
   const currentMonth = new Date().getMonth();
