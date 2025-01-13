@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Line } from 'react-chartjs-2';
+import BoatListingCard from "../../components/boatListingCard/BoatListingCard";
+import BoatListingCard2 from "../../components/boatListingCard2/boatListingCard2";
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -17,27 +20,113 @@ import { FaArrowRight } from 'react-icons/fa';
 
 // Register chart components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
-
 const BusinessDashboard = () => {
-  const [businessOwner, setBusinessOwner] = useState('Jane Doe');
+  const [businessOwner, setBusinessOwner] = useState('');
+  const [customerCounts, setCustomerCounts] = useState([]);
+  const [dashboardListings, setDashboardListings] = useState([]);
+  const [favoriteBoats, setFavoriteBoats] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
-    // Placeholder since backend is not available
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        // API çağrılarını paralel olarak başlat
+        const [businessOwnerResponse, customerCountsResponse, dashboardListingsResponse, favoriteBoatsResponse, recentActivitiesResponse] = await Promise.all([
+          fetch('http://localhost:8081/api/business/dashboard', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch('http://localhost:8081/api/business/dashboard/monthly-rentals', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch('http://localhost:8081/api/business/dashboard/listings', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch('http://localhost:8081/api/favorites/dashboard', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch('http://localhost:8081/api/rentals/dashboard', { // <== recent activities request
+            headers: { Authorization: `Bearer ${token}` }, // Token ekleniyor
+          }),
+        ]);
+        
+
+        // İşlemleri kontrol et ve sonuçları al
+        if (businessOwnerResponse.ok) {
+          const businessOwnerData = await businessOwnerResponse.json();
+          setBusinessOwner(businessOwnerData.name);
+        } else {
+          throw new Error("Failed to fetch business owner");
+        }
+
+        if (customerCountsResponse.ok) {
+          const customerCountsData = await customerCountsResponse.json();
+          console.log('API Response:', customerCountsData);
+
+          // Backend'den gelen veriyi doğru bir şekilde işleyin
+          const monthlyRentals = Array(12).fill(0);
+          customerCountsData.monthlyRentals.forEach((item, index) => {
+            if (item !== undefined && item !== null) {
+              monthlyRentals[index] = item;
+            }
+          });
+
+          console.log('Processed Monthly Rentals:', monthlyRentals);
+          setCustomerCounts(monthlyRentals); // State'i güncelle
+        }
+        else {
+          throw new Error("Failed to fetch customer counts");
+        }
+
+        if (dashboardListingsResponse.ok) {
+          const dashboardListingsData = await dashboardListingsResponse.json();
+          setDashboardListings(dashboardListingsData.boats || []);
+        } else {
+          throw new Error("Failed to fetch dashboard listings");
+        }
+
+
+        if (favoriteBoatsResponse.ok) {
+          const favoriteBoatsData = await favoriteBoatsResponse.json();
+          console.log("Favorite Boats API Response:", favoriteBoatsData); // Gelen API yanıtını kontrol et
+          setFavoriteBoats(favoriteBoatsData.boats || []);
+        } else {
+          console.error("Failed to fetch favorite boats");
+        }
+
+        if (recentActivitiesResponse.ok) {
+          const recentActivitiesData = await recentActivitiesResponse.json();
+          console.log("Recent Activities API Response:", recentActivitiesData); // Gelen API yanıtını kontrol et
+          setRecentActivities(recentActivitiesData || []);
+        } else {
+          console.error("Failed to fetch recent activities");
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+
+
+    };
+
+    fetchDashboardData();
   }, []);
+
 
   // Determine the months to display up to the current month
   const currentMonth = new Date().getMonth();
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const displayMonths = months.slice(0, currentMonth + 1);
 
-  // Placeholder data for the chart
+  // Grafik verisini backend'den gelen verilere bağla
+  console.log('Customer Counts State:', customerCounts); // Grafik verisi oluşturulmadan önce kontrol
   const data = {
     labels: displayMonths,
     datasets: [
       {
         label: 'Customer Count',
-        data: Array.from({ length: currentMonth + 1 }, () => Math.floor(Math.random() * 20) + 10),
+        data: displayMonths.map((_, index) => customerCounts[index] || 0), // Eksik ayları 0 ile dolduruyor
         borderColor: '#4A90E2',
         backgroundColor: 'rgba(74, 144, 226, 0.1)',
         fill: true,
@@ -48,6 +137,9 @@ const BusinessDashboard = () => {
       },
     ],
   };
+
+  console.log('Graph Data:', data);
+
 
   const options = {
     responsive: true,
@@ -82,40 +174,21 @@ const BusinessDashboard = () => {
     },
   };
 
-  const listings = [
-    "https://via.placeholder.com/100",
-    "https://via.placeholder.com/100",
-    "https://via.placeholder.com/100",
-    "https://via.placeholder.com/100",
-    "https://via.placeholder.com/100",
-  ];
 
-  const favoriteListings = [
-    { icon: 'icon1.png', placeName: 'Listing 1', location: 'Location 1' },
-    { icon: 'icon2.png', placeName: 'Listing 2', location: 'Location 2' },
-    { icon: 'icon3.png', placeName: 'Listing 3', location: 'Location 3' },
-    { icon: 'icon4.png', placeName: 'Listing 4', location: 'Location 4' },
-  ];
 
-  const recentActivities = [
-    { icon: 'icon1.png', placeName: 'Activity 1', location: 'Location A', rating: 4, comment: 'Great place!' },
-    { icon: 'icon2.png', placeName: 'Activity 2', location: 'Location B', rating: 5, comment: 'Amazing experience!' },
-    { icon: 'icon3.png', placeName: 'Activity 3', location: 'Location C', rating: 3, comment: 'It was okay.' },
-    { icon: 'icon4.png', placeName: 'Activity 4', location: 'Location D', rating: null, comment: null },
-  ];
 
   const renderListings = (listings) => (
     <div className="flex justify-between items-center w-full">
-      {listings.map((listing) => (
+      {listings.map((listing, index) => (
         <div
-          key={listing.id}
+          key={index}
           className="flex flex-col items-center w-1/4 cursor-pointer"
-          onClick={() => router.push(`/listings/${listing.id}`)} // Dinamik detay sayfası rotası
+          onClick={() => router.push(`/listings/${listing.icon}`)} // Correct dynamic route syntax
         >
           <div className="w-40 h-40 rounded-lg overflow-hidden shadow-md">
             <img
-              src={`/images/${listing.icon}`}
-              alt={`Icon for ${listing.placeName}`}
+              src={`/images/${listing.icon}`} // Fixed string interpolation for src
+              alt={`Icon for ${listing.placeName}`} // Fixed string interpolation for alt
               className="w-full h-full object-cover"
             />
           </div>
@@ -125,46 +198,65 @@ const BusinessDashboard = () => {
       ))}
     </div>
   );
-  
+
 
   const renderActivities = (activities) => (
-    <div className="flex justify-between items-start w-full">
+    <div className="flex flex-wrap gap-4">
       {activities.map((activity, index) => (
-        <div key={index} className="flex flex-col items-center w-1/4 p-4">
-          <div className="w-40 h-40 rounded-lg overflow-hidden">
+        <div key={index} className="w-60 p-4 bg-white shadow rounded-lg">
+          <div className="w-full h-32 overflow-hidden rounded-md">
             <img
-              src={`/images/${activity.icon}`}
-              alt={`Icon for ${activity.placeName}`}
+              src={activity.photos ? activity.photos : "/images/placeholder.png"}
+              alt={activity.boat_name}
               className="w-full h-full object-cover"
             />
           </div>
-          <p className="text-lg mt-2">{activity.placeName}</p>
-          <p className="text-sm text-[#4b799c]">{activity.location}</p>
-          <div className="mt-1 h-12 flex items-center justify-center">
-            {activity.comment ? (
-              <p className="text-sm text-gray-700 text-center">{activity.comment}</p>
+          <h4 className="text-lg font-semibold mt-2">{activity.boat_name}</h4>
+          <p className="text-gray-500">{activity.location}</p>
+          <div className="mt-2">
+            {activity.rating ? (
+              <p>Rating: {activity.rating} ★</p>
             ) : (
-              <p className="text-sm text-gray-500 text-center">No comment</p>
+              <p className="text-gray-500">Not ranked yet</p>
             )}
           </div>
-          <div className="mt-2 h-6 flex items-center justify-center">
-            {activity.rating !== null ? (
-              [...Array(5)].map((_, i) => (
-                <span
-                  key={i}
-                  className={`text-2xl ${i < activity.rating ? 'text-[#2195f3]' : 'text-gray-300'}`}
-                >
-                  ★
-                </span>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500">Not ranked yet</p>
-            )}
-          </div>
+          {activity.comment && (
+            <p className="text-sm text-gray-700 mt-1">{activity.comment}</p>
+          )}
         </div>
       ))}
     </div>
   );
+  
+  
+  
+  
+
+
+  const renderFavoriteBoats = (boats) => {
+    console.log("Rendering Favorite Boats:", boats); // Gelen veriyi kontrol et
+    return (
+      <div className="grid grid-cols-4 gap-4">
+        {boats.map((boat) => (
+          <div
+            key={boat.boat_id}
+            className="w-24 h-24 rounded-lg overflow-hidden shadow-md bg-white"
+          >
+            <img
+              src={boat.photos ? boat.photos[0] : "/images/placeholder.png"}
+              alt={boat.boat_name}
+              className="w-full h-full object-cover"
+            />
+            <p className="text-sm text-center mt-1">{boat.location}</p>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+
+
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center">
@@ -205,71 +297,124 @@ const BusinessDashboard = () => {
 
       {/* Listings Section */}
       <section className="p-6 w-[980px] mt-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Listings</h2>
-        <div
-          className="flex justify-between items-center bg-gray-100 p-4 rounded-lg shadow-md border"
-          style={{
-            borderColor: '#d1d5db',
-          }}
-        >
-          {/* Single or Grid Image Display */}
-          <div className="w-20 h-20 relative">
-            {listings.length > 4 ? (
-              <div className="grid grid-cols-2 grid-rows-2 gap-1 w-full h-full">
-                <img src={listings[0]} alt="Listing 1" className="w-full h-full object-cover rounded-md" />
-                <img src={listings[1]} alt="Listing 2" className="w-full h-full object-cover rounded-md" />
-                <img src={listings[2]} alt="Listing 3" className="w-full h-full object-cover rounded-md" />
-                <img src={listings[3]} alt="Listing 4" className="w-full h-full object-cover rounded-md" />
-              </div>
-            ) : (
-              <img src={listings[0]} alt="Listing" className="w-full h-full object-cover rounded-md" />
-            )}
-          </div>
-
-          {/* Arrow button for navigating to all listings with tooltip */}
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Your Listings</h2>
+        <div className="flex justify-between items-center bg-gray-100 p-4 rounded-lg shadow-md border">
+          {dashboardListings.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2">
+              {dashboardListings.map((listing) => (
+                <div key={listing.boat_id} className="w-20 h-20 rounded-lg overflow-hidden shadow-md">
+                  <img
+                    src={listing.photos ? listing.photos[0] : "/images/placeholder.png"}
+                    alt={listing.boat_name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>No listings found</p>
+          )}
           <button
             onClick={() => router.push('/Business/allListings')}
-            title="See all listings and edit"
-            className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            title="See all listings"
+            className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600"
           >
             <FaArrowRight />
           </button>
         </div>
       </section>
 
+
+      {/* Your Favorite Listings */}
       {/* Your Favorite Listings */}
       <section className="p-6 w-[980px] mt-8">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-2xl font-bold text-gray-800">Your Favorite Listings</h3>
+          <h3 className="text-2xl font-bold text-gray-800">Your Favorite Boats</h3>
           <button
             onClick={() => router.push('/Favourites')}
-            title="See all your favourites"
-            className="flex items-center bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600"
           >
-            <FaArrowRight className="text-xl" />
+            <FaArrowRight />
           </button>
         </div>
-        <div className="p-6 border-2 rounded-lg" style={{ borderColor: '#d1d5db', backgroundColor: 'transparent' }}>
-          {renderListings(favoriteListings)}
+        <div
+          className="p-6 border-2 rounded-lg"
+          style={{ borderColor: '#d1d5db', backgroundColor: 'transparent' }}
+        >
+          {favoriteBoats.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {favoriteBoats.map((boat) => (
+                <BoatListingCard key={boat.boat_id} boat_id={boat.boat_id} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-center">No favorites found</p>
+          )}
         </div>
       </section>
 
+
+
+
       {/* Your Recent Activities */}
       <section className="p-6 w-[980px] mt-8">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-2xl font-bold text-gray-800">Your Recent Activities</h3>
-          <button
-            onClick={() => router.push('/RecentActivities')}
-            title="See all your recent activities"
-            className="flex items-center bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            <FaArrowRight className="text-xl" />
-          </button>
-        </div>
-        <div className="p-6 border-2 rounded-lg" style={{ borderColor: '#d1d5db', backgroundColor: 'transparent' }}>
-          {renderActivities(recentActivities)}
-        </div>
-      </section>
+  <div className="flex justify-between items-center mb-4">
+    <h3 className="text-2xl font-bold text-gray-800">Your Recent Activities</h3>
+    <button
+      onClick={() => router.push('/RecentActivities')}
+      title="See all your recent activities"
+      className="flex items-center bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+    >
+      <FaArrowRight className="text-xl" />
+    </button>
+  </div>
+  <div
+    className="p-6 border-2 rounded-lg"
+    style={{ borderColor: '#d1d5db', backgroundColor: 'transparent' }}
+  >
+    {recentActivities.length > 0 ? (
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {recentActivities.map((activity) => (
+          <div key={activity.boat_id}>
+            {/* BoatListingCard Bileşeni */}
+            <BoatListingCard2 boat_id={activity.boat_id} />
+
+            {/* Yorum */}
+            {activity.comment ? (
+              <p className="text-sm text-gray-700 mt-2 text-center">
+                {activity.comment}
+              </p>
+            ) : (
+              <p className="text-sm text-gray-500 mt-2 text-center">
+                No comment
+              </p>
+            )}
+
+            {/* Rating */}
+            <div className="mt-2 flex justify-center">
+              {[...Array(5)].map((_, i) => (
+                <span
+                  key={i}
+                  className={`text-xl ${
+                    i < (activity.rating || 0)
+                      ? "text-yellow-500"
+                      : "text-gray-300"
+                  }`}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p className="text-center text-gray-500">No recent activities found</p>
+    )}
+  </div>
+</section>
+
+
     </div>
   );
 };
