@@ -3,7 +3,7 @@ import { connectDB } from './config/db.js';
 
 const db = connectDB();
 
-//Check rentals and update
+// Fonksiyon: Kiralamaları kontrol et ve güncelle
 export const checkAndUpdateRentalStatus = () => {
   const sql = `
     UPDATE rentals
@@ -20,6 +20,7 @@ export const checkAndUpdateRentalStatus = () => {
   });
 };
 
+// Gece yarısı çalışan cron job
 cron.schedule('0 0 * * *', () => {
   console.log('Running nightly rental status check...');
   checkAndUpdateRentalStatus();
