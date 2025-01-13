@@ -11,11 +11,17 @@ const tripTypes = [
   { id: 3, name: 'Sunrise & Sunset Trips', description: '7–12 hours' },
   { id: 4, name: 'Overnight Adventures', description: '1+ days' }
 ];
-
 const ports = [
-  'Port of Aliağa', 'Port of Alidaş', 'Port of Altıntel', 'Port of Ambarlı',
-  'Port of Antalya', 'Port of Ayvalık', 'Port of Bandırma', 'Port of Bodrum',
-  // Add other ports as needed
+  'Port of Aliağa', 'Port of Alidaş', 'Port of Altıntel', 'Port of Ambarlı', 'Port of Anamur',
+  'Port of Antalya', 'Port of Ayvalık', 'Port of Bandırma', 'Port of Bartın', 'Port of Bodrum',
+  'Port of Botaş(Ceyhan)', 'Port of Büyükdere', 'Port of Çanakkale', 'Port of Çeşme', 'Port of Derince',
+  'Port of Dikili', 'Port of Edremit', 'Port of Fethiye', 'Port of Filyos', 'Port of Finike',
+  'Port of Gemlik', 'Port of Giresun', 'Port of Güllük', 'Port of Haydarpaşa', 'Port of Hopa',
+  'Port of İnebolu', 'Port of İskenderun', 'Port of İstanbul', 'Port of İzmir', 'Port of İzmit',
+  'Port of Karadeniz Ereğli', 'Port of Karaköy', 'Port of Karasu', 'Port of Kuşadası', 'Port of Marmaris',
+  'Port of Mersin', 'Port of Nemrut', 'Port of Ordu', 'Port of Ortadoğu', 'Port of Rize',
+  'Port of Samsun', 'Port of Sinop', 'Port of Taşucu', 'Port of Tekirdağ', 'Port of Trabzon',
+  'Port of Tuzla', 'Port of Yeşilovacık Medcem', 'Port of Zeytinburnu', 'Port of Zonguldak'
 ];
 
 export default function EditBoatListing() {
@@ -37,7 +43,7 @@ export default function EditBoatListing() {
   });
   
   const [photos, setPhotos] = useState<File[]>([]);
-  const [license, setLicense] = useState<File | null>(null);
+
   const [currentPhotos, setCurrentPhotos] = useState<string[]>([]);
 
   useEffect(() => {
@@ -49,19 +55,31 @@ export default function EditBoatListing() {
         });
         
         const boat = response.data.boat;
+        
+        // Map database trip types back to IDs
+        const tripTypeMap = {
+          'short': 1,
+          'day': 2,
+          'sunrise': 3,
+          'overnight': 4
+        };
+  
+        const mappedTripTypes = boat?.trip_types
+          ? boat.trip_types.split(',')
+              .map((type: string) => tripTypeMap[type.trim()])
+              .filter(Boolean)
+          : [];
+  
         setFormData({
-            boat_name: boat?.boat_name || '',
-            description: boat?.description || '',
-            boat_type: boat?.boat_type || '',
-            location: boat?.location || '',
-            capacity: boat?.capacity ? boat.capacity.toString() : '',
-            price_per_hour: boat?.price_per_hour ? boat.price_per_hour.toString() : '',
-            price_per_day: boat?.price_per_day?.toString() || '',
-            trip_types: boat?.trip_types?.split(',').map((type: string) => {
-              const tripType = tripTypes.find(t => t.name.toLowerCase() === type);
-              return tripType ? tripType.id : null;
-            }).filter(Boolean) || [],
-          });
+          boat_name: boat?.boat_name || '',
+          description: boat?.description || '',
+          boat_type: boat?.boat_type || '',
+          location: boat?.location || '',
+          capacity: boat?.capacity ? boat.capacity.toString() : '',
+          price_per_hour: boat?.price_per_hour ? boat.price_per_hour.toString() : '',
+          price_per_day: boat?.price_per_day?.toString() || '',
+          trip_types: mappedTripTypes,
+        });
         setCurrentPhotos(Array.isArray(boat.photos) ? boat.photos : JSON.parse(boat.photos || '[]'));
       } catch (err) {
         console.error('Error fetching boat details:', err);
@@ -70,7 +88,7 @@ export default function EditBoatListing() {
         setLoading(false);
       }
     };
-
+  
     fetchBoatDetails();
   }, [params.id]);
 
@@ -100,23 +118,16 @@ export default function EditBoatListing() {
       setPhotos(fileList);
     }
   };
-
-  const handleLicenseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setLicense(e.target.files[0]);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError('');
-
+  
     try {
       const token = localStorage.getItem('token');
       const formDataToSend = new FormData();
-
-      // Append all form fields
+  
+      // Append all form fields except photos (if no new photos, we leave it unchanged)
       Object.entries(formData).forEach(([key, value]) => {
         if (key === 'trip_types') {
           formDataToSend.append(key, JSON.stringify(value));
@@ -124,24 +135,28 @@ export default function EditBoatListing() {
           formDataToSend.append(key, value.toString());
         }
       });
-
+  
       // Append files if they exist
       photos.forEach(photo => {
         formDataToSend.append('photos', photo);
       });
-
-      if (license) {
-        formDataToSend.append('license', license);
+  
+      // Check if license is provided
+     
+  
+      // If no photos are provided, leave the photos field unchanged in the DB
+      if (photos.length === 0) {
+        formDataToSend.delete('photos');
       }
-
+  
       await axios.put(`http://localhost:8081/api/boats/${params.id}`, formDataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
       });
-
-      router.push('/');
+  
+      router.push('/Business/allListings');
     } catch (err) {
       console.error('Error updating boat:', err);
       setError('Failed to update boat listing');
@@ -149,7 +164,7 @@ export default function EditBoatListing() {
       setSaving(false);
     }
   };
-
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -270,6 +285,20 @@ export default function EditBoatListing() {
             </div>
           </div>
 
+          {/* Conditionally show Price per Day field if "Overnight Adventures" is selected */}
+          {formData.trip_types.includes(4) && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Price per Day</label>
+              <input
+                type="number"
+                name="price_per_day"
+                value={formData.price_per_day}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Current Photos</label>
             <div className="mt-2 grid grid-cols-5 gap-4">
@@ -295,16 +324,7 @@ export default function EditBoatListing() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Update License</label>
-            <input
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={handleLicenseChange}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-          </div>
-
+        
           <div className="flex justify-end space-x-4">
             <button
               type="button"
@@ -333,3 +353,4 @@ export default function EditBoatListing() {
     </div>
   );
 }
+
