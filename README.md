@@ -1,8 +1,10 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
+```bash
 EMAIL_USER,
-EMAIL_PASS shoould be added to env.local
+EMAIL_PASS should be added to env.local
+```
 First, run the development server:
 
 ```bash
