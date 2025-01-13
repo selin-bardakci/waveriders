@@ -139,7 +139,7 @@ const ListingsPage = () => {
       );
 
       if (response.status === 200) {
-        const ids = response.data.rows.map((boat) => boat.boat_id);
+        const ids = response.data.rows.map((boat: { boat_id: any; }) => boat.boat_id);
         setBoatIds(ids);
         setTotalPages(Math.ceil(response.data.total / listingsPerPage));
         setIsDataLoaded(true); // Mark data as successfully loaded
