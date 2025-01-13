@@ -76,7 +76,24 @@ const BoatListingDetails = () => {
     
     }, [id]); 
     
-  
+    const handleBackButtonClick = () => {
+      const source = sessionStorage.getItem("navigation_source");
+
+      if (source === "homepage") {
+        router.push("/");
+      } else if (source === "ListingsPage") {
+        router.push("/ListingsPage");
+      } else if (source === "allListings") {
+        router.push("/allListings"); // Navigate back to allListings
+      } else if (source === "Favourites") {
+        router.push("/Favourites"); // Navigate back to allListings
+      }else if (source === "RecentActivities") {
+        router.push("/RecentActivities"); // Navigate back to allListings
+      }  else {
+        router.back(); // Fallback navigation
+      }
+    };
+    
 
   useEffect(() => {
     const fetchUnavailableDates = async () => {
@@ -99,17 +116,17 @@ const BoatListingDetails = () => {
       try {
         const response = await axios.get(`http://localhost:8081/api/boats/${id}/reviews`);
         if (response.status === 200 && response.data.reviews) {
-          setReviews(response.data.reviews); // Ensure the response updates `reviews` state
-          console.log('Reviews:', response.data.reviews); // Debugging log
+          setReviews(response.data.reviews);
         } else {
           console.error('Failed to fetch reviews:', response.data.message);
-          setReviews([]);
+          setReviews([]); // Handle missing data gracefully
         }
       } catch (error) {
         console.error('Error fetching reviews:', error);
-        setReviews([]);
+        setReviews([]); // Graceful fallback for errors
       }
     };
+    
 
     fetchReviews();
   }, [id]);
@@ -180,10 +197,22 @@ const BoatListingDetails = () => {
     setIsOpen(false);
     setSelectedImage(null);
   };
-  // Format trip types to display descriptions
-  const formattedTripTypes = tripTypes
-    .map((type) => mapTripTypesToDescriptions[type])
-    .filter(Boolean); // Filter out invalid or undefined types
+  const tripTypesArray = Array.isArray(tripTypes) && tripTypes.length > 0
+  ? tripTypes[0].split(',').map((type) => type.trim()) // Split the first element if it's a string
+  : typeof tripTypes === 'string'
+  ? tripTypes.split(',').map((type) => type.trim())
+  : [];
+
+// Map trip types to their descriptions
+const formattedTripTypes = tripTypesArray
+  .map((type) => mapTripTypesToDescriptions[type])
+  .filter(Boolean); // Filter out undefined or invalid types
+
+// Debugging
+console.log('Raw trip_types:', tripTypes);
+console.log('Processed tripTypesArray:', tripTypesArray);
+console.log('Mapped trip types (descriptions):', formattedTripTypes);
+
 
   const handleBookingSubmit = (e) => {
     e.preventDefault();
@@ -257,20 +286,20 @@ const BoatListingDetails = () => {
       <header className="bg-white shadow p-4 flex items-center justify-between">
         {/* Back Button */}
         <button
-          onClick={() => router.push('/auth/ListingsPage')}
-          className="text-blue-500 flex items-center"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            className="w-6 h-6 mr-1"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back
-        </button>
+  onClick={handleBackButtonClick}
+  className="text-blue-500 flex items-center"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    className="w-6 h-6 mr-1"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+  </svg>
+  Back
+</button>
 
         {/* Header */}
         <h1 className="text-2xl font-semibold">{boat_name}</h1>
@@ -357,13 +386,20 @@ const BoatListingDetails = () => {
         <div className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">About this experience</h2>
           <p className="text-gray-700 mb-4">{description}</p>
-
           <h3 className="font-semibold mt-4 mb-2">Trip Types</h3>
-          <ul className="grid grid-cols-2 gap-2 text-gray-700">
-            {formattedTripTypes.map((type, index) => (
-              <li key={index}>✅ {type}</li>
-            ))}
-          </ul>
+<ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-gray-700">
+  {formattedTripTypes.length > 0 ? (
+    formattedTripTypes.map((type, index) => (
+      
+      <li key={index} className="flex items-center space-x-2">
+        <span>✅</span>
+        <span>{type}</span>
+      </li>
+    ))
+  ) : (
+    <p className="text-gray-500">No trip types available</p>
+  )}
+</ul>
 
           <h3 className="font-semibold mt-4 mb-2">Rate Details</h3>
           <p className="text-gray-700">
@@ -388,6 +424,74 @@ const BoatListingDetails = () => {
             </div>
           </div>
         </section>
+        <section className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow relative">
+  <h3 className="text-xl font-semibold mb-4">Reviews</h3>
+
+  <div className="flex">
+    {/* Review Boxes */}
+    {reviews.length > 0 ? (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow">
+        {reviews.slice(0, 3).map((review, index) => (
+          <div
+            key={index}
+            className="bg-gray-100 p-4 rounded-lg shadow-md border border-gray-300 flex flex-col justify-between"
+          >
+            {/* Author */}
+            <p className="font-semibold text-gray-800 mb-2">
+              {review.author && review.author.trim() ? review.author : 'Anonymous'}
+            </p>
+            {/* Date */}
+            <p className="text-gray-600 text-sm mb-2">
+              {review.created_at ? new Date(review.created_at).toLocaleDateString() : 'N/A'}
+            </p>
+            {/* Review Content */}
+            <p className="text-gray-700 text-sm flex-grow">
+              {review.review_text && review.review_text.trim()
+                ? review.review_text
+                : 'No review content available.'}
+            </p>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow">
+        {[...Array(3)].map((_, index) => (
+          <div
+            key={index}
+            className="bg-gray-100 p-4 rounded-lg shadow-md border border-gray-300 flex items-center justify-center"
+          >
+            <p className="text-gray-500 text-sm">No reviews available</p>
+          </div>
+        ))}
+      </div>
+    )}
+
+    {/* Arrow Button */}
+    <div className="flex items-center ml-4">
+    <button
+  onClick={() => router.push(`/listings/${id}/reviews`)}
+  className="w-12 h-12 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition flex items-center justify-center"
+  aria-label="View All Reviews"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    className="w-6 h-6"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M9 5l7 7-7 7"
+    />
+  </svg>
+</button>
+
+    </div>
+  </div>
+</section>
 
 
 
