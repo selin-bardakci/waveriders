@@ -14,13 +14,14 @@ interface RecentActivity {
   rating: number | null;
 }
 const Dashboard = () => {
-  const { user, isLoggedIn } = useAuth(); 
+  const { user, isLoggedIn, isLoading } = useAuth();
   const [businessOwner, setBusinessOwner] = useState<string>('');
   const [favoriteBoats, setFavoriteBoats] = useState<{ boat_id: number }[]>([]);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const router = useRouter();
 
   useEffect(() => {
+    if (isLoading) return;
     if (!isLoggedIn) {
       router.push('/auth/sign-in'); 
       return;
@@ -76,10 +77,13 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
-  }, [isLoggedIn, user, router]);
+  }, [isLoading, isLoggedIn, user, router]);
 
   if (!isLoggedIn || user?.account_type !== 'customer') {
     return null; 
+  }
+    if (isLoading) {
+    return <p>Loading...</p>;
   }
 
   return (
