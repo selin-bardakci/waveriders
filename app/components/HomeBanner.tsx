@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Map, { GeolocateControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import SearchBar from '/components/SearchBar/SearchBar'; // Make sure this is the correct path
+import SearchBar from '../components/SearchBar/SearchBar'; // Make sure this is the correct path
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
