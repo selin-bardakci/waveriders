@@ -17,6 +17,7 @@ const RegisterForm = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const router = useRouter();
 
+
   useEffect(() => {
     const today = new Date();
     const year = today.getFullYear() - 18;
@@ -26,13 +27,10 @@ const RegisterForm = () => {
   }, []);
 
   const validateForm = () => {
-    // Check if all fields are filled
     if (!name || !lastname || !birthdate || !email || !password || !phone) {
       setError('All fields are required.');
       return false;
     }
-
-    // Check if name and lastname contain numbers
     if (/\d/.test(name)) {
       setError('First name must not contain numbers.');
       return false;
@@ -41,72 +39,58 @@ const RegisterForm = () => {
       setError('Last name must not contain numbers.');
       return false;
     }
-
-    // Check the length of the first name
     if (name.length < 2 ) {
       setError('First name must be at least 2 characters long.');
       return false;
     }
-
-    // Updated password validation
-    if (password.length < 7) {
-      setError('Password must be at least 7 characters long.');
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
       return false;
     }
-    if (!/[A-Z]/.test(password)) {
-      setError('Password must contain at least one uppercase letter.');
-      return false;
-    }
-    if (!/\d/.test(password)) {
-      setError('Password must contain at least one number.');
-      return false;
-    }
-
-    // Validate birthdate format (ensure it's in YYYY-MM-DD)
     if (!/^\d{4}-\d{2}-\d{2}$/.test(birthdate)) {
-      setError('Invalid birthdate. Please use the format YYYY-MM-DD.');
+      setError('Invalid birthdate. Please use the format DD-MM-YYYY.');
       return false;
     }
-
-    // Validate phone number (assuming 10 digits without country code)
-    if (!/^\d{10}$/.test(phone)) {
+    if(!/^\d{11}$/.test(phone)) {
       setError('Invalid phone number. Please use a 10-digit number.');
       return false;
     }
-
-    // Validate email format
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       setError('Invalid email address.');
-      return false;
+      return false
     }
 
     return true;
   };
 
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(''); // Reset error message
-
+  
     if (!isChecked) {
       setError('You must accept the terms.');
       return;
     }
-
+  
     if (!validateForm()) return; // Validate the form
-
+  
+    // Format birthdate from DD.MM.YYYY to YYYY-MM-DD
+    const formattedBirthdate = birthdate.split('.').reverse().join('-');
+  
     try {
+     
       const response = await axios.post('http://localhost:8081/api/auth/signup', {
         name,
         lastname,
         email,
         password,
         phone, 
-        birthdate, // Already in YYYY-MM-DD format from the date input
+        birthdate: formattedBirthdate, 
         account_type: 'customer'
       });
       
       setSuccessMessage('Registration successful. A verification email has been sent.');
-      router.push('/auth/sign-in');
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
       setError(errorMessage);
@@ -134,7 +118,7 @@ const RegisterForm = () => {
                 placeholder="First Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                maxLength={50} // Optional: limit the max length
+                max={maxBirthDate}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -145,7 +129,6 @@ const RegisterForm = () => {
                 placeholder="Last Name"
                 value={lastname}
                 onChange={(e) => setLastName(e.target.value)}
-                maxLength={50} // Optional: limit the max length
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -155,7 +138,6 @@ const RegisterForm = () => {
                 type="date"
                 value={birthdate}
                 onChange={(e) => setBirthDate(e.target.value)}
-                max={maxBirthDate}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -176,7 +158,6 @@ const RegisterForm = () => {
                 placeholder="Phone Number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                maxLength={10}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -189,10 +170,6 @@ const RegisterForm = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              {/* Optional: Add password requirements below the input */}
-              <p className="text-sm text-gray-600 mt-2">
-                Password must be at least 7 characters long, contain at least one uppercase letter, and one number.
-              </p>
             </div>
 
             <div className="mb-6">
@@ -219,8 +196,8 @@ const RegisterForm = () => {
                 disabled={!isChecked}
               >
                 Register
-              </button>
-            </div>
+            </button>
+           </div>
           </form>
         </div>
       </div>
