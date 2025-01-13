@@ -32,7 +32,7 @@ const EmailVerification = () => {
           <button
             type="button"
             className="w-full bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition"
-            onClick={() => router.push('/auth/businessDashboard')}
+            onClick={() => router.push('/Business/allListings')}
           >
             Back to Dashboard
           </button>
