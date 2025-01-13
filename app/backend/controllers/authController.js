@@ -158,32 +158,91 @@ const uploadCaptainLicense = multer({ storage: captainLicenseStorage }).single('
 
 // Upload boat license function
 export const handleUploadBoatLicense = async (req, res) => {
-  const { id } = req.body; // Expect dynamic ID
+  const { id } = req.body; // Expect business_id
   const boatLicenseFile = req.file;
 
-  console.log("ID received in handleUploadBoatLicense:", id); // Debug log
+  console.log("Business ID received in handleUploadBoatLicense:", id); // Debug log
 
   if (!id) {
-    return res.status(400).json({ message: 'Business ID or Boat ID is required' });
+    console.error("Error: Missing Business ID in the request body.");
+    return res.status(400).json({ message: 'Business ID is required' });
   }
 
   if (!boatLicenseFile) {
+    console.error("Error: No boat license file uploaded.");
     return res.status(400).json({ message: 'No boat license file uploaded' });
   }
 
   try {
-    const fullPath = path.resolve(boatLicenseFile.path);
-    console.log("Uploading to S3 with ID:", id); // Debug log
-    const boatLicensePath = await uploadToS3(fullPath, process.env.AWS_S3_BUCKET, id, 'boat-licenses');
+    // Fetch the boat_id using the business_id
+    req.db.query(
+      `SELECT boat_id FROM boats WHERE business_id = ?`,
+      [id],
+      async (err, results) => {
+        if (err) {
+          console.error("Error fetching boat_id:", err);
+          return res.status(500).json({ message: 'Database error: Failed to fetch boat ID' });
+        }
 
-    await fs.unlink(fullPath);
+        if (results.length === 0) {
+          console.error("No boat found for the provided business_id:", id);
+          return res.status(400).json({ message: 'No boat found for the provided business ID' });
+        }
 
-    res.status(200).json({ message: 'Boat license uploaded successfully', licensePath: boatLicensePath });
+        const boatId = results[0].boat_id;
+
+        // Debug: Log the resolved boat_id
+        console.log("Resolved boat_id:", boatId);
+
+        // Upload file to S3 and get the path
+        const fullPath = path.resolve(boatLicenseFile.path);
+        console.log("Uploading to S3 with boat_id:", boatId); // Debug log
+        const boatLicensePath = await uploadToS3(
+          fullPath,
+          process.env.AWS_S3_BUCKET,
+          id,
+          'boat-licenses'
+        );
+
+        // Debug: Log the S3 path
+        console.log("Boat license uploaded to S3. Path:", boatLicensePath);
+
+        // Remove the local file
+        await fs.unlink(fullPath);
+
+        // Update the database with the license path
+        req.db.query(
+          `UPDATE boats SET boat_license_path = ? WHERE boat_id = ?`,
+          [boatLicensePath, boatId],
+          (err, result) => {
+            if (err) {
+              console.error("Database error during boat license update:", err);
+              return res.status(500).json({ message: 'Database error: Failed to save boat license' });
+            }
+
+            // Debug: Log the database update result
+            console.log("Database update result:", result);
+
+            if (result.affectedRows === 0) {
+              console.error("No rows were updated. Check the boat_id:", boatId);
+              return res.status(400).json({ message: 'No boat found with the provided ID' });
+            }
+
+            // Send success response
+            res.status(200).json({
+              message: 'Boat license uploaded and saved successfully',
+              licensePath: boatLicensePath,
+            });
+          }
+        );
+      }
+    );
   } catch (err) {
-    console.error('Error uploading boat license:', err);
+    console.error("Error uploading boat license:", err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 
 export const handleRegisterCaptain = (req, res) => {
@@ -223,6 +282,7 @@ export const handleRegisterCaptain = (req, res) => {
 export const handleUploadCaptainLicense = async (req, res) => {
   const { id } = req.body; // Accept dynamic ID (business_id or captain_id)
   const captainLicenseFile = req.file;
+  console.log('Received ID (captain_id):', id);
 
   if (!id) {
     return res.status(400).json({ message: 'Business ID or Captain ID is required' });
@@ -233,12 +293,67 @@ export const handleUploadCaptainLicense = async (req, res) => {
   }
 
   try {
-    const fullPath = path.resolve(captainLicenseFile.path);
-    const captainLicensePath = await uploadToS3(fullPath, process.env.AWS_S3_BUCKET, id, 'captain-licenses');
+    // Fetch the captain_id using the business_id
+    req.db.query(
+      `SELECT captain_id FROM captains WHERE business_id = ?`,
+      [id],
+      async (err, results) => {
+        if (err) {
+          console.error('Error fetching captain_id:', err);
+          return res.status(500).json({ message: 'Database error: Failed to fetch captain ID' });
+        }
 
-    await fs.unlink(fullPath);
+        if (results.length === 0) {
+          console.error('No captain found for the provided business_id:', id);
+          return res.status(400).json({ message: 'No captain found for the provided business ID' });
+        }
 
-    res.status(200).json({ message: 'Captain license uploaded successfully', licensePath: captainLicensePath });
+        const captainId = results[0].captain_id;
+
+        // Debug: Log the resolved captain_id
+        console.log('Resolved captain_id:', captainId);
+
+        // Upload file to S3 and get the path
+        const fullPath = path.resolve(captainLicenseFile.path);
+        const captainLicensePath = await uploadToS3(
+          fullPath,
+          process.env.AWS_S3_BUCKET,
+          id,
+          'captain-licenses'
+        );
+
+        // Debug: Log S3 path
+        console.log('Captain license uploaded to S3. Path:', captainLicensePath);
+
+        // Remove the local file
+        await fs.unlink(fullPath);
+
+        // Update the database with the license path
+        req.db.query(
+          `UPDATE captains SET registration_papers = ? WHERE captain_id = ?`,
+          [captainLicensePath, captainId],
+          (err, result) => {
+            if (err) {
+              console.error('Error saving captain license to the database:', err);
+              return res.status(500).json({ message: 'Database error: Failed to save captain license' });
+            }
+
+            // Debug: Log database update result
+            console.log('Database update result:', result);
+
+            if (result.affectedRows === 0) {
+              console.error('No rows were updated. Check the captain_id:', captainId);
+              return res.status(400).json({ message: 'No captain found with the provided ID' });
+            }
+
+            res.status(200).json({
+              message: 'Captain license uploaded and saved successfully',
+              licensePath: captainLicensePath,
+            });
+          }
+        );
+      }
+    );
   } catch (err) {
     console.error('Error uploading captain license:', err);
     res.status(500).json({ message: 'Server error' });
@@ -423,12 +538,37 @@ export const getBusiness = (req, res) => {
 };
 
 export const getUser = (req, res) => {
-  User.getUser(db, 'business', (err, results) => {
+  User.getUsersByType(db, 'business', (err, results) => {
     if (err) {
       console.error('Error fetching users:', err);
       return res.status(500).json({ message: 'Error fetching users' });
     }
-    res.status(200).json({ users: results });
+
+    // Fetch the business name for users with null first_name and last_name
+    const userPromises = results.map((user) => {
+      if (!user.first_name && !user.last_name) {
+        return new Promise((resolve, reject) => {
+          Business.searchBusiness(db, user.user_id, (err, businessResult) => {
+            if (err) {
+              console.error(`Error fetching business name for user_id ${user.user_id}:`, err);
+              reject(err);
+            } else {
+              user.first_name = businessResult[0]?.business_name || null;
+              user.last_name = ''; // Ensure last_name is empty
+              resolve(user);
+            }
+          });
+        });
+      }
+      return Promise.resolve(user); // No change needed for users with names
+    });
+
+    Promise.all(userPromises)
+      .then((updatedUsers) => res.status(200).json({ users: updatedUsers }))
+      .catch((err) => {
+        console.error('Error resolving business names for users:', err);
+        res.status(500).json({ message: 'Error fetching business names' });
+      });
   });
 };
 
