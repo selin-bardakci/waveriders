@@ -87,7 +87,10 @@ export const getBoatById = (db, boatId) => {
 
 export const updateBoatListing = (db, boatId, updates) => {
   return new Promise((resolve, reject) => {
-    // Ensure photos is properly formatted as JSON array
+      if ('photos' in updates && !updates.photos) {
+      delete updates.photos;
+    }
+  
     if (updates.photos && typeof updates.photos === 'string') {
       try {
         // If it's already a JSON string, parse and stringify to validate
