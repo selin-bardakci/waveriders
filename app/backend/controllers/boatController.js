@@ -68,6 +68,34 @@ export const updateBoat = async (req, res) => {
   }
 };
 
+export const removeBoatListing = async (req, res) => {
+  const { boat_id } = req.params;
+
+  if (!boat_id) {
+    return res.status(400).json({ message: 'Boat ID is required' });
+  }
+
+  try {
+    const sql = `DELETE FROM boats WHERE boat_id = ?`;
+
+    db.query(sql, [boat_id], (err, result) => {
+      if (err) {
+        console.error('Error removing boat listing:', err);
+        return res.status(500).json({ message: 'Error removing boat listing' });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Boat listing not found' });
+      }
+
+      res.status(200).json({ message: 'Boat listing removed successfully' });
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 export const getBoatDetails = async (req, res) => {
   const boatId = req.params.id;
 
@@ -83,32 +111,3 @@ export const getBoatDetails = async (req, res) => {
   }
 };
 
-export const removeBoatListing = async (req, res) => {
-  const { boat_id } = req.params;
-
-  if (!boat_id) {
-    return res.status(400).json({ message: 'Boat ID is required' });
-  }
-
-  try {
-    // Get the existing boat to check for associated photos
-    const existingBoat = await getBoatById(db, boat_id);
-    if (!existingBoat) {
-      return res.status(404).json({ message: 'Boat not found' });
-    }
-
-    // Step 1: Delete the boat's photos from S3 (if any)
-    const existingPhotos = JSON.parse(existingBoat.photos || '[]');
-    for (const photoUrl of existingPhotos) {
-      await deleteFromS3(photoUrl); // Delete each old photo from S3
-    }
-
-    // Step 2: Remove the boat from the database
-    await removeBoatListingFromDb(db, boat_id);
-
-    res.status(200).json({ message: 'Boat listing removed successfully' });
-  } catch (error) {
-    console.error('Error removing boat listing:', error);
-    res.status(500).json({ message: 'Failed to remove boat listing' });
-  }
-};
