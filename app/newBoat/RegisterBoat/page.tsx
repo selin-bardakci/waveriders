@@ -29,29 +29,7 @@ const ports = [
 
 const AddNewBoatAndLicense = () => {
   const { user } = useAuth();
-  const [business_id, setBusinessId] = useState<number | null>(null); 
-  useEffect(() => {
-    const userId = user?.id; // Make sure user is not undefined or null
-    console.log("User ID in frontend:", userId);
-  
-    if (userId) {
-      axios.get(`http://localhost:8081/api/newBoat/${userId}`)
-        .then((response) => {
-          console.log("Response from API:", response.data);
-          setBusinessId(response.data.business_id);
-        })
-        .catch((error) => {
-          console.error("Error fetching business ID:", error);
-          setError("Error fetching business ID.");
-        });
-    } else {
-      console.log("No user ID found.");
-    }
-  }, [user]); // Depend on `user` to trigger the effect
-  
-
-  // Debugging Logs
-  
+  const { user, isLoggedIn, isLoading } = useAuth();
   const [port, setPort] = useState('');
   const [boatName, setBoatName] = useState('');
   const [boatType, setBoatType] = useState('');
@@ -63,10 +41,49 @@ const AddNewBoatAndLicense = () => {
   const [selectedTrips, setSelectedTrips] = useState<number[]>([]); // For trip selection
   const [termsAgreed] = useState(false);
   const [error, setError] = useState(''); // Add error state
-  const [license, setLicense] = useState<File | null>(null); // Declare state for license file
+  const [license, setLicense] = useState<File | null>(null); 
+  const [business_id, setBusinessId] = useState<number | null>(null); // Declare state for license file
   // const [step] = useState(2); // Progress tracker
 
   const router = useRouter();
+  useEffect(() => {
+    const checkAccessAndFetchBusinessId = async () => {
+      if (isLoading) return;
+
+      if (!isLoggedIn) {
+        router.push('/auth/sign-in'); // Giriş yapılmadıysa yönlendir
+        return;
+      }
+
+      if (user?.account_type !== 'business') {
+        router.push('/'); // Business olmayan kullanıcıları yönlendir
+        return;
+      }
+
+      try {
+        if (user?.id) {
+          const response = await axios.get(`http://localhost:8081/api/newBoat/${user.id}`);
+          setBusinessId(response.data.business_id);
+        }
+      } catch (error) {
+        console.error('Error fetching business ID:', error);
+        setError('Error fetching business ID.');
+      }
+    };
+
+    checkAccessAndFetchBusinessId();
+  }, [isLoading, isLoggedIn, user, router]);
+
+  if (isLoading || !isLoggedIn || user?.account_type !== 'business') {
+    // Yükleniyor ekranı ya da yönlendirme kontrolü sırasında hiçbir şey render edilmez
+    return null;
+  }
+
+  if (isLoading) {
+    return <p>Loading...</p>; // Yükleniyor ekranı
+  } 
+
+
 
   const handleFiles = (files: FileList) => {
     const fileArray = Array.from(files);
