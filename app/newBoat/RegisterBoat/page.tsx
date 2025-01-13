@@ -58,7 +58,7 @@ const AddNewBoatAndLicense = () => {
   const [boatDescription, setBoatDescription] = useState('');
   const [maxCapacity, setMaxCapacity] = useState('');
   const [rentalPrice, setRentalPrice] = useState('');
-  const [rentalPricePerDay] = useState(''); // New rental price per day state
+  const [rentalPricePerDay, setRentalPricePerDay] = useState(''); // New rental price per day state
   const [photos, setPhotos] = useState<File[]>([]);
   const [selectedTrips, setSelectedTrips] = useState<number[]>([]); // For trip selection
   const [termsAgreed] = useState(false);
@@ -147,7 +147,12 @@ const AddNewBoatAndLicense = () => {
       setError('Business ID is required.');
       return;
     }
-  
+
+     if (selectedTrips.includes(4) && !rentalPricePerDay) {
+      setError('Please enter the price per day for overnight trips.');
+      return;
+
+    }
     setError(''); // Reset error state
   
     // Prepare FormData
@@ -164,12 +169,6 @@ const AddNewBoatAndLicense = () => {
     photos.forEach((photo) => formData.append('photos', photo));
     if (license) formData.append('license', license);  // Add license file to FormData
   
-    // Debugging: Log the FormData contents
-    console.log("FormData Contents:");
-    const formDataEntries = Array.from(formData.entries()); // Convert to array
-    formDataEntries.forEach(([key, value]) => {
-      console.log(`${key}: ${value}`);
-    });
 
     try {
       const response = await axios.post('http://localhost:8081/api/newBoat/registerBoat', formData, {
@@ -201,7 +200,7 @@ const AddNewBoatAndLicense = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col">
+   <div className="relative min-h-screen flex flex-col">
       {/* Background Image */}
       <div className="absolute inset-0 bg-cover bg-center opacity-70" style={{ backgroundImage: 'url(/images/deneme2.jpg)' }}></div>
 
@@ -224,7 +223,6 @@ const AddNewBoatAndLicense = () => {
                 value={boatName}
                 onChange={(e) => setBoatName(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                id="uniqueLicenseInput"
               />
             </div>
 
@@ -272,6 +270,19 @@ const AddNewBoatAndLicense = () => {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
+            {/* Price per Day (only for overnight trips) */}
+            {selectedTrips.includes(4) && (
+              <div className="mb-4">
+                <input
+                  type="number"
+                  placeholder="Rental Price per Day"
+                  value={rentalPricePerDay}
+                  onChange={(e) => setRentalPricePerDay(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
 
             {/* Port Selection */}
             <div className="mb-6">
@@ -393,14 +404,13 @@ const AddNewBoatAndLicense = () => {
             {error && <p className="text-red-500 text-center mt-4">{error}</p>}
 
             {/* Submit */}
-             <div className="text-center">
+            <div className="text-center">
               <button
                 type="submit"
                 className="w-full bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition"
               >
                 Submit
               </button>
-            
             </div>
           </form>
         </div>
