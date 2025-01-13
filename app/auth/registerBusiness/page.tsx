@@ -4,6 +4,7 @@ import { useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { BusinessProvider } from '../../context/BusinessContext';
+
 const RegisterBusiness = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -39,6 +40,20 @@ const RegisterBusiness = () => {
     }
   };
 
+  // Password Validation Function
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 7) {
+      return 'Password must be at least 7 characters long.';
+    }
+    if (!/[A-Z]/.test(pwd)) {
+      return 'Password must contain at least one uppercase letter.';
+    }
+    if (!/[0-9]/.test(pwd)) {
+      return 'Password must contain at least one number.';
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent default form submission behavior
 
@@ -50,6 +65,13 @@ const RegisterBusiness = () => {
 
     if (!email || !phone || !password) {
       setError('Email, Phone Number, and Password are required.');
+      return;
+    }
+
+    // Password Validation
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
@@ -196,8 +218,14 @@ const RegisterBusiness = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
+                  validatePassword(password) ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                }`}
               />
+              {/* Password Requirements */}
+              <div className="mt-2 text-sm text-gray-600">
+                Password must be at least 7 characters long, contain at least one uppercase letter, and one number.
+              </div>
             </div>
 
             {/* Terms and Conditions Checkbox */}
