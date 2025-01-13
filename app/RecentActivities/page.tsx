@@ -4,55 +4,64 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { FaStar } from "react-icons/fa";
 import BoatListingCard from "../components/boatListingCard/BoatListingCard";
-import { format, parseISO, isValid as isValidDateFn, isSameDay } from 'date-fns';
+import { format, parseISO, isValid as isValidDateFn } from 'date-fns';
 
-// Tip Tanımları
+// Type Definitions
+interface Rating {
+  general_rating: number;
+  driver_rating: number;
+  cleanliness_rating: number;
+  review_text?: string;
+}
+
 interface BookingDetails {
   rental_id: string;
   boat_id: string;
-  start_date: string; // 'YYYY-MM-DD' formatında
-  end_date?: string;  // 'YYYY-MM-DD' formatında, opsiyonel
-  start_time?: string; // 'HH:mm' formatında, opsiyonel
-  end_time?: string;  // 'HH:mm' formatında, opsiyonel
-  total_price: number; // Değiştirildi: rental_price -> total_price
-  status: string;
-  rating?: any;       // Rating yapısına göre düzenleyin
   name?: string;
-  comment?: string;
+  start_date: string; // 'YYYY-MM-DD' format
+  end_date?: string;  // 'YYYY-MM-DD' format, optional
+  start_time?: string; // 'HH:mm' format, optional
+  end_time?: string;  // 'HH:mm' format, optional
+  total_price: number; // Changed from rental_price to total_price
+  status: string;
+  rating?: Rating | null; // Rating structure
 }
 
 const CustomerRecentActivities = () => {
-  const [activities, setActivities] = useState<any[]>([]);
+  const [activities, setActivities] = useState<BookingDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Modal görünürlük durumları
+  // Modal visibility states
   const [showRankModal, setShowRankModal] = useState(false);
   const [showReviewConfirmationModal, setShowReviewConfirmationModal] = useState(false);
   const [showBookingCancelModal, setShowBookingCancelModal] = useState(false);
   const [showBookingDetailsModal, setShowBookingDetailsModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
-  const [currentActivity, setCurrentActivity] = useState<any>(null);
+  const [currentActivity, setCurrentActivity] = useState<BookingDetails | null>(null);
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
 
-  // Rating durumları
+  // Rating states
   const [generalRating, setGeneralRating] = useState(0);
   const [driverRating, setDriverRating] = useState(0);
   const [cleanlinessRating, setCleanlinessRating] = useState(0);
   const [comment, setComment] = useState("");
 
-  // Gönderim mesaj durumu
+  // Submission message state
   const [submissionMessage, setSubmissionMessage] = useState<{ type: string; text: string } | null>(null);
 
-  // Doğrulama hataları durumu
+  // Validation errors state
   const [validationErrors, setValidationErrors] = useState({
     general: false,
     driver: false,
     cleanliness: false,
   });
 
-  // Start Date'in Geçerli Olduğunu Kontrol Etme
+  // Tooltip state for disabled submit button (optional)
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  // Function to validate date
   const isValidDate = (dateString?: string): boolean => {
     if (!dateString) return false;
     try {
@@ -63,24 +72,30 @@ const CustomerRecentActivities = () => {
     }
   };
 
-  // Start Time ve End Time'in Geçerli Olduğunu Kontrol Etme
+  // Function to validate time
   const isValidTime = (timeString?: string): boolean => {
     if (!timeString) return false;
     const timeRegex = /^([0-1]\d|2[0-3]):([0-5]\d)$/;
     return timeRegex.test(timeString);
   };
 
-  // Son kiralamaları al
+  // Fetch recent rentals
   useEffect(() => {
     const fetchRecentRentals = async () => {
       try {
         const token = localStorage.getItem("token");
+        if (!token) {
+          setError("Authentication token not found. Please log in.");
+          setLoading(false);
+          return;
+        }
+
         const response = await axios.get("http://localhost:8081/api/rentals/recent", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (response.status === 200) {
-          const sortedActivities = response.data.sort((a: any, b: any) => {
+          const sortedActivities = response.data.sort((a: BookingDetails, b: BookingDetails) => {
             if (a.status === "ongoing" && b.status !== "ongoing") return -1;
             if (a.status !== "ongoing" && b.status === "ongoing") return 1;
             if (!a.rating && b.rating) return -1;
@@ -103,8 +118,8 @@ const CustomerRecentActivities = () => {
     fetchRecentRentals();
   }, []);
 
-  // Modal açma ve kapatma fonksiyonları
-  const openRankModal = (activity: any) => {
+  // Modal open and close functions
+  const openRankModal = (activity: BookingDetails) => {
     setCurrentActivity(activity);
     setShowRankModal(true);
   };
@@ -118,15 +133,18 @@ const CustomerRecentActivities = () => {
     setValidationErrors({ general: false, driver: false, cleanliness: false });
   };
 
-  const openBookingDetailsModal = async (activity: any) => {
+  const openBookingDetailsModal = async (activity: BookingDetails) => {
     setCurrentActivity(activity);
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Authentication token not found. Please log in.");
+        return;
+      }
+
       const response = await axios.get(`http://localhost:8081/api/rentals/${activity.rental_id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      console.log("Booking Details Response:", response.data); // Hata ayıklama için log
 
       if (response.status === 200) {
         setBookingDetails(response.data);
@@ -143,7 +161,7 @@ const CustomerRecentActivities = () => {
     setBookingDetails(null);
   };
 
-  const openDetailsModal = (activity: any) => {
+  const openDetailsModal = (activity: BookingDetails) => {
     setCurrentActivity(activity);
     setShowDetailsModal(true);
   };
@@ -164,43 +182,66 @@ const CustomerRecentActivities = () => {
     setShowBookingCancelModal(false);
   };
 
-  // Rezervasyon iptal etme
+  // Cancel booking
   const cancelBooking = async () => {
+    if (!currentActivity) return;
+
     try {
       const token = localStorage.getItem("token");
-      if (currentActivity) {
-        await axios.delete(`http://localhost:8081/api/rentals/${currentActivity.rental_id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+      if (!token) {
+        setError("Authentication token not found. Please log in.");
+        return;
       }
 
+      await axios.delete(`http://localhost:8081/api/rentals/${currentActivity.rental_id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       setActivities((prev) =>
-        prev.filter((activity: any) => currentActivity && activity.rental_id !== currentActivity.rental_id)
+        prev.filter((activity) => activity.rental_id !== currentActivity.rental_id)
       );
       closeBookingCancelModal();
       closeBookingDetailsModal();
+      setSubmissionMessage({ type: "success", text: "Booking has been canceled successfully!" });
     } catch (err) {
       console.error("Error cancelling booking:", err);
       setError("Failed to cancel booking. Please try again later.");
     }
   };
 
-  // Puan kaydetme
+  // Save rating
   const saveRank = async () => {
-    // Doğrulama hatalarını sıfırla
+    // Reset validation errors
     setValidationErrors({
       general: !generalRating,
       driver: !driverRating,
       cleanliness: !cleanlinessRating,
     });
 
-    // Herhangi bir puan eksikse işlemi durdur
+    // Debugging: Log validation errors
+    console.log("Validation Errors:", {
+      general: !generalRating,
+      driver: !driverRating,
+      cleanliness: !cleanlinessRating,
+    });
+
+    // Stop if any rating is missing
     if (!generalRating || !driverRating || !cleanlinessRating) {
-      return; // Her kategori yanında uyarılar görüntülenecek
+      return;
+    }
+
+    if (!currentActivity) {
+      setError("No activity selected for rating.");
+      return;
     }
 
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Authentication token not found. Please log in.");
+        return;
+      }
+
       const response = await axios.post(
         "http://localhost:8081/api/rentals/review",
         {
@@ -216,21 +257,26 @@ const CustomerRecentActivities = () => {
       );
 
       if (response.status === 201) {
-        const updatedActivities = await axios.get("http://localhost:8081/api/rentals/recent", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const sortedActivities = updatedActivities.data.sort((a: any, b: any) => {
-          if (a.status === "ongoing" && b.status !== "ongoing") return -1;
-          if (a.status !== "ongoing" && b.status === "ongoing") return 1;
-          if (!a.rating && b.rating) return -1;
-          if (a.rating && !b.rating) return 1;
-          return 0;
-        });
-
-        setActivities(sortedActivities);
+        // Update the specific activity with the new rating
+        setActivities((prev) =>
+          prev.map((activity) =>
+            activity.rental_id === currentActivity.rental_id
+              ? {
+                  ...activity,
+                  rating: {
+                    general_rating: generalRating,
+                    driver_rating: driverRating,
+                    cleanliness_rating: cleanlinessRating,
+                    review_text: comment,
+                  },
+                }
+              : activity
+          )
+        );
         closeRankModal();
         setSubmissionMessage({ type: "success", text: "Your review has been submitted successfully!" });
+      } else {
+        throw new Error("Failed to submit review");
       }
     } catch (err) {
       console.error("Error saving rating:", err);
@@ -238,28 +284,57 @@ const CustomerRecentActivities = () => {
     }
   };
 
-  // İncelemeyi kaldırma
-  const handleRemoveReview = async (rental_id: any) => {
+  // Remove review
+  const handleRemoveReview = async (rental_id: string) => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Authentication token not found. Please log in.");
+        return;
+      }
+
       await axios.delete(`http://localhost:8081/api/rentals/review/${rental_id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setActivities((prev) => prev.filter((activity) => activity.rental_id !== rental_id));
+      // Update the specific activity's rating fields to null
+      setActivities((prev) =>
+        prev.map((activity) => {
+          if (activity.rental_id === rental_id) {
+            return {
+              ...activity,
+              rating: null,
+            };
+          }
+          return activity;
+        })
+      );
       closeReviewConfirmationModal();
+      setSubmissionMessage({ type: "success", text: "Your review has been removed successfully!" });
     } catch (err) {
       console.error("Error removing review:", err);
       setError("Failed to remove review. Please try again later.");
     }
   };
 
+  // Handle mouse enter and leave for tooltip (optional)
+  const handleMouseEnter = () => {
+    if (!generalRating || !driverRating || !cleanlinessRating) {
+      setShowTooltip(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setShowTooltip(false);
+  };
+
+  // Render loading or error states
   if (loading) return <p>Loading your recent activities...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <div className="min-h-screen bg-gray-100 py-4">
-      {/* Gönderim Mesajı */}
+      {/* Submission Message */}
       {submissionMessage && (
         <div
           className={`mb-4 p-4 rounded ${
@@ -273,25 +348,27 @@ const CustomerRecentActivities = () => {
       <div className="container mx-auto py-4 w-full md:w-3/4 lg:w-4/5">
         <h2 className="text-2xl font-bold text-gray-800 mb-8">Recent Activities</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {activities.map((activity: any) => (
+          {activities.map((activity) => (
             <div key={activity.rental_id} className="relative">
-              <BoatListingCard boat_id={activity.boat_id} />
-              <div className="flex justify-center items-center mt-4">
-                {activity.status === "completed" && !activity.rating ? (
+              <BoatListingCard boat_id={Number(activity.boat_id)} />
+              <div className="flex justify-center items-center mt-4 space-x-2">
+                {activity.status === "completed" && !activity.rating && (
                   <button
                     onClick={() => openRankModal(activity)}
                     className="bg-blue-500 text-white text-sm font-semibold py-1 px-4 rounded hover:bg-blue-600 transition"
                   >
                     Rank Now
                   </button>
-                ) : activity.status === "completed" && activity.rating ? (
+                )}
+                {activity.status === "completed" && activity.rating && (
                   <button
                     onClick={() => openDetailsModal(activity)}
                     className="bg-blue-500 text-white text-sm font-semibold py-1 px-4 rounded hover:bg-blue-600 transition"
                   >
                     See Rating Details
                   </button>
-                ) : activity.status === "ongoing" ? (
+                )}
+                {activity.status === "ongoing" && (
                   <>
                     <button
                       onClick={() => openBookingDetailsModal(activity)}
@@ -306,7 +383,7 @@ const CustomerRecentActivities = () => {
                       Cancel Booking
                     </button>
                   </>
-                ) : null}
+                )}
               </div>
             </div>
           ))}
@@ -343,7 +420,7 @@ const CustomerRecentActivities = () => {
               </div>
             )}
             {/* Conditional Rendering of Times */}
-            {bookingDetails.end_date && bookingDetails.end_date === bookingDetails.start_date ? (
+            {bookingDetails.end_date && bookingDetails.end_date === bookingDetails.start_date && (
               <>
                 <div className="text-sm font-medium text-gray-700 mb-2">
                   <p>Start Time:</p>
@@ -362,12 +439,13 @@ const CustomerRecentActivities = () => {
                   )}
                 </div>
               </>
-            ) : null}
+            )}
             <p className="text-sm font-medium text-gray-700">Total Price: ${bookingDetails.total_price}</p>
             <div className="flex justify-end space-x-4 mt-4">
               <button
                 onClick={closeBookingDetailsModal}
                 className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+                type="button"
               >
                 Close
               </button>
@@ -376,8 +454,8 @@ const CustomerRecentActivities = () => {
         </div>
       )}
 
-      {/* Onay Modal */}
-      {showBookingCancelModal && (
+      {/* Booking Cancellation Confirmation Modal */}
+      {showBookingCancelModal && currentActivity && (
         <div
           className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
           role="dialog"
@@ -390,12 +468,14 @@ const CustomerRecentActivities = () => {
               <button
                 onClick={closeBookingCancelModal}
                 className="bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+                type="button"
               >
                 Cancel
               </button>
               <button
                 onClick={cancelBooking}
                 className="bg-red-500 text-white text-sm px-4 py-2 rounded-lg hover:bg-red-600 transition"
+                type="button"
               >
                 Confirm
               </button>
@@ -405,7 +485,7 @@ const CustomerRecentActivities = () => {
       )}
 
       {/* Rank Modal */}
-      {showRankModal && (
+      {showRankModal && currentActivity && (
         <div
           className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
           role="dialog"
@@ -413,7 +493,7 @@ const CustomerRecentActivities = () => {
           aria-modal="true"
         >
           <div className="bg-white p-8 rounded-lg shadow-lg text-center w-96" id="rank-modal-title">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Rate {currentActivity.name}</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Rate {currentActivity.name || "this boat"}</h3>
 
             {/* General Rating */}
             <div className="mb-4">
@@ -481,31 +561,44 @@ const CustomerRecentActivities = () => {
               onChange={(e) => setComment(e.target.value)}
             />
 
-            {/* Butonlar */}
+            {/* Buttons */}
             <div className="flex justify-end space-x-4 mt-4">
               <button
                 onClick={closeRankModal}
                 className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+                type="button" // Explicitly set type to prevent form submission
               >
                 Cancel
               </button>
-              <button
-                onClick={saveRank}
-                className={`bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition ${
-                  !generalRating || !driverRating || !cleanlinessRating
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
-              >
-                Submit
-              </button>
+              <div className="relative">
+                <button
+                  onClick={saveRank}
+                  className={`bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition ${
+                    !generalRating || !driverRating || !cleanlinessRating
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                  // disabled={!generalRating || !driverRating || !cleanlinessRating} // Removed disabled
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                  type="button" // Explicitly set type to prevent form submission
+                >
+                  Submit
+                </button>
+                {/* Tooltip (optional) */}
+                {showTooltip && (
+                  <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-700 text-white text-xs rounded py-1 px-2">
+                    Please fill out all rating fields to submit.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Ranking Details Modal */}
-      {showDetailsModal && currentActivity && (
+      {showDetailsModal && currentActivity && currentActivity.rating && (
         <div
           className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
           role="dialog"
@@ -522,7 +615,7 @@ const CustomerRecentActivities = () => {
                 {[...Array(5)].map((_, index) => (
                   <FaStar
                     key={index}
-                    className={index < currentActivity.rating ? "text-yellow-500" : "text-gray-300"}
+                    className={index < (currentActivity.rating?.general_rating || 0) ? "text-yellow-500" : "text-gray-300"}
                   />
                 ))}
               </div>
@@ -535,7 +628,7 @@ const CustomerRecentActivities = () => {
                 {[...Array(5)].map((_, index) => (
                   <FaStar
                     key={index}
-                    className={index < currentActivity.driver ? "text-yellow-500" : "text-gray-300"}
+                    className={index < (currentActivity.rating?.driver_rating || 0) ? "text-yellow-500" : "text-gray-300"}
                   />
                 ))}
               </div>
@@ -548,25 +641,28 @@ const CustomerRecentActivities = () => {
                 {[...Array(5)].map((_, index) => (
                   <FaStar
                     key={index}
-                    className={index < currentActivity.cleanliness ? "text-yellow-500" : "text-gray-300"}
+                    className={index < (currentActivity.rating?.cleanliness_rating || 0) ? "text-yellow-500" : "text-gray-300"}
                   />
                 ))}
               </div>
             </div>
 
             {/* Comment */}
-            <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-              <p className="font-semibold text-gray-700">Comment:</p>
-              <p className="text-sm text-gray-600">
-                {currentActivity.comment || "No comment provided"}
-              </p>
-            </div>
+            {currentActivity.rating?.review_text && (
+              <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+                <p className="font-semibold text-gray-700">Comment:</p>
+                <p className="text-sm text-gray-600">
+                  {currentActivity.rating.review_text}
+                </p>
+              </div>
+            )}
 
-            {/* Butonlar */}
+            {/* Buttons */}
             <div className="flex justify-between mt-4">
               <button
                 onClick={closeDetailsModal}
                 className="bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+                type="button"
               >
                 Close
               </button>
@@ -576,6 +672,7 @@ const CustomerRecentActivities = () => {
                   setShowReviewConfirmationModal(true);
                 }}
                 className="bg-red-500 text-white text-sm px-4 py-2 rounded-lg hover:bg-red-600 transition"
+                type="button"
               >
                 Remove Rating
               </button>
@@ -585,7 +682,7 @@ const CustomerRecentActivities = () => {
       )}
 
       {/* Review Confirmation Modal */}
-      {showReviewConfirmationModal && (
+      {showReviewConfirmationModal && currentActivity && (
         <div
           className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
           role="dialog"
@@ -603,17 +700,16 @@ const CustomerRecentActivities = () => {
                   setShowDetailsModal(true);
                 }}
                 className="bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+                type="button"
               >
                 Cancel
               </button>
               <button
                 onClick={() => {
-                  if (currentActivity) {
-                    handleRemoveReview(currentActivity.rental_id);
-                  }
-                  setShowReviewConfirmationModal(false);
+                  handleRemoveReview(currentActivity.rental_id);
                 }}
                 className="bg-red-500 text-white text-sm px-4 py-2 rounded-lg hover:bg-red-600 transition"
+                type="button"
               >
                 Confirm
               </button>
