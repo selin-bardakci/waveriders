@@ -508,11 +508,30 @@ export const registerBoat = async (req, res) => {
       }
 
       res.status(201).json({ message: 'Boat registered successfully', boat: result });
+      const boatId = result.insertId;
+
+      // Insert into verification table
+      const verificationQuery = `
+        INSERT INTO verification (
+          boat_id,
+          boat_approvement,
+          verification_status
+        ) VALUES (?, 1, 'inReview')
+      `;
+
+      db.query(verificationQuery, [boatId], (verificationErr) => {
+        if (verificationErr) {
+          console.error('Error adding boat to verification:', verificationErr);
+          return res.status(500).json({ message: 'Error creating verification record' });
+        }
     });
+  });
+    
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 
 
