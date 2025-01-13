@@ -83,3 +83,23 @@ export const Boat = {
   }
   
 };
+
+
+export class Boat2 {
+  static createBoat(db, boatData, callback) {
+    const query = 'INSERT INTO boats SET ?';
+    db.query(query, boatData, callback);
+  }
+
+  static async getLastInsertedBoat(db) {
+    return new Promise((resolve, reject) => {
+      db.query(
+        'SELECT * FROM boats WHERE boat_id = LAST_INSERT_ID()',
+        (err, results) => {
+          if (err) reject(err);
+          else resolve(results[0]);
+        }
+      );
+    });
+  }
+}
