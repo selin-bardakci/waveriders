@@ -16,7 +16,21 @@ const SignInPage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      router.push('/'); // Redirect authenticated users to homepage
+      axios
+        .get('http://localhost:8081/api/users/profile', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((response) => {
+          const { account_type } = response.data;
+          if (account_type === 'admin') {
+            router.push('/admin/control'); 
+          } else {
+            router.push('/'); 
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem('token'); 
+        });
     }
   }, [router]);
 
