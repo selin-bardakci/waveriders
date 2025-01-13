@@ -4,6 +4,7 @@ import { User } from '../models/userModel.js';
 import { Business } from '../models/businessModel.js';
 import { Boat } from '../models/boatModel.js';
 import { Captain } from '../models/captainModel.js';
+import { sendVerificationEmail } from '../routes/emailService.js'; 
 import multer from 'multer';
 import path from 'path';
 import { uploadToS3 } from '../config/s3.js';
