@@ -46,13 +46,13 @@ const AllListings = () => {
     setCurrentBoatId(null);
   };
 
-  const handleRemoveListing = async () => {
+const handleRemoveListing = async () => {
     if (!currentBoatId) return;
 
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:8081/api/boats/${currentBoatId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      await axios.delete(http://localhost:8081/api/boats/${currentBoatId}, {
+        headers: { Authorization: Bearer ${token} },
       });
       setListings((prev) => prev.filter((boat: any) => boat.boat_id !== currentBoatId));
     } catch (err) {
@@ -62,6 +62,7 @@ const AllListings = () => {
       closeConfirmModal();
     }
   };
+  
 
   if (loading) return <p>Loading listings...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
