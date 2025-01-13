@@ -15,6 +15,7 @@ import favoriteRoutes from './routes/favoriteRoutes.js';
 import businessRoutes from './routes/businessRoutes.js';
 import newboatRoutes from './routes/newboatRoutes.js';
 import tripTypesRoutes from './routes/tripTypesRoutes.js'; // Add this import
+import verificationRoutes from './routes/verificationRoutes.js';
 import './scheduler.js'; 
 
 const app = express();
@@ -56,6 +57,7 @@ app.use("/api/favorites", favoriteRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/boats', boatRoutes);
 app.use('/api/newBoat', newboatRoutes);
+app.use('/api/verification', verificationRoutes);
 checkAndUpdateRentalStatus();
 
 // Start the server
