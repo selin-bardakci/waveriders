@@ -31,6 +31,8 @@ npm install moment
 npm install react-datepicker
 # and
 npm install node-cron
+# and
+npm i --save-dev @types/react-slider
 
 ```
 
