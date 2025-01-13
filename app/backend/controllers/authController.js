@@ -99,12 +99,8 @@ export const registerBusiness = async (req, res) => {
   }
 };
 
-
-
 export const registerUser = async (req, res) => {
-  console.log("registerUser controller function hit");
-  console.log("Request body:", req.body);
-  const { name, lastname, email, password, phone,  birthdate } = req.body;
+  const { name, lastname, email, password, phone, birthdate } = req.body;
 
   if (!name || !lastname || !email || !password || !phone || !birthdate) {
     return res.status(400).json({ message: 'All fields are required' });
@@ -113,23 +109,24 @@ export const registerUser = async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    User.createUser(db, {
-      first_name: name,
-      last_name: lastname,
-      email,
-      password: hashedPassword,
-      phone_number: phone,
-      date_of_birth: birthdate,
-      account_type: 'customer'
-    }, (err, result) => {
-      if (err) {
-        console.error('Error creating user:', err);
-        return res.status(500).json({ message: 'Server error' });
-      }
-      res.status(200).json({ message: 'Registration successful' });
+    // Insert the user into the database
+    const user = await new Promise((resolve, reject) => {
+      const sql = `
+        INSERT INTO users (first_name, last_name, email, password, phone_number, date_of_birth, account_type)
+        VALUES (?, ?, ?, ?, ?, ?, 'customer')
+      `;
+      db.query(sql, [name, lastname, email, hashedPassword, phone, birthdate], (err, result) => {
+        if (err) return reject(new Error('Error creating user.'));
+        resolve(result);
+      });
     });
-  } catch (err) {
-    console.error('Error hashing password:', err);
+
+    // Send verification email
+    await sendVerificationEmail(email);
+
+    return res.status(200).json({ message: 'Registration successful. Please verify your email.' });
+  } catch (error) {
+    console.error('Error in registerUser:', error.message);
     return res.status(500).json({ message: 'Server error' });
   }
 };
@@ -386,6 +383,25 @@ export const loginUser = async (req, res) => {
       }
 
       const user = results[0];
+
+      // Check if email is verified
+      const isEmailVerified = await new Promise((resolve, reject) => {
+        const sql = `SELECT * FROM email_verifications WHERE user_id = ? AND expiration > NOW()`;
+        db.query(sql, [user.user_id], (err, results) => {
+          if (err) {
+            console.error('Error checking email verification status:', err);
+            return reject(new Error('Internal server error'));
+          }
+          resolve(results.length === 0); // If no valid verification token exists, email is verified
+        });
+      });
+
+      if (!isEmailVerified) {
+        console.log('Login failed: Email is not verified.');
+        return res.status(403).json({ message: 'Please verify your email before logging in.' });
+      }
+
+      // Check password
       const isPasswordValid = await bcrypt.compare(password, user.password);
 
       if (!isPasswordValid) {
@@ -393,13 +409,13 @@ export const loginUser = async (req, res) => {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
+      // Generate JWT token
       const token = jwt.sign(
-        { id: user.user_id, email: user.email, account_type: user.account_type }, 
-        process.env.JWT_SECRET, 
-        { expiresIn: '1h' } 
+        { id: user.user_id, email: user.email, account_type: user.account_type },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
       );
 
-     
       console.log('Login successful for user:', {
         id: user.user_id,
         email: user.email,
@@ -409,11 +425,10 @@ export const loginUser = async (req, res) => {
 
       res.status(200).json({
         message: 'Login successful',
-        token, 
+        token,
         user: { id: user.user_id, email: user.email, account_type: user.account_type },
       });
     });
-    
   } catch (err) {
     console.error('Unexpected error:', err);
     res.status(500).json({ message: 'Internal server error' });
