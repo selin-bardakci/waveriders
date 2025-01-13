@@ -15,7 +15,7 @@ router.get('/:id', authenticateToken, (req, res, next) => {
 
 router.get('/:id', authenticateToken, getBoatDetails);
 router.put('/:id', authenticateToken, upload, updateBoat);
-router.delete('/:id', authenticateToken, removeBoatListing);
+router.delete('/:boat_id', authenticateToken, removeBoatListing);
 
 router.get('/:id/reviews', async (req, res) => {
   const { id } = req.params;
