@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Line } from 'react-chartjs-2';
+import { useAuth } from '../../context/AuthContext';
 import BoatListingCard from "../../components/boatListingCard/BoatListingCard";
 import BoatListingCard2 from "../../components/boatListingCard2/boatListingCard2";
 
@@ -21,6 +22,7 @@ import { FaArrowRight } from 'react-icons/fa';
 // Register chart components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 const BusinessDashboard = () => {
+  const { user, isLoggedIn } = useAuth();
   const [businessOwner, setBusinessOwner] = useState('');
   const [customerCounts, setCustomerCounts] = useState([]);
   const [dashboardListings, setDashboardListings] = useState([]);
@@ -29,6 +31,16 @@ const BusinessDashboard = () => {
   const router = useRouter();
 
   useEffect(() => {
+    if (!isLoggedIn) {
+      router.push('/auth/sign-in'); 
+      return;
+    }
+
+    if (user?.account_type !== 'business') {
+      router.push('/'); 
+      return;
+    }
+    
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -111,7 +123,11 @@ const BusinessDashboard = () => {
     };
 
     fetchDashboardData();
-  }, []);
+   }, [isLoggedIn, user, router]);
+
+  if (!isLoggedIn || user?.account_type !== 'business') {
+    return null; // Kullanıcı uygun değilse hiçbir şey render etme
+  }
 
 
   // Determine the months to display up to the current month
