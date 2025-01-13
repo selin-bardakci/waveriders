@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import BoatListingCard from "../../components/boatListingCard/BoatListingCard";
+import { useRouter } from 'next/navigation';
 
 const AllListings = () => {
+  const router = useRouter();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -53,7 +55,6 @@ const AllListings = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setListings((prev) => prev.filter((boat: any) => boat.boat_id !== currentBoatId));
-      alert("Listing removed successfully.");
     } catch (err) {
       console.error("Error removing listing:", err);
       alert("Failed to remove listing.");
@@ -82,12 +83,12 @@ const AllListings = () => {
                   Remove Listing
                 </button>
                 <div className="flex justify-center mt-4">
-                  <button
-                    onClick={() => console.log("Edit listing functionality here!")}
-                    className="bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-400 transition"
-                  >
-                    Edit Your Listing
-                  </button>
+                <button
+              onClick={() => router.push(`/listings/${boat.boat_id}/edit`)}
+              className="bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+            >
+             Edit Your Listing
+              </button>
                 </div>
               </div>
             ))
