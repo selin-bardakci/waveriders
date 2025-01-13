@@ -113,7 +113,7 @@ const NavBar = () => {
             href="/auth/ListingsPage" className="text-base font-medium py-2 px-4 hover:bg-gray-200 transition rounded-md"> 
             Rent a boat</Link>
             <Link 
-            href="/newBoat/addNewBoat" className="px-5 py-2 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition" > Add Boat
+            href="/newBoat/RegisterBoat" className="px-5 py-2 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition" > Add Boat
             </Link>
 
           <div className="relative">
