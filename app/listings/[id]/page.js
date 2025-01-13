@@ -1,4 +1,5 @@
 'use client';
+
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -16,6 +17,15 @@ const mapTripTypesToDescriptions = {
   day: "Day trip (3-6 hours)",
   sunrise: "Sunrise & Sunset trip (7-12 hours)",
   overnight: "Overnight adventure (1+ days)",
+};
+
+// Helper function to format date as 'yyyy-MM-dd' in local timezone
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  // Months are zero-indexed in JavaScript Date objects
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 const BoatListingDetails = () => {
@@ -36,64 +46,64 @@ const BoatListingDetails = () => {
   const [reviews, setReviews] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  
-    useEffect(() => {
-      const fetchListingAndFavoriteStatus = async () => {
-        try {
-          const listingResponse = await axios.get(`http://localhost:8081/api/listings/${id}`);
-          if (listingResponse.status === 200) {
-            const fetchedListing = listingResponse.data;
-    
 
-            if (typeof fetchedListing.trip_types === 'string') {
-              fetchedListing.tripTypes = [fetchedListing.trip_types]; 
-            } else if (Array.isArray(fetchedListing.trip_types)) {
-              fetchedListing.tripTypes = fetchedListing.trip_types; 
-            } else {
-              fetchedListing.tripTypes = []; 
-            }
-    
-            setListing(fetchedListing); 
-          }
-    
+  useEffect(() => {
+    const fetchListingAndFavoriteStatus = async () => {
+      try {
+        const listingResponse = await axios.get(`http://localhost:8081/api/listings/${id}`);
+        if (listingResponse.status === 200) {
+          const fetchedListing = listingResponse.data;
 
-          const token = localStorage.getItem('token');
-          if (token) {
-            const favoriteResponse = await axios.get('http://localhost:8081/api/favorites', {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-    
-            const isFavoriteBoat = favoriteResponse.data.favorites.some((boat) => boat.boat_id === Number(id));
-            setIsFavorite(isFavoriteBoat); 
+          if (typeof fetchedListing.trip_types === 'string') {
+            fetchedListing.tripTypes = fetchedListing.trip_types.split(',').map(type => type.trim());
+          } else if (Array.isArray(fetchedListing.trip_types)) {
+            fetchedListing.tripTypes = fetchedListing.trip_types.flatMap(type => type.split(',').map(t => t.trim()));
+          } else {
+            fetchedListing.tripTypes = [];
           }
-        } catch (error) {
-          console.error('Error fetching boat details or checking favorites:', error);
-          setError(error.message || 'Failed to fetch boat details. Please try again.');
+
+          setListing(fetchedListing);
         }
-      };
-    
-      fetchListingAndFavoriteStatus(); 
-    
-    }, [id]); 
-    
-    const handleBackButtonClick = () => {
-      const source = sessionStorage.getItem("navigation_source");
 
-      if (source === "homepage") {
-        router.push("/");
-      } else if (source === "ListingsPage") {
-        router.push("/ListingsPage");
-      } else if (source === "allListings") {
-        router.push("/allListings"); // Navigate back to allListings
-      } else if (source === "Favourites") {
-        router.push("/Favourites"); // Navigate back to allListings
-      }else if (source === "RecentActivities") {
-        router.push("/RecentActivities"); // Navigate back to allListings
-      }  else {
-        router.back(); // Fallback navigation
+        const token = localStorage.getItem('token');
+        console.log("Fetched token:", token);
+        if (token) {
+          const favoriteResponse = await axios.get('http://localhost:8081/api/favorites', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          const isFavoriteBoat = favoriteResponse.data.favorites.some((boat) => boat.boat_id === Number(id));
+          setIsFavorite(isFavoriteBoat); 
+          console.log("Is favorite boat:", isFavoriteBoat);
+        }
+      } catch (error) {
+        console.error('Error fetching boat details or checking favorites:', error);
+        setError(error.response?.data?.message || 'Failed to fetch boat details. Please try again.');
       }
     };
-    
+
+    fetchListingAndFavoriteStatus(); 
+
+  }, [id]); 
+
+  // Enhanced handleBackButtonClick function
+  const handleBackButtonClick = () => {
+    const source = sessionStorage.getItem("navigation_source");
+
+    if (source === "homepage") {
+      router.push("/");
+    } else if (source === "ListingsPage") {
+      router.push("/ListingsPage");
+    } else if (source === "allListings") {
+      router.push("/allListings"); // Navigate back to allListings
+    } else if (source === "Favourites") {
+      router.push("/Favourites"); // Navigate back to Favourites
+    } else if (source === "RecentActivities") {
+      router.push("/RecentActivities"); // Navigate back to RecentActivities
+    } else {
+      router.back(); // Fallback navigation
+    }
+  };
 
   useEffect(() => {
     const fetchUnavailableDates = async () => {
@@ -111,6 +121,7 @@ const BoatListingDetails = () => {
 
     fetchUnavailableDates();
   }, [id]);
+
   useEffect(() => {
     const fetchReviews = async () => {
       try {
@@ -126,12 +137,9 @@ const BoatListingDetails = () => {
         setReviews([]); // Graceful fallback for errors
       }
     };
-    
 
     fetchReviews();
   }, [id]);
-
-
 
   if (error) {
     return <p className="text-red-500">{error}</p>;
@@ -162,9 +170,11 @@ const BoatListingDetails = () => {
     }
     return dates;
   });
+
   const toggleFavorite = async () => {
     try {
       const token = localStorage.getItem('token');
+      console.log("Toggling favorite with token:", token);
 
       if (isFavorite) {
         await axios.delete('http://localhost:8081/api/favorites', {
@@ -172,7 +182,7 @@ const BoatListingDetails = () => {
           data: { boat_id: id }, 
         });
         setIsFavorite(false);
-        //alert('Boat removed from favorites.');
+        console.log("Boat removed from favorites.");
       } else {
         await axios.post(
           'http://localhost:8081/api/favorites',
@@ -180,7 +190,7 @@ const BoatListingDetails = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setIsFavorite(true);
-        //alert('Boat added to favorites.');
+        console.log("Boat added to favorites.");
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
@@ -197,11 +207,13 @@ const BoatListingDetails = () => {
     setIsOpen(false);
     setSelectedImage(null);
   };
+
+  // Ensure tripTypes is an array of trimmed strings
   const tripTypesArray = Array.isArray(tripTypes) && tripTypes.length > 0
-  ? tripTypes[0].split(',').map((type) => type.trim()) // Split the first element if it's a string
-  : typeof tripTypes === 'string'
-  ? tripTypes.split(',').map((type) => type.trim())
-  : [];
+    ? tripTypes.flatMap(type => type.split(',').map(t => t.trim()))
+    : typeof tripTypes === 'string'
+      ? tripTypes.split(',').map(t => t.trim())
+      : [];
 
 // Map trip types to their descriptions
 const formattedTripTypes = tripTypesArray
@@ -213,20 +225,47 @@ console.log('Raw trip_types:', tripTypes);
 console.log('Processed tripTypesArray:', tripTypesArray);
 console.log('Mapped trip types (descriptions):', formattedTripTypes);
 
-
   const handleBookingSubmit = (e) => {
     e.preventDefault();
+    console.log("Booking form submitted");
+
+    const token = localStorage.getItem('token');
+    console.log("Token:", token);
+    
+    if (!token) {
+      // User is not authenticated
+      const currentPath = `/listings/${id}`;
+      console.log("Storing redirect path in sessionStorage:", currentPath);
+      sessionStorage.setItem('redirectAfterLogin', currentPath);
+      router.push('/auth/sign-in'); // Ensure this path matches your Sign-In page route
+      return;
+    }
+    
+    // If authenticated, proceed to show the review modal
+    console.log("User is authenticated, showing review modal");
     setShowReview(true);
   };
 
   const confirmBooking = async () => {
+    // Ensure that selectedDate and endDate are not null
+    if (!selectedDate) {
+      alert("Please select a start date.");
+      return;
+    }
+
+    if (selectedTripType === mapTripTypesToDescriptions.overnight && !endDate) {
+      alert("Please select an end date for the overnight trip.");
+      return;
+    }
+
     const rentalData = {
       boat_id: id,
-      start_date: selectedDate.toISOString().split('T')[0],
-      end_date: selectedTripType === 'overnight' ? endDate.toISOString().split('T')[0] : null,
+      start_date: formatDate(selectedDate),
+      end_date: selectedTripType === mapTripTypesToDescriptions.overnight ? formatDate(endDate) : null,
       rental_price: calculateTotalPrice(),
       start_time: selectedTime || "00:00",
       end_time: endTime || "23:59",
+      number_of_guests: Number(numberOfGuests),
     };
 
     try {
@@ -238,12 +277,19 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
 
       if (response.status === 201) {
         setConfirmationMessage('Your booking was successful!');
+        console.log("Booking successful");
+        // Optionally, you can reset the form here
+        setSelectedDate(null);
+        setEndDate(null);
+        setSelectedTime("");
+        setEndTime("");
+        setNumberOfGuests(1);
       } else {
         alert(response.data.message || 'Failed to create rental.');
       }
     } catch (error) {
       console.error('Error creating rental:', error);
-      alert('An error occurred while creating the rental.');
+      alert(error.response?.data?.message || 'An error occurred while creating the rental.');
     }
 
     setShowReview(false);
@@ -263,13 +309,10 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
   const driverAverage = calculateAverageRating("driver_rating");
   const cleanlinessAverage = calculateAverageRating("cleanliness_rating");
 
-
-
-
   const calculateTotalPrice = () => {
-    if (selectedTripType === 'overnight') {
+    if (selectedTripType === mapTripTypesToDescriptions.overnight) {
       if (!selectedDate || !endDate) return 0;
-      const days = Math.ceil((new Date(endDate) - new Date(selectedDate)) / (1000 * 60 * 60 * 24));
+      const days = Math.ceil((endDate - selectedDate) / (1000 * 60 * 60 * 24));
       return days * price_per_day;
     } else {
       if (!selectedTime || !endTime) return 0;
@@ -286,25 +329,25 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
       <header className="bg-white shadow p-4 flex items-center justify-between">
         {/* Back Button */}
         <button
-  onClick={handleBackButtonClick}
-  className="text-blue-500 flex items-center"
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    className="w-6 h-6 mr-1"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-  </svg>
-  Back
-</button>
+          onClick={handleBackButtonClick}
+          className="text-blue-500 flex items-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            className="w-6 h-6 mr-1"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
 
         {/* Header */}
         <h1 className="text-2xl font-semibold">{boat_name}</h1>
 
-        {/* Add to Favorites Button  */}
+        {/* Add to Favorites Button */}
         <button
           onClick={toggleFavorite}
           className="flex items-center text-yellow-500"
@@ -327,8 +370,8 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
         </button>
       </header>
 
-
       <main className="container mx-auto py-8">
+        {/* Image Slider */}
         <div className="mb-8 max-w-5xl mx-auto">
           <Swiper
             modules={[Navigation, Pagination]}
@@ -382,24 +425,23 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
           )}
         </div>
 
-
+        {/* About Section */}
         <div className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">About this experience</h2>
           <p className="text-gray-700 mb-4">{description}</p>
           <h3 className="font-semibold mt-4 mb-2">Trip Types</h3>
-<ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-gray-700">
-  {formattedTripTypes.length > 0 ? (
-    formattedTripTypes.map((type, index) => (
-      
-      <li key={index} className="flex items-center space-x-2">
-        <span>✅</span>
-        <span>{type}</span>
-      </li>
-    ))
-  ) : (
-    <p className="text-gray-500">No trip types available</p>
-  )}
-</ul>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-gray-700">
+            {formattedTripTypes.length > 0 ? (
+              formattedTripTypes.map((type, index) => (
+                <li key={index} className="flex items-center space-x-2">
+                  <span>✅</span>
+                  <span>{type}</span>
+                </li>
+              ))
+            ) : (
+              <p className="text-gray-500">No trip types available</p>
+            )}
+          </ul>
 
           <h3 className="font-semibold mt-4 mb-2">Rate Details</h3>
           <p className="text-gray-700">
@@ -410,6 +452,8 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
                 : 'N/A'}
           </p>
         </div>
+
+        {/* Ratings Section */}
         <section className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow">
           <h3 className="text-xl font-semibold mb-4">Average Ratings</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -424,77 +468,77 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
             </div>
           </div>
         </section>
+
+        {/* Reviews Section */}
         <section className="mb-8 max-w-5xl mx-auto bg-white p-6 rounded-lg shadow relative">
-  <h3 className="text-xl font-semibold mb-4">Reviews</h3>
+          <h3 className="text-xl font-semibold mb-4">Reviews</h3>
 
-  <div className="flex">
-    {/* Review Boxes */}
-    {reviews.length > 0 ? (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow">
-        {reviews.slice(0, 3).map((review, index) => (
-          <div
-            key={index}
-            className="bg-gray-100 p-4 rounded-lg shadow-md border border-gray-300 flex flex-col justify-between"
-          >
-            {/* Author */}
-            <p className="font-semibold text-gray-800 mb-2">
-              {review.author && review.author.trim() ? review.author : 'Anonymous'}
-            </p>
-            {/* Date */}
-            <p className="text-gray-600 text-sm mb-2">
-              {review.created_at ? new Date(review.created_at).toLocaleDateString() : 'N/A'}
-            </p>
-            {/* Review Content */}
-            <p className="text-gray-700 text-sm flex-grow">
-              {review.review_text && review.review_text.trim()
-                ? review.review_text
-                : 'No review content available.'}
-            </p>
+          <div className="flex">
+            {/* Review Boxes */}
+            {reviews.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow">
+                {reviews.slice(0, 3).map((review, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-100 p-4 rounded-lg shadow-md border border-gray-300 flex flex-col justify-between"
+                  >
+                    {/* Author */}
+                    <p className="font-semibold text-gray-800 mb-2">
+                      {review.author && review.author.trim() ? review.author : 'Anonymous'}
+                    </p>
+                    {/* Date */}
+                    <p className="text-gray-600 text-sm mb-2">
+                      {review.created_at ? new Date(review.created_at).toLocaleDateString() : 'N/A'}
+                    </p>
+                    {/* Review Content */}
+                    <p className="text-gray-700 text-sm flex-grow">
+                      {review.review_text && review.review_text.trim()
+                        ? review.review_text
+                        : 'No review content available.'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow">
+                {[...Array(3)].map((_, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-100 p-4 rounded-lg shadow-md border border-gray-300 flex items-center justify-center"
+                  >
+                    <p className="text-gray-500 text-sm">No reviews available</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Arrow Button */}
+            <div className="flex items-center ml-4">
+              <button
+                onClick={() => router.push(`/listings/${id}/reviews`)}
+                className="w-12 h-12 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition flex items-center justify-center"
+                aria-label="View All Reviews"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
-    ) : (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow">
-        {[...Array(3)].map((_, index) => (
-          <div
-            key={index}
-            className="bg-gray-100 p-4 rounded-lg shadow-md border border-gray-300 flex items-center justify-center"
-          >
-            <p className="text-gray-500 text-sm">No reviews available</p>
-          </div>
-        ))}
-      </div>
-    )}
+        </section>
 
-    {/* Arrow Button */}
-    <div className="flex items-center ml-4">
-    <button
-  onClick={() => router.push(`/listings/${id}/reviews`)}
-  className="w-12 h-12 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition flex items-center justify-center"
-  aria-label="View All Reviews"
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    className="w-6 h-6"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 5l7 7-7 7"
-    />
-  </svg>
-</button>
-
-    </div>
-  </div>
-</section>
-
-
-
+        {/* Booking Form */}
         <section className="bg-white p-6 rounded-lg shadow max-w-5xl mx-auto">
           <h3 className="text-xl font-semibold mb-4">Select a date, time, and trip type</h3>
           <form onSubmit={handleBookingSubmit}>
@@ -522,6 +566,7 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
               minDate={new Date()}
               dateFormat="yyyy-MM-dd"
               className="w-full p-2 mb-4 border rounded"
+              required
             />
 
             {selectedTripType === mapTripTypesToDescriptions.overnight ? (
@@ -577,6 +622,7 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
           </form>
         </section>
 
+        {/* Review Modal */}
         {showReview && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
@@ -600,6 +646,7 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
           </div>
         )}
 
+        {/* Confirmation Message */}
         {confirmationMessage && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
