@@ -214,7 +214,12 @@ const RegisterBoat = () => {
       router.push('/auth/boatLicense');
     } catch (err) {
       console.error('Error during boat registration:', err);
-      const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
+    
+      let errorMessage = 'Registration failed. Please try again.';
+      if (err instanceof Error && 'response' in err) {
+        errorMessage = (err as any).response?.data?.message || errorMessage;
+      }
+      
       setError(errorMessage);
     }
   };
