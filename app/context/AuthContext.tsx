@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (token) {
         try {
           const response = await axios.get('http://localhost:8081/api/users/profile', {
-            headers: { Authorization: Bearer ${token} },
+            headers: { Authorization: `Bearer ${token}` },
           });
           setUser(response.data);
           setIsLoggedIn(true);
