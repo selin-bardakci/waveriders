@@ -55,3 +55,60 @@ export const getUserFavorites = (req, res) => {
       res.status(200).json({ favorites: results });
     });
   };
+
+
+// Get Favorite Boats for Dashboard
+export const getFavoriteBoats = async (req, res) => {
+  const db = connectDB(); // db bağlantısını başlat
+  const userId = req.user.id; // Kullanıcı ID (authMiddleware'den geliyor)
+
+  try {
+    console.log("User ID:", userId); // Kullanıcı ID'sini kontrol et
+
+    // Favorilerden en fazla 4 bot ID'sini al
+    const favoritesSql = `
+      SELECT boat_id
+      FROM favorites
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+      LIMIT 4
+    `;
+
+    db.query(favoritesSql, [userId], (err, favoriteResults) => {
+      if (err) {
+        console.error("Error fetching favorites:", err); // SQL hatasını kontrol et
+        return res.status(500).json({ message: "Error fetching favorite boats" });
+      }
+
+      console.log("Favorite Results:", favoriteResults); // Favori botları kontrol et
+
+      if (favoriteResults.length === 0) {
+        console.warn("No favorite boats found for user:", userId); // Favori bulunamazsa
+        return res.status(200).json({ boats: [] });
+      }
+
+      const boatIds = favoriteResults.map((fav) => fav.boat_id);
+      console.log("Boat IDs:", boatIds); // Bot ID'lerini kontrol et
+
+      // Bu botların detaylarını al
+      const boatsSql = `
+        SELECT boat_id, boat_name, location, photos
+        FROM boats
+        WHERE boat_id IN (?)
+      `;
+      db.query(boatsSql, [boatIds], (err, boatResults) => {
+        if (err) {
+          console.error("Error fetching boats:", err); // SQL hatasını kontrol et
+          return res.status(500).json({ message: "Error fetching boat details" });
+        }
+
+        console.log("Boat Results:", boatResults); // Bot detaylarını kontrol et
+        res.status(200).json({ boats: boatResults });
+      });
+    });
+  } catch (error) {
+    console.error("Error:", error); // Genel hata kontrolü
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
