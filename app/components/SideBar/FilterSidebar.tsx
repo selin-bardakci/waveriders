@@ -15,16 +15,29 @@ interface FilterSidebarProps {
     selectedTrips: string[]; // Trip types will now be strings, not numbers
     vehicleType: string;
   }) => void;
+  activeFilters: {
+    priceRange: [number, number];
+    tripType: string[];
+    vehicleType: string;
+  }; // Yeni prop
 }
 
 const FilterSidebar: React.FC<FilterSidebarProps> = ({
   isOpen,
   onClose,
   onApplyFilters,
+  activeFilters,
 }) => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]); // Default price range
   const [selectedTrips, setSelectedTrips] = useState<string[]>([]); // Store trip types as strings
   const [vehicleType, setVehicleType] = useState<string>('');
+  useEffect(() => {
+    if (activeFilters) {
+      setPriceRange(activeFilters.priceRange || [0, 5000]);
+      setSelectedTrips(activeFilters.tripType || []);
+      setVehicleType(activeFilters.vehicleType || '');
+    }
+  }, [activeFilters]);
 
   // Sabit trip types listesi
   const tripTypes = [
