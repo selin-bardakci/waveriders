@@ -1,9 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from 'next/navigation';
 import axios from "axios";
 import BoatListingCard from "../components/boatListingCard/BoatListingCard";
+import { useAuth } from "../context/AuthContext";
 
 const Favourites = () => {
+  const { user, isLoggedIn, isLoading } = useAuth();
+  const router = useRouter();
   const [favorites, setFavorites] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -11,6 +15,18 @@ const Favourites = () => {
   const [currentBoatId, setCurrentBoatId] = useState<number | null>(null);
 
   useEffect(() => {
+    if (isLoading) return;
+
+    if (!isLoggedIn) {
+      router.push("/auth/sign-in"); // Giriş yapılmamışsa giriş sayfasına yönlendir
+      return;
+    }
+
+    if (user?.account_type === "admin") {
+      router.push("/admin/control"); // Admin ise kontrol paneline yönlendir
+      return;
+    }
+    
     const fetchFavorites = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -32,8 +48,12 @@ const Favourites = () => {
     };
 
     fetchFavorites();
-  }, []);
-
+  }, [isLoading, isLoggedIn, user, router]);
+  
+  if (isLoading || !isLoggedIn || user?.account_type === "admin") {
+    return null; // Yükleniyor ya da yönlendirme sırasında hiçbir şey render etme
+  }
+  
   const openConfirmModal = (boat_id: number) => {
     setCurrentBoatId(boat_id);
     setShowConfirmModal(true);
