@@ -162,7 +162,6 @@ export const deleteReview = async (req, res) => {
   }
 };
 
-// Rezervasyon Detaylarını Getir
 export const getBookingDetails = async (req, res) => {
   const { rental_id } = req.params;
 
@@ -174,7 +173,10 @@ export const getBookingDetails = async (req, res) => {
     const sql = `
       SELECT 
         rental_id, 
-        DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date, 
+        DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date,
+        DATE_FORMAT(end_date, '%Y-%m-%d') AS end_date,         -- end_date ekleniyor
+        TIME_FORMAT(start_time, '%H:%i') AS start_time,       -- start_time formatlanıyor
+        TIME_FORMAT(end_time, '%H:%i') AS end_time,           -- end_time formatlanıyor
         rental_price AS total_price
       FROM rentals
       WHERE rental_id = ?
@@ -190,13 +192,14 @@ export const getBookingDetails = async (req, res) => {
         return res.status(404).json({ message: 'Booking not found' });
       }
 
-      res.status(200).json(results[0]);
+      res.status(200).json(results[0]);  // end_date dahil edildi
     });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 
 
@@ -211,7 +214,7 @@ export const cancelBooking = async (req, res) => {
   }
 
   try {
-    const sql = `DELETE FROM rentals WHERE rental_id = ?`;
+    const sql = 'DELETE FROM rentals WHERE rental_id = ?';
 
     db.query(sql, [rental_id], (err, result) => {
       if (err) {
@@ -229,8 +232,8 @@ export const cancelBooking = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in cancelBooking:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
+    res.status(500).json({ message: 'Server error' });
+  }
 };
 
 
