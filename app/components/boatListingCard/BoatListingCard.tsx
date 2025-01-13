@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 interface BoatListingCardProps {
   boat_id: number;
@@ -11,6 +12,7 @@ interface BoatListingCardProps {
 const BoatListingCard: React.FC<BoatListingCardProps> = ({ boat_id }) => {
   const [boat, setBoat] = useState<any>(null);
   const [error, setError] = useState("");
+
 
   useEffect(() => {
     const fetchBoatDetails = async () => {
@@ -46,7 +48,28 @@ const BoatListingCard: React.FC<BoatListingCardProps> = ({ boat_id }) => {
 
   return (
     <Link href={`/listings/${boat_id}`} passHref>
-      <div className="bg-white border rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer">
+  <div
+    onClick={() => {
+      const currentPage = window.location.pathname; // Get current path
+      let source;
+
+      if (currentPage === "/") {
+        source = "homepage";
+      } else if (currentPage === "/ListingsPage") {
+        source = "ListingsPage";
+      } else if (currentPage === "/allListings") {
+        source = "allListings";
+      } else if (currentPage === "/Favourites") {
+        source = "Favourites";
+      }else if (currentPage === "/RecentActivities") {
+        source = "RecentActivities";
+      } else {
+        source = "OtherPage"; // Fallback for unhandled routes
+      }
+      sessionStorage.setItem("navigation_source", source); // Save source to sessionStorage
+    }}
+    className="bg-white border rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+  >
         {imageUrl ? (
           <img
             src={imageUrl}
