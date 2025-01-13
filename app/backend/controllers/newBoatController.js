@@ -6,6 +6,8 @@ import { Captain } from '../models/captainModel.js';
 import { Boat } from '../models/boatModel.js';
 
 const db = connectDB();
+
+
 export const registerBoat = async (req, res) => {
   const { 
     boat_name, 
@@ -32,6 +34,7 @@ export const registerBoat = async (req, res) => {
   }
 
   try {
+    // Step 1: Create the boat registration
     const result = await createBoatRegistration(
       db,
       req.body,
@@ -42,13 +45,35 @@ export const registerBoat = async (req, res) => {
       process.env.AWS_S3_BUCKET
     );
 
-    res.status(201).json({
+    // Step 2: Get the boat_id from the result (assumes result contains the boat info including boat_id)
+    const boatId = result.boat_id;
+
+    // Step 3: Add the boat_id to the verification table
+    const verificationQuery = `
+        INSERT INTO verification (
+          boat_id,
+          boat_approvement,
+          verification_status
+        ) VALUES (?, 1, 'inReview')
+      `; // Assuming the default status for a new boat verification is 'inReview'
+
+    
+      db.query(verificationQuery, [boatId], (verificationErr) => {
+        if (verificationErr) {
+          console.error('Error adding boat to verification:', verificationErr);
+          return res.status(500).json({ message: 'Error creating verification record' });
+        }
+    });
+
+    // Step 4: Return success response
+    return res.status(201).json({
       message: 'Boat registered successfully',
       boat: result
     });
+    
   } catch (error) {
     console.error('Server error during boat registration:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       message: 'Server error',
       error: error.message 
     });
