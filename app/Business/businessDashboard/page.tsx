@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Line } from 'react-chartjs-2';
-import { useAuth } from '../../context/AuthContext';
 import BoatListingCard from "../../components/boatListingCard/BoatListingCard";
 import BoatListingCard2 from "../../components/boatListingCard2/boatListingCard2";
 
@@ -21,26 +20,32 @@ import { FaArrowRight } from 'react-icons/fa';
 
 // Register chart components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+
+interface RecentActivity {
+  boat_id: number;
+  comment?: string;
+  rating?: number;
+}
+
+interface FavoriteBoat {
+  boat_id: number;
+}
+
+interface Listing {
+  boat_id: number;
+  photos?: string[];
+  boat_name: string;
+}
+
 const BusinessDashboard = () => {
-  const { user, isLoggedIn } = useAuth();
-  const [businessOwner, setBusinessOwner] = useState('');
-  const [customerCounts, setCustomerCounts] = useState([]);
-  const [dashboardListings, setDashboardListings] = useState([]);
-  const [favoriteBoats, setFavoriteBoats] = useState([]);
-  const [recentActivities, setRecentActivities] = useState([]);
+  const [businessOwner, setBusinessOwner] = useState<string>('');
+  const [customerCounts, setCustomerCounts] = useState<number[]>([]);
+  const [favoriteBoats, setFavoriteBoats] = useState<FavoriteBoat[]>([]);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [dashboardListings, setDashboardListings] = useState<Listing[]>([]);
   const router = useRouter();
-
+  
   useEffect(() => {
-    if (!isLoggedIn) {
-      router.push('/auth/sign-in'); 
-      return;
-    }
-
-    if (user?.account_type !== 'business') {
-      router.push('/'); 
-      return;
-    }
-    
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -63,7 +68,7 @@ const BusinessDashboard = () => {
             headers: { Authorization: `Bearer ${token}` }, // Token ekleniyor
           }),
         ]);
-        
+
 
         // İşlemleri kontrol et ve sonuçları al
         if (businessOwnerResponse.ok) {
@@ -79,11 +84,12 @@ const BusinessDashboard = () => {
 
           // Backend'den gelen veriyi doğru bir şekilde işleyin
           const monthlyRentals = Array(12).fill(0);
-          customerCountsData.monthlyRentals.forEach((item, index) => {
+          customerCountsData.monthlyRentals.forEach((item: number | null, index: number) => {
             if (item !== undefined && item !== null) {
               monthlyRentals[index] = item;
             }
           });
+
 
           console.log('Processed Monthly Rentals:', monthlyRentals);
           setCustomerCounts(monthlyRentals); // State'i güncelle
@@ -123,11 +129,7 @@ const BusinessDashboard = () => {
     };
 
     fetchDashboardData();
-   }, [isLoggedIn, user, router]);
-
-  if (!isLoggedIn || user?.account_type !== 'business') {
-    return null; // Kullanıcı uygun değilse hiçbir şey render etme
-  }
+  }, []);
 
 
   // Determine the months to display up to the current month
@@ -156,7 +158,6 @@ const BusinessDashboard = () => {
 
   console.log('Graph Data:', data);
 
-
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -175,7 +176,9 @@ const BusinessDashboard = () => {
           text: 'This year',
           color: '#333',
           font: {
-            weight: 'bold',
+            size: 14, // Specify size explicitly
+            family: 'Arial, sans-serif', // Specify font family explicitly
+            weight: 'bold' as 'bold', // Use a type assertion to satisfy TypeScript
           },
         },
       },
@@ -189,88 +192,7 @@ const BusinessDashboard = () => {
       },
     },
   };
-
-
-
-
-  const renderListings = (listings) => (
-    <div className="flex justify-between items-center w-full">
-      {listings.map((listing, index) => (
-        <div
-          key={index}
-          className="flex flex-col items-center w-1/4 cursor-pointer"
-          onClick={() => router.push(`/listings/${listing.icon}`)} // Correct dynamic route syntax
-        >
-          <div className="w-40 h-40 rounded-lg overflow-hidden shadow-md">
-            <img
-              src={`/images/${listing.icon}`} // Fixed string interpolation for src
-              alt={`Icon for ${listing.placeName}`} // Fixed string interpolation for alt
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <p className="text-lg mt-2">{listing.placeName}</p>
-          <p className="text-sm text-[#4b799c]">{listing.location}</p>
-        </div>
-      ))}
-    </div>
-  );
-
-
-  const renderActivities = (activities) => (
-    <div className="flex flex-wrap gap-4">
-      {activities.map((activity, index) => (
-        <div key={index} className="w-60 p-4 bg-white shadow rounded-lg">
-          <div className="w-full h-32 overflow-hidden rounded-md">
-            <img
-              src={activity.photos ? activity.photos : "/images/placeholder.png"}
-              alt={activity.boat_name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <h4 className="text-lg font-semibold mt-2">{activity.boat_name}</h4>
-          <p className="text-gray-500">{activity.location}</p>
-          <div className="mt-2">
-            {activity.rating ? (
-              <p>Rating: {activity.rating} ★</p>
-            ) : (
-              <p className="text-gray-500">Not ranked yet</p>
-            )}
-          </div>
-          {activity.comment && (
-            <p className="text-sm text-gray-700 mt-1">{activity.comment}</p>
-          )}
-        </div>
-      ))}
-    </div>
-  );
   
-  
-  
-  
-
-
-  const renderFavoriteBoats = (boats) => {
-    console.log("Rendering Favorite Boats:", boats); // Gelen veriyi kontrol et
-    return (
-      <div className="grid grid-cols-4 gap-4">
-        {boats.map((boat) => (
-          <div
-            key={boat.boat_id}
-            className="w-24 h-24 rounded-lg overflow-hidden shadow-md bg-white"
-          >
-            <img
-              src={boat.photos ? boat.photos[0] : "/images/placeholder.png"}
-              alt={boat.boat_name}
-              className="w-full h-full object-cover"
-            />
-            <p className="text-sm text-center mt-1">{boat.location}</p>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-
 
 
 
@@ -374,61 +296,60 @@ const BusinessDashboard = () => {
 
       {/* Your Recent Activities */}
       <section className="p-6 w-[980px] mt-8">
-  <div className="flex justify-between items-center mb-4">
-    <h3 className="text-2xl font-bold text-gray-800">Your Recent Activities</h3>
-    <button
-      onClick={() => router.push('/RecentActivities')}
-      title="See all your recent activities"
-      className="flex items-center bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
-    >
-      <FaArrowRight className="text-xl" />
-    </button>
-  </div>
-  <div
-    className="p-6 border-2 rounded-lg"
-    style={{ borderColor: '#d1d5db', backgroundColor: 'transparent' }}
-  >
-    {recentActivities.length > 0 ? (
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {recentActivities.map((activity) => (
-          <div key={activity.boat_id}>
-            {/* BoatListingCard Bileşeni */}
-            <BoatListingCard2 boat_id={activity.boat_id} />
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-2xl font-bold text-gray-800">Your Recent Activities</h3>
+          <button
+            onClick={() => router.push('/RecentActivities')}
+            title="See all your recent activities"
+            className="flex items-center bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            <FaArrowRight className="text-xl" />
+          </button>
+        </div>
+        <div
+          className="p-6 border-2 rounded-lg"
+          style={{ borderColor: '#d1d5db', backgroundColor: 'transparent' }}
+        >
+          {recentActivities.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {recentActivities.map((activity) => (
+                <div key={activity.boat_id}>
+                  {/* BoatListingCard Bileşeni */}
+                  <BoatListingCard2 boat_id={activity.boat_id} />
 
-            {/* Yorum */}
-            {activity.comment ? (
-              <p className="text-sm text-gray-700 mt-2 text-center">
-                {activity.comment}
-              </p>
-            ) : (
-              <p className="text-sm text-gray-500 mt-2 text-center">
-                No comment
-              </p>
-            )}
+                  {/* Yorum */}
+                  {activity.comment ? (
+                    <p className="text-sm text-gray-700 mt-2 text-center">
+                      {activity.comment}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500 mt-2 text-center">
+                      No comment
+                    </p>
+                  )}
 
-            {/* Rating */}
-            <div className="mt-2 flex justify-center">
-              {[...Array(5)].map((_, i) => (
-                <span
-                  key={i}
-                  className={`text-xl ${
-                    i < (activity.rating || 0)
-                      ? "text-yellow-500"
-                      : "text-gray-300"
-                  }`}
-                >
-                  ★
-                </span>
+                  {/* Rating */}
+                  <div className="mt-2 flex justify-center">
+                    {[...Array(5)].map((_, i) => (
+                      <span
+                        key={i}
+                        className={`text-xl ${i < (activity.rating || 0)
+                            ? "text-yellow-500"
+                            : "text-gray-300"
+                          }`}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
-        ))}
-      </div>
-    ) : (
-      <p className="text-center text-gray-500">No recent activities found</p>
-    )}
-  </div>
-</section>
+          ) : (
+            <p className="text-center text-gray-500">No recent activities found</p>
+          )}
+        </div>
+      </section>
 
 
     </div>
