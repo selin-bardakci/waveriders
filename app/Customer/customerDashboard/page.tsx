@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import BoatListingCard from '../../components/boatListingCard/BoatListingCard';
 import BoatListingCard2 from '../../components/boatListingCard2/boatListingCard2';
+import { useAuth } from '../../context/AuthContext';
 import { FaArrowRight } from 'react-icons/fa';
 
 interface RecentActivity {
@@ -12,19 +13,30 @@ interface RecentActivity {
   comment: string | null;
   rating: number | null;
 }
-
 const Dashboard = () => {
+  const { user, isLoggedIn } = useAuth(); 
   const [businessOwner, setBusinessOwner] = useState<string>('');
   const [favoriteBoats, setFavoriteBoats] = useState<{ boat_id: number }[]>([]);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const router = useRouter();
 
   useEffect(() => {
+    if (!isLoggedIn) {
+      router.push('/auth/sign-in'); 
+      return;
+    }
+
+    if (user?.account_type !== 'customer') {
+      router.push('/'); 
+      return;
+    }
+
+   
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem('token');
 
-        // API çağrılarını paralel olarak başlat
+
         const [businessOwnerResponse, favoriteBoatsResponse, recentActivitiesResponse] = await Promise.all([
           fetch('http://localhost:8081/api/business/dashboard', {
             headers: { Authorization: `Bearer ${token}` },
@@ -37,17 +49,16 @@ const Dashboard = () => {
           }),
         ]);
 
-        // İşlemleri kontrol et ve sonuçları al
+        
         if (businessOwnerResponse.ok) {
           const businessOwnerData = await businessOwnerResponse.json();
           setBusinessOwner(businessOwnerData.name);
         } else {
-          throw new Error('Failed to fetch business owner');
+          console.error('Failed to fetch business owner');
         }
 
         if (favoriteBoatsResponse.ok) {
           const favoriteBoatsData = await favoriteBoatsResponse.json();
-          console.log('Favorite Boats API Response:', favoriteBoatsData); // Gelen API yanıtını kontrol et
           setFavoriteBoats(favoriteBoatsData.boats || []);
         } else {
           console.error('Failed to fetch favorite boats');
@@ -55,7 +66,6 @@ const Dashboard = () => {
 
         if (recentActivitiesResponse.ok) {
           const recentActivitiesData: RecentActivity[] = await recentActivitiesResponse.json();
-          console.log('Recent Activities API Response:', recentActivitiesData); // Gelen API yanıtını kontrol et
           setRecentActivities(recentActivitiesData || []);
         } else {
           console.error('Failed to fetch recent activities');
@@ -66,7 +76,11 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [isLoggedIn, user, router]);
+
+  if (!isLoggedIn || user?.account_type !== 'customer') {
+    return null; 
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center">
