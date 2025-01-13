@@ -10,40 +10,43 @@ const s3Client = new S3Client({
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'wN',
     },
   });
-  
+
   export const uploadMultiplePhotos = async (files, bucketName, businessId, boatId, type) => {
-  try {
-    const uploadPromises = files.map(async (file, index) => {
-      const fileContent = fs.readFileSync(file.path);
-      const fileExt = path.extname(file.originalname);
-      const fileName = `photo-${index + 1}${fileExt}`;
-      
-      // Create S3 key with proper structure
-      const key = `business-${businessId}/${type}/${fileName}`;
-      
-      const params = {
-        Bucket: bucketName,
-        Key: key,
-        Body: fileContent,
-        ContentType: mime.getType(file.path) || 'application/octet-stream',
-      };
-
-      const command = new PutObjectCommand(params);
-      await s3Client.send(command);
-      
-      // Clean up local file
-      fs.unlinkSync(file.path);
-
-      return `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-    });
-
-    return Promise.all(uploadPromises);
-  } catch (error) {
-    console.error('S3 upload error:', error);
-    throw new Error(`Error uploading files to S3: ${error.message}`);
-  }
-};
+    try {
+      const uploadPromises = files.map(async (file, index) => {
+        // Generate a unique name based on timestamp and random string
+        const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+        const fileExt = path.extname(file.originalname);
+        const fileName = `${uniqueName}${fileExt}`; // Unique file name
+        console.log('Uploading file:', fileName);
+        // Create S3 key with proper structure (business and boat context)
+        const key = `business-${businessId}/${type}/${fileName}`;
+        
+        const fileContent = fs.readFileSync(file.path);
+        const params = {
+          Bucket: bucketName,
+          Key: key,
+          Body: fileContent,
+          ContentType: mime.getType(file.path) || 'application/octet-stream',
+        };
   
+        const command = new PutObjectCommand(params);
+        await s3Client.send(command);
+        
+        // Clean up the local file after upload
+        fs.unlinkSync(file.path);
+  
+        // Return the public URL for the uploaded file
+        return `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+      });
+  
+      return Promise.all(uploadPromises);
+    } catch (error) {
+      console.error('S3 upload error:', error);
+      throw new Error(`Error uploading files to S3: ${error.message}`);
+    }
+  };
+
 
   export const uploadToS3 = async (filePath, bucketName, businessId, type) => {
     console.log('Starting S3 Upload:', { filePath, bucketName, businessId, type });
