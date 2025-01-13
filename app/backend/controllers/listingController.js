@@ -183,12 +183,7 @@ export const getListingByBoatId = async (req, res) => {
 
     // Generate signed URLs for each photo
     const signedUrls = photoKeys.map((key) => {
-      const s3Key = key.replace(/.*amazonaws\.com\//, '');
-      console.log(`Original Key: ${key}`);
-      console.log(`Processed Key for Signed URL: ${s3Key}`);
-      const signedUrl = getSignedUrl('waveriders-boat-photos', s3Key);
-      console.log(`Generated Signed URL: ${signedUrl}`);
-      return signedUrl;
+  return key;
     });
     
 
@@ -222,39 +217,114 @@ export const getRandomListings = async (req, res) => {
 };
 
 export const getPaginatedListings = async (req, res) => {
-  const { page = 1, limit = 15, price_min, price_max, trip_type, vehicle_type } = req.query;
-
+  const { page = 1, limit = 15, price_min, price_max, trip_type, vehicle_type, sortField, sortOrder, location, start_date, end_date, guests } = req.query;
+  console.log('Received sortField:', sortField); 
+  console.log('Received sortOrder:', sortOrder); 
   console.log('Filters:', { price_min, price_max, trip_type, vehicle_type });
   console.log('Pagination:', { page, limit });
-
+  
   try {
     const offset = (page - 1) * limit;
 
     let query = 'SELECT * FROM boats WHERE 1=1';
+    let totalQuery = 'SELECT COUNT(*) as total FROM boats WHERE 1=1';
     const params = [];
+    const totalParams = [];
 
+    // Price filter
     if (price_min) {
       query += ' AND price_per_hour >= ?';
+      totalQuery += ' AND price_per_hour >= ?';
       params.push(price_min);
+      totalParams.push(price_min);
     }
     if (price_max) {
       query += ' AND price_per_hour <= ?';
+      totalQuery += ' AND price_per_hour <= ?';
       params.push(price_max);
-    }
-    if (trip_type) {
-      query += ' AND trip_types LIKE ?';
-      params.push(`%${trip_type}%`);
-    }
-    if (vehicle_type) {
-      query += ' AND boat_type = ?';
-      params.push(vehicle_type);
+      totalParams.push(price_max);
     }
 
+    // Date filter (exclude boats rented during selected dates)
+    if (start_date && end_date) {
+      query += ` AND boat_id NOT IN (
+        SELECT boat_id FROM rentals WHERE
+        (start_date BETWEEN ? AND ?) OR
+        (end_date BETWEEN ? AND ?)
+      )`;
+      totalQuery += ` AND boat_id NOT IN (
+        SELECT boat_id FROM rentals WHERE
+        (start_date BETWEEN ? AND ?) OR
+        (end_date BETWEEN ? AND ?)
+      )`;
+      params.push(start_date, end_date, start_date, end_date);
+      totalParams.push(start_date, end_date, start_date, end_date);
+    }
+
+    // Location filter
+    if (location && location !== '' && location !== 'All Ports') {
+      query += ' AND location = ?';
+      totalQuery += ' AND location = ?';
+      params.push(location);
+      totalParams.push(location);
+    } else {
+      console.log('Location is "All Ports" or empty, fetching all ports.');
+    }
+    if (guests) {
+      query += ' AND capacity >= ?';
+      totalQuery += ' AND capacity >= ?';
+      params.push(guests);
+      totalParams.push(guests);
+    }
+
+    // Trip Type filter
+    let tripTypes = [];
+    let tripTypeConditions = '';
+    if (trip_type) {
+      tripTypes = Array.isArray(trip_type) ? trip_type : [trip_type];
+      tripTypeConditions = tripTypes
+        .map(() => 'FIND_IN_SET(?, trip_types) > 0')
+        .join(' OR ');
+      query += ` AND (${tripTypeConditions})`;
+      totalQuery += ` AND (${tripTypeConditions})`;
+      params.push(...tripTypes);
+      totalParams.push(...tripTypes);
+    }
+
+    // Vehicle type filter
+    if (vehicle_type) {
+      query += ' AND boat_type = ?';
+      totalQuery += ' AND boat_type = ?';
+      params.push(vehicle_type); 
+      totalParams.push(vehicle_type);
+    }
+
+    // Sort field and order
+    if (sortField && sortOrder) {
+      const validSortFields = ['price_per_hour']; 
+      const validSortOrders = ['asc', 'desc'];
+
+      if (!validSortFields.includes(sortField) || !validSortOrders.includes(sortOrder.toLowerCase())) {
+        console.log('Invalid sortField or sortOrder:', sortField, sortOrder);
+        return res.status(400).json({ message: 'Invalid sort parameters' });
+      }
+
+      query += ` ORDER BY ${sortField} ${sortOrder.toUpperCase()}`;
+    }
+
+    // Pagination limit and offset
     query += ' LIMIT ? OFFSET ?';
     params.push(Number(limit), Number(offset));
 
+    console.log('Generated SQL query:', query);
+    console.log('Query parameters:', params);
+
     const [rows] = await dbb.query(query, params);
-    const [[{ total }]] = await dbb.query('SELECT COUNT(*) as total FROM boats WHERE 1=1', params);
+
+    console.log('Generated Total SQL query:', totalQuery);
+    console.log('Total Query parameters:', totalParams);
+
+    const [[{ total }]] = await dbb.query(totalQuery, totalParams);
 
     res.json({ rows, total });
   } catch (error) {
