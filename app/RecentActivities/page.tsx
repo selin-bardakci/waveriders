@@ -108,30 +108,51 @@ const CustomerRecentActivities = () => {
     setShowReviewConfirmationModal(false);
   };
 
-  const openBookingCancelModal = () => {
+  const openBookingCancelModal = (activity) => {
+    if (!activity || !activity.rental_id) {
+      console.error("Error: Invalid activity passed to openBookingCancelModal.");
+      return;
+    }
+    setCurrentActivity(activity);
     setShowBookingCancelModal(true);
   };
+
 
   const closeBookingCancelModal = () => {
     setShowBookingCancelModal(false);
   };
-
   const cancelBooking = async () => {
+    if (!currentActivity || !currentActivity.rental_id) {
+      console.error("Error: currentActivity is null or rental_id is missing.");
+      alert("An error occurred. Please try again.");
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:8081/api/rentals/${currentActivity.rental_id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setActivities((prev) =>
-        prev.filter((activity) => activity.rental_id !== currentActivity.rental_id)
+      const response = await axios.delete(
+        `http://localhost:8081/api/rentals/${currentActivity.rental_id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
-      closeBookingCancelModal();
-      closeBookingDetailsModal();
+
+      if (response.status === 200) {
+        setActivities((prev) =>
+          prev.filter((activity) => activity.rental_id !== currentActivity.rental_id)
+        );
+        closeBookingCancelModal();
+        closeBookingDetailsModal();
+      } else {
+        throw new Error("Failed to cancel booking");
+      }
     } catch (err) {
       console.error("Error cancelling booking:", err);
+      alert("An error occurred while cancelling the booking. Please try again.");
     }
   };
+
+
 
   const saveRank = async () => {
     try {
@@ -165,7 +186,7 @@ const CustomerRecentActivities = () => {
 
         setActivities(sortedActivities);
         closeRankModal();
-        alert("Your review has been submitted successfully!");
+
       }
     } catch (err) {
       console.error("Error saving rating:", err);
@@ -204,7 +225,7 @@ const CustomerRecentActivities = () => {
               <BoatListingCard boat_id={activity.boat_id} />
               <div className="flex justify-center items-center mt-4">
 
-              {activity.status === "completed" && !activity.rating ? (
+                {activity.status === "completed" && !activity.rating ? (
                   <button
                     onClick={() => openRankModal(activity)}
                     className="bg-blue-500 text-white text-sm font-semibold py-1 px-4 rounded hover:bg-blue-600 transition"
@@ -227,11 +248,12 @@ const CustomerRecentActivities = () => {
                       See Booking Details
                     </button>
                     <button
-                      onClick={openBookingCancelModal}
-                       className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 text-sm rounded hover:bg-red-600 transition"
+                      onClick={() => openBookingCancelModal(activity)}
+                      className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 text-sm rounded hover:bg-red-600 transition"
                     >
                       Cancel Booking
                     </button>
+
                   </>
                 ) : null}
 
@@ -454,4 +476,3 @@ const CustomerRecentActivities = () => {
 
 export default CustomerRecentActivities;
 
-               
