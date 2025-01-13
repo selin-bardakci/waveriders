@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import axios from "axios";
 import { FaStar } from "react-icons/fa";
 import BoatListingCard from "../components/boatListingCard/BoatListingCard";
 import { format, parseISO, isValid as isValidDateFn } from 'date-fns';
+import { useAuth } from "../context/AuthContext";
 
 // Type Definitions
 interface Rating {
@@ -28,6 +30,9 @@ interface BookingDetails {
 }
 
 const CustomerRecentActivities = () => {
+  const { user, isLoggedIn, isLoading } = useAuth();
+  const router = useRouter();
+  
   const [activities, setActivities] = useState<BookingDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -81,6 +86,18 @@ const CustomerRecentActivities = () => {
 
   // Fetch recent rentals
   useEffect(() => {
+    if (isLoading) return;
+
+    if (!isLoggedIn) {
+      router.push("/auth/sign-in"); // Giriş yapılmamışsa giriş sayfasına yönlendir
+      return;
+    }
+
+    if (user?.account_type === "admin") {
+      router.push("/admin/control"); // Admin ise kontrol paneline yönlendir
+      return;
+    }
+    
     const fetchRecentRentals = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -116,8 +133,11 @@ const CustomerRecentActivities = () => {
     };
 
     fetchRecentRentals();
-  }, []);
-
+  }, [isLoading, isLoggedIn, user, router]);
+  
+  if (isLoading || !isLoggedIn || user?.account_type === "admin") {
+    return null; // Yükleniyor ya da yönlendirme sırasında hiçbir şey render etme
+  }
   // Modal open and close functions
   const openRankModal = (activity: BookingDetails) => {
     setCurrentActivity(activity);
