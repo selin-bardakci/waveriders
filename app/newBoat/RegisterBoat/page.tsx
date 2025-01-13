@@ -28,7 +28,6 @@ const ports = [
 ];
 
 const AddNewBoatAndLicense = () => {
-  const { user } = useAuth();
   const { user, isLoggedIn, isLoading } = useAuth();
   const [port, setPort] = useState('');
   const [boatName, setBoatName] = useState('');
