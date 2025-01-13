@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 const AllListings = () => {
   const router = useRouter();
+  const { user, isLoggedIn, isLoading } = useAuth();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -13,6 +14,19 @@ const AllListings = () => {
   const [currentBoatId, setCurrentBoatId] = useState<number | null>(null);
 
   useEffect(() => {
+    if (isLoading) return; // Kullanıcı durumu yüklenirken bekle
+
+    if (!isLoggedIn) {
+      // Kullanıcı giriş yapmamışsa, giriş yapma sayfasına yönlendir
+      router.push('/auth/sign-in');
+      return;
+    }
+
+    if (user?.account_type !== 'business') {
+      // Kullanıcı giriş yapmış ama account_type 'business' değilse ana sayfaya yönlendir
+      router.push('/');
+      return;
+    }
     const fetchListings = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -34,7 +48,15 @@ const AllListings = () => {
     };
 
     fetchListings();
-  }, []);
+  }, [isLoading, isLoggedIn, user, router]);
+
+  if (isLoading) {
+    return <p>Loading...</p>; // Yükleniyor ekranı
+  }
+
+  if (!isLoggedIn || user?.account_type !== 'business') {
+    return null; // Kullanıcı uygun değilse hiçbir şey render etme
+  }
 
   const openConfirmModal = (boat_id: number) => {
     setCurrentBoatId(boat_id);
