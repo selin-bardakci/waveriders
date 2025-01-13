@@ -7,10 +7,10 @@ import { useAuth } from "../../context/AuthContext";
 
 
 const tripTypes = [
-  { id: 1, name: 'Short Trips', description: '1–2 hours', image: '/images/icon1.png' },
-  { id: 2, name: 'Day Trips', description: '3–6 hours', image: '/images/icon2.png' },
-  { id: 3, name: 'Sunrise & Sunset Trips', description: '7–12 hours', image: '/images/icon3.png' },
-  { id: 4, name: 'Overnight Adventures', description: '1+ days', image: '/images/icon4.png' }
+  { id: 1, name: 'Short Trips', description: '1–2 hours', image: '/images/short.png' },
+  { id: 2, name: 'Day Trips', description: '3–6 hours', image: '/images/day.png' },
+  { id: 3, name: 'Sunrise & Sunset Trips', description: '7–12 hours', image: '/images/sunrise.png' },
+  { id: 4, name: 'Overnight Adventures', description: '1+ days', image: '/images/overnight.png' }
 ];
 
 // Ports data
