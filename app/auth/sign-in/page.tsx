@@ -13,15 +13,14 @@ const SignInPage = () => {
   const { setUser, setIsLoggedIn } = useAuth(); 
   const router = useRouter();
 
-  
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      router.push('/');
+      router.push('/'); // Redirect authenticated users to homepage
     }
   }, [router]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true); 
 
@@ -36,11 +35,22 @@ const SignInPage = () => {
         localStorage.setItem('token', token); 
         setUser(user); 
         setIsLoggedIn(true); 
-        router.push('/'); 
+        console.log("Sign-in successful, token stored.");
+
+        // Retrieve the redirect URL from sessionStorage
+        const redirect = sessionStorage.getItem('redirectAfterLogin') || '/';
+        console.log("Redirecting to:", redirect);
+
+        // Remove the redirect path from sessionStorage
+        sessionStorage.removeItem('redirectAfterLogin');
+
+        // Redirect to the intended page
+        router.push(redirect);
       } else {
         setError('Invalid email or password.');
       }
     } catch (err) {
+      console.error('Sign-in error:', err);
       setError(err.response?.data?.message || 'An unexpected error occurred.');
     } finally {
       setLoading(false); 
@@ -62,6 +72,7 @@ const SignInPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
           {/* Password Input */}
@@ -72,6 +83,7 @@ const SignInPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
             />
           </div>
           {/* Error Message */}
