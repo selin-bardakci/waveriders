@@ -16,21 +16,7 @@ const SignInPage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      axios
-        .get('http://localhost:8081/api/users/profile', {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((response) => {
-          const { account_type } = response.data;
-          if (account_type === 'admin') {
-            router.push('/admin/control'); 
-          } else {
-            router.push('/'); 
-          }
-        })
-        .catch(() => {
-          localStorage.removeItem('token'); 
-        });
+      router.push('/'); // Redirect authenticated users to homepage
     }
   }, [router]);
 
@@ -112,6 +98,16 @@ const SignInPage = () => {
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
+          <div className="text-center mt-4">
+  <a
+    href="/forgot-password"
+    className="text-gray-500 hover:underline text-sm hover:text-gray-700"
+  >
+    Forgot your password?
+  </a>
+</div>
+
+
         </form>
       </div>
     </div>
