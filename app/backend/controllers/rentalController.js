@@ -162,6 +162,7 @@ export const deleteReview = async (req, res) => {
   }
 };
 
+// Rezervasyon Detaylarını Getir
 export const getBookingDetails = async (req, res) => {
   const { rental_id } = req.params;
 
@@ -202,15 +203,15 @@ export const getBookingDetails = async (req, res) => {
 export const cancelBooking = async (req, res) => {
   const { rental_id } = req.params;
 
+  console.log('Rental ID received for cancellation:', rental_id);
+
   if (!rental_id) {
+    console.log('Rental ID is missing');
     return res.status(400).json({ message: 'Rental ID is required' });
   }
 
   try {
-    const sql = `
-      DELETE FROM rentals
-      WHERE rental_id = ?
-    `;
+    const sql = `DELETE FROM rentals WHERE rental_id = ?`;
 
     db.query(sql, [rental_id], (err, result) => {
       if (err) {
@@ -219,16 +220,71 @@ export const cancelBooking = async (req, res) => {
       }
 
       if (result.affectedRows === 0) {
+        console.log('No booking found for rental_id:', rental_id);
         return res.status(404).json({ message: 'Booking not found or already deleted' });
       }
 
+      console.log('Booking deleted successfully:', rental_id);
       res.status(200).json({ message: 'Booking deleted successfully' });
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in cancelBooking:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
 
 
+
+export const getDashboardRecentRentals = async (req, res) => {
+  const customer_id = req.user.id;
+
+  console.log("Customer ID:", customer_id); // Kullanıcı ID kontrolü
+
+  try {
+    const sql = `
+      SELECT 
+        r.rental_id, 
+        r.boat_id, 
+        r.start_date, 
+        r.end_date, 
+        r.status, 
+        r.rental_price,
+        br.overall_rating AS rating,
+        br.driver_rating AS driver,
+        br.cleanliness_rating AS cleanliness,
+        br.review_text AS comment,
+        b.photos AS photos,
+        b.boat_name AS boat_name,
+        b.location AS location
+      FROM rentals r
+      LEFT JOIN boat_reviews br ON r.rental_id = br.rental_id
+      LEFT JOIN boats b ON r.boat_id = b.boat_id
+      WHERE r.customer_id = ?
+      ORDER BY 
+        CASE 
+          WHEN r.status = 'completed' AND br.review_text IS NOT NULL THEN 1
+          WHEN r.status = 'completed' THEN 2
+          ELSE 3
+        END, 
+        r.start_date DESC
+      LIMIT 4
+    `;
+
+    console.log("SQL Query:", sql); // SQL sorgusunu loglayın
+
+    db.query(sql, [customer_id], (err, results) => {
+      if (err) {
+        console.error("Error fetching recent rentals for dashboard:", err);
+        return res.status(500).json({ message: "Error fetching recent rentals" });
+      }
+
+      console.log("SQL Results:", results); // SQL sorgusunun sonucunu loglayın
+
+      res.status(200).json(results);
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
