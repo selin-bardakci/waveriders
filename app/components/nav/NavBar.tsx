@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { Logo } from '../Logo/Logo.js'; // Import your logo component
 
 const NavBar = () => {
   const { user, setUser, isLoggedIn, setIsLoggedIn } = useAuth();
@@ -205,11 +206,15 @@ const NavBar = () => {
   };
 
   return (
-    <div className="sticky top-0 w-full mx-auto bg-white border-b-2 border-gray-300 shadow-md z-30 h-20 p-4 flex items-center rounded-tl-[1rem] rounded-tr-[1rem]">
-      <div className="flex w-full justify-between items-center px-6">
-        <Link href="/" className="text-lg font-semibold">
-          WaveRiders
-        </Link>
+    <div className="sticky top-0 w-full bg-white border-b-2 border-gray-300 shadow-md z-30 h-20 flex items-center rounded-tl-[1rem] rounded-tr-[1rem]">
+      <div className="flex justify-between items-center w-full">
+        {/* Logo and WaveRiders Text */}
+        <div className="flex items-center">
+          <Logo /> {/* Add Logo */}
+          <Link href="/" className="text-lg font-semibold">
+            WaveRiders
+          </Link>
+        </div>
         <div className="flex items-center gap-8 md:gap-8">{renderNavLinks()}</div>
       </div>
     </div>
