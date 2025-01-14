@@ -1,8 +1,9 @@
-"use client"; 
+"use client";
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react'; // Ensure you have lucide-react installed: npm install lucide-react
 
 const RegisterForm = () => {
   const [name, setName] = useState('');
@@ -16,6 +17,9 @@ const RegisterForm = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const router = useRouter();
+
+  // **1. Introduce the `saving` state**
+  const [saving, setSaving] = useState(false); // Tracks if the form is being submitted
 
   useEffect(() => {
     const today = new Date();
@@ -38,7 +42,7 @@ const RegisterForm = () => {
       setError('Last name must not contain numbers.');
       return false;
     }
-    if (name.length < 2 ) {
+    if (name.trim().length < 2) {
       setError('First name must be at least 2 characters long.');
       return false;
     }
@@ -67,6 +71,10 @@ const RegisterForm = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(''); // Reset error message
+    setSuccessMessage(''); // Reset success message
+
+    // **Prevent submission if already saving**
+    if (saving) return;
 
     if (!isChecked) {
       setError('You must accept the terms.');
@@ -80,25 +88,34 @@ const RegisterForm = () => {
     const formattedBirthdate = birthdate;
 
     try {
+      // **Start the saving process**
+      setSaving(true);
+
       const response = await axios.post('http://localhost:8081/api/auth/signup', {
         name,
         lastname,
         email,
         password,
-        phone, 
-        birthdate: formattedBirthdate, 
+        phone,
+        birthdate: formattedBirthdate,
         account_type: 'customer'
       });
-      
+
       setSuccessMessage('Registration successful. A verification email has been sent.');
-      // Optional: Redirect after successful registration
+      console.log('Registration response:', response.data);
+
+      // Optional: Redirect after successful registration (e.g., to a welcome page)
       // router.push('/welcome');
     } catch (err: any) {
+      console.error('Registration error:', err);
       const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
       setError(errorMessage);
+    } finally {
+      // **End the saving process**
+      setSaving(false);
     }
   };
-  
+
   // Allow only numeric input for phone number
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -114,6 +131,7 @@ const RegisterForm = () => {
         className="absolute inset-0 bg-cover bg-center opacity-70"
         style={{ backgroundImage: 'url(/images/registerPhoto.png)' }}
       ></div>
+
       {/* Registration Container on the right */}
       <div className="relative w-full flex justify-end items-center z-10">
         <div className="w-full max-w-lg bg-white p-8 border border-gray-300 rounded-lg shadow-md mr-10">
@@ -122,6 +140,7 @@ const RegisterForm = () => {
           </h2>
 
           <form onSubmit={handleSubmit}>
+            {/* First Name */}
             <div className="mb-4">
               <input
                 type="text"
@@ -129,9 +148,11 @@ const RegisterForm = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={saving} // **Disable input while saving**
               />
             </div>
 
+            {/* Last Name */}
             <div className="mb-4">
               <input
                 type="text"
@@ -139,19 +160,23 @@ const RegisterForm = () => {
                 value={lastname}
                 onChange={(e) => setLastName(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={saving} // **Disable input while saving**
               />
             </div>
 
+            {/* Birthdate */}
             <div className="mb-4">
               <input
                 type="date"
                 value={birthdate}
                 onChange={(e) => setBirthDate(e.target.value)}
-                max={maxBirthDate}
+                max={maxBirthDate} // Restrict the date to 18 years ago from today
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={saving} // **Disable input while saving**
               />
             </div>
 
+            {/* Email Address */}
             <div className="mb-4">
               <input
                 type="email"
@@ -159,9 +184,11 @@ const RegisterForm = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={saving} // **Disable input while saving**
               />
             </div>
 
+            {/* Phone Number */}
             <div className="mb-4">
               <input
                 type="tel"
@@ -171,11 +198,13 @@ const RegisterForm = () => {
                 pattern="^0\d{10}$"
                 inputMode="numeric"
                 maxLength={11}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 title="Please enter an 11-digit phone number starting with 0."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={saving} // **Disable input while saving**
               />
             </div>
 
+            {/* Password */}
             <div className="mb-4">
               <input
                 type="password"
@@ -183,9 +212,11 @@ const RegisterForm = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={saving} // **Disable input while saving**
               />
             </div>
 
+            {/* Terms and Conditions */}
             <div className="mb-6">
               <label className="inline-flex items-center">
                 <input
@@ -193,23 +224,38 @@ const RegisterForm = () => {
                   checked={isChecked}
                   onChange={() => setIsChecked(!isChecked)}
                   className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                  disabled={saving} // **Disable checkbox while saving**
                 />
                 <span className="ml-2 text-gray-700">
-                  I accept the terms. <a href="/terms" className="text-blue-600">Terms and Conditions</a>
+                  I accept the <a href="/terms" className="text-blue-600">Terms and Conditions</a>
                 </span>
               </label>
             </div>
 
+            {/* Error Message */}
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+            {/* Success Message */}
             {successMessage && <p className="text-green-500 text-center mb-4">{successMessage}</p>}
 
+            {/* **Submit Button** */}
             <div className="text-center">
               <button
                 type="submit"
-                className={`w-full ${isChecked ? 'bg-blue-500 hover:bg-blue-600' : 'bg-blue-300'} text-white px-10 py-3 text-sm rounded-lg transition`}
-                disabled={!isChecked}
+                disabled={saving || !isChecked} // **Disable button while saving or terms not accepted**
+                className={`w-full flex items-center justify-center ${
+                  saving || !isChecked
+                    ? 'bg-blue-300 cursor-not-allowed'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                } text-white px-10 py-3 text-sm rounded-lg transition`}
               >
-                Register
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> {/* Loading Spinner */}
+                    Saving...
+                  </>
+                ) : (
+                  'Register'
+                )}
               </button>
             </div>
           </form>
