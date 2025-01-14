@@ -1,4 +1,4 @@
-"use client";
+"use client"; 
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -16,7 +16,6 @@ const RegisterForm = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const router = useRouter();
-
 
   useEffect(() => {
     const today = new Date();
@@ -47,39 +46,40 @@ const RegisterForm = () => {
       setError('Password must be at least 6 characters long.');
       return false;
     }
+    // Validate birthdate format YYYY-MM-DD
     if (!/^\d{4}-\d{2}-\d{2}$/.test(birthdate)) {
-      setError('Invalid birthdate. Please use the format DD-MM-YYYY.');
+      setError('Invalid birthdate. Please use the format YYYY-MM-DD.');
       return false;
     }
-    if(!/^\d{11}$/.test(phone)) {
-      setError('Invalid phone number. Please use a 10-digit number.');
+    // Phone number validation: starts with 0 and has exactly 11 digits
+    if (!/^0\d{10}$/.test(phone)) {
+      setError('Invalid phone number. Please enter an 11-digit number starting with 0.');
       return false;
     }
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       setError('Invalid email address.');
-      return false
+      return false;
     }
 
     return true;
   };
 
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(''); // Reset error message
-  
+
     if (!isChecked) {
       setError('You must accept the terms.');
       return;
     }
-  
+
     if (!validateForm()) return; // Validate the form
-  
-    // Format birthdate from DD.MM.YYYY to YYYY-MM-DD
-    const formattedBirthdate = birthdate.split('.').reverse().join('-');
-  
+
+    // Format birthdate from DD.MM.YYYY to YYYY-MM-DD if needed
+    // Assuming the input is already in YYYY-MM-DD format since type="date" is used
+    const formattedBirthdate = birthdate;
+
     try {
-     
       const response = await axios.post('http://localhost:8081/api/auth/signup', {
         name,
         lastname,
@@ -91,12 +91,22 @@ const RegisterForm = () => {
       });
       
       setSuccessMessage('Registration successful. A verification email has been sent.');
+      // Optional: Redirect after successful registration
+      // router.push('/welcome');
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
       setError(errorMessage);
     }
   };
   
+  // Allow only numeric input for phone number
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Remove all non-digit characters
+    const numericValue = value.replace(/\D/g, '');
+    setPhone(numericValue);
+  };
+
   return (
     <div className="relative min-h-screen flex">
       {/* Background Image */}
@@ -118,7 +128,6 @@ const RegisterForm = () => {
                 placeholder="First Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                max={maxBirthDate}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -138,6 +147,7 @@ const RegisterForm = () => {
                 type="date"
                 value={birthdate}
                 onChange={(e) => setBirthDate(e.target.value)}
+                max={maxBirthDate}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -157,8 +167,12 @@ const RegisterForm = () => {
                 type="tel"
                 placeholder="Phone Number"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={handlePhoneChange}
+                pattern="^0\d{10}$"
+                inputMode="numeric"
+                maxLength={11}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                title="Please enter an 11-digit phone number starting with 0."
               />
             </div>
 
@@ -196,8 +210,8 @@ const RegisterForm = () => {
                 disabled={!isChecked}
               >
                 Register
-            </button>
-           </div>
+              </button>
+            </div>
           </form>
         </div>
       </div>
