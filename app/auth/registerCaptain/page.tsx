@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from "../../context/AuthContext"; 
 import axios from 'axios';
+import { Loader2 } from 'lucide-react'; // Import a loading spinner (ensure you have lucide-react installed)
 
 const RegisterCaptain = () => {
   const [captainName, setCaptainName] = useState('');
@@ -27,7 +28,10 @@ const RegisterCaptain = () => {
   const previousPage = sessionStorage.getItem('previousPage');
 
   const router = useRouter();
-  
+
+  // **1. Introduce the `saving` state**
+  const [saving, setSaving] = useState(false); // Tracks if the form is being submitted
+
   useEffect(() => {
     if (isLoading) return; // Wait while user status is loading
 
@@ -107,8 +111,12 @@ const RegisterCaptain = () => {
     return "";
   };
 
+  // **2. Modify handleSubmit to manage the `saving` state**
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Prevent submission if already saving
+    if (saving) return;
 
     // Reset error messages
     setError('');
@@ -152,6 +160,9 @@ const RegisterCaptain = () => {
     // Assuming the input is already in YYYY-MM-DD format since type="date" is used
     const formattedBirthdate = captainAge;
 
+    // **Start the saving process**
+    setSaving(true);
+
     try {
       const formData = new FormData();
       formData.append('first_name', captainName);
@@ -188,6 +199,9 @@ const RegisterCaptain = () => {
     } catch (err: any) {
       console.error('Error during captain registration:', err);
       setError(err.response?.data?.message || 'Failed to register captain. Please try again.');
+    } finally {
+      // **End the saving process**
+      setSaving(false);
     }
   };
 
@@ -232,6 +246,7 @@ const RegisterCaptain = () => {
                 value={captainName}
                 onChange={(e) => setCaptainName(e.target.value)}
                 className={`w-full p-3 border ${captainNameError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                disabled={saving} // **Disable input while saving**
               />
               {captainNameError && (
                 <p className="text-red-500 text-sm mt-1">{captainNameError}</p>
@@ -246,6 +261,7 @@ const RegisterCaptain = () => {
                 value={captainLastName}
                 onChange={(e) => setCaptainLastName(e.target.value)}
                 className={`w-full p-3 border ${captainLastNameError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                disabled={saving} // **Disable input while saving**
               />
               {captainLastNameError && (
                 <p className="text-red-500 text-sm mt-1">{captainLastNameError}</p>
@@ -261,6 +277,7 @@ const RegisterCaptain = () => {
                 onChange={(e) => setCaptainAge(e.target.value)}
                 max={maxBirthDate} // Restrict the date to 18 years ago from today
                 className={`w-full p-3 border ${error.includes('Date of birth') ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                disabled={saving} // **Disable input while saving**
               />
             </div>
 
@@ -272,6 +289,7 @@ const RegisterCaptain = () => {
                 value={experience}
                 onChange={(e) => setExperience(e.target.value)}
                 className={`w-full p-3 border ${error.includes('experience') ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                disabled={saving} // **Disable input while saving**
               />
             </div>
 
@@ -287,6 +305,7 @@ const RegisterCaptain = () => {
                 inputMode="numeric"
                 maxLength={11}
                 title="Please enter an 11-digit phone number starting with 0."
+                disabled={saving} // **Disable input while saving**
               />
               {captainPhoneError && (
                 <p className="text-red-500 text-sm mt-1">{captainPhoneError}</p>
@@ -301,13 +320,23 @@ const RegisterCaptain = () => {
             {/* Success Message */}
             {successMessage && <p className="text-green-500 text-center mb-4">{successMessage}</p>}
 
-            {/* Submit Button */}
+            {/* **3. Modify the Submit Button** */}
             <div className="text-center">
               <button
                 type="submit"
-                className="w-full bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition"
+                disabled={saving} // **Disable button while saving**
+                className={`w-full flex items-center justify-center bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition ${
+                  saving ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                Next
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Next'
+                )}
               </button>
             </div>
           </form>
