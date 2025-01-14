@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from "../../context/AuthContext"; 
 import axios from 'axios';
 
 const RegisterCaptain = () => {
@@ -16,9 +17,24 @@ const RegisterCaptain = () => {
   const [error, setError] = useState(''); // Error state
   const [maxBirthDate, setMaxBirthDate] = useState(''); // For restricting date input
   const [successMessage, setSuccessMessage] = useState('');
+  const { isLoggedIn, isLoading } = useAuth();
+  const previousPage = sessionStorage.getItem('previousPage');
+
   const router = useRouter();
   
   useEffect(() => {
+    if (isLoading) return; // Kullanıcı durumu yüklenirken bekle
+
+    if (isLoggedIn) {
+      router.push('/');
+      return;
+    }
+
+    if (previousPage !== 'auth/boatLicense') {
+      router.push('/auth/AccountSetup'); 
+    }
+    sessionStorage.setItem('previousPage', 'auth/registerCaptain');
+    
     const storedbusinessid = localStorage.getItem('business_id');
     console.log('Business ID:', storedbusinessid);
     if (storedbusinessid) {
@@ -33,7 +49,12 @@ const RegisterCaptain = () => {
     } else {
       setError('Business ID is not found. Please create a Business first.');
     }
-  }, [setBusinessId]);
+  }, [setBusinessId ,router, isLoading, isLoggedIn]);
+
+  if (isLoggedIn) {
+    return null; 
+  }
+
   // Calculate the maximum date allowed (18 years ago from today)
   useEffect(() => {
     const today = new Date();
