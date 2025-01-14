@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../context/AuthContext"; // AuthContext'i kullanın
 import BoatListingCard from "../../components/boatListingCard/BoatListingCard";
-import { useRouter } from 'next/navigation';
 
 const AllListings = () => {
   const router = useRouter();
@@ -17,16 +18,15 @@ const AllListings = () => {
     if (isLoading) return; // Kullanıcı durumu yüklenirken bekle
 
     if (!isLoggedIn) {
-      // Kullanıcı giriş yapmamışsa, giriş yapma sayfasına yönlendir
-      router.push('/auth/sign-in');
+      router.push("/auth/sign-in"); // Kullanıcı giriş yapmamışsa giriş sayfasına yönlendir
       return;
     }
 
-    if (user?.account_type !== 'business') {
-      // Kullanıcı giriş yapmış ama account_type 'business' değilse ana sayfaya yönlendir
-      router.push('/');
+    if (user?.account_type !== "business") {
+      router.push("/"); // Kullanıcı 'business' değilse ana sayfaya yönlendir
       return;
     }
+
     const fetchListings = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -54,7 +54,7 @@ const AllListings = () => {
     return <p>Loading...</p>; // Yükleniyor ekranı
   }
 
-  if (!isLoggedIn || user?.account_type !== 'business') {
+  if (!isLoggedIn || user?.account_type !== "business") {
     return null; // Kullanıcı uygun değilse hiçbir şey render etme
   }
 
@@ -68,13 +68,13 @@ const AllListings = () => {
     setCurrentBoatId(null);
   };
 
-const handleRemoveListing = async () => {
+  const handleRemoveListing = async () => {
     if (!currentBoatId) return;
 
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(http://localhost:8081/api/boats/${currentBoatId}, {
-        headers: { Authorization: Bearer ${token} },
+      await axios.delete(`http://localhost:8081/api/boats/${currentBoatId}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
       setListings((prev) => prev.filter((boat: any) => boat.boat_id !== currentBoatId));
     } catch (err) {
@@ -84,7 +84,6 @@ const handleRemoveListing = async () => {
       closeConfirmModal();
     }
   };
-  
 
   if (loading) return <p>Loading listings...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
