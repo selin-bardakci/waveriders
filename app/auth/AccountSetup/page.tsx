@@ -1,11 +1,26 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from "../../context/AuthContext"; 
 import { useRouter } from 'next/navigation'; // Import router
 
 const AccountSetup = () => {
   const [selectedOption, setSelectedOption] = useState('');
   const [error, setError] = useState('');
+    const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter(); // Initialize router
+
+  useEffect(() => {
+    if (isLoading) return; 
+
+    if (isLoggedIn) {
+      router.push('/');
+      return;
+    }
+  }, [router, isLoading, isLoggedIn]);
+
+  if (isLoggedIn) {
+    return null; 
+  }
 
   const handleOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedOption(e.target.value);
