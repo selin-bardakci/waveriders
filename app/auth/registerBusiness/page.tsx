@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { BusinessProvider } from '../../context/BusinessContext';
+import { useAuth } from "../../context/AuthContext";
+
 
 const RegisterBusiness = () => {
   const [firstName, setFirstName] = useState('');
@@ -15,9 +17,22 @@ const RegisterBusiness = () => {
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1); // Progress tracker
-
+  const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
 
+  useEffect(() => {
+    if (isLoading) return; 
+
+    if (isLoggedIn) {
+      router.push('/');
+      return;
+    }
+    sessionStorage.setItem('previousPage', 'auth/registerBusiness');
+  }, [router, isLoading, isLoggedIn]);
+
+  if (isLoggedIn) {
+    return null;
+  }
   // Handler to manage mutual exclusivity between individual and business fields
   const handleFirstNameLastNameChange = (field: string, value: string) => {
     if (field === 'firstName') {
@@ -81,7 +96,7 @@ const RegisterBusiness = () => {
     }
 
     setError('');
-    
+
     try {
       const response = await axios.post('http://localhost:8081/api/auth/registerBusiness', {
         first_name: firstName || null,
@@ -95,7 +110,7 @@ const RegisterBusiness = () => {
       });
       //store business_id in context
       const businessId = response.data?.business_id;
-      if(businessId !== undefined){
+      if (businessId !== undefined) {
         localStorage.setItem('business_id', businessId.toString());
         console.log('Business ID successfully stored in localStorage:', businessId);
       } else {
@@ -108,7 +123,7 @@ const RegisterBusiness = () => {
       console.log({
         firstName, lastName, businessName, email, phone, password, termsAgreed
       });
-      
+
       // Navigate to the next step
       router.push('/auth/registerBoat');  // Example of next step
     } catch (error) {
@@ -119,7 +134,7 @@ const RegisterBusiness = () => {
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Background Image */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center opacity-70"
         style={{ backgroundImage: 'url(/images/deneme2.jpg)' }}
       ></div>
@@ -218,9 +233,8 @@ const RegisterBusiness = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                  validatePassword(password) ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
-                }`}
+                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${validatePassword(password) ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                  }`}
               />
               {/* Password Requirements */}
               <div className="mt-2 text-sm text-gray-600">
