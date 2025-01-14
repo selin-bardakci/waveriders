@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { useAuth } from "../../context/AuthContext"; 
+
 
 const CaptainLicense = () => {
   const [businessId, setBusinessId] = useState<string | null>(null);
@@ -9,10 +11,23 @@ const CaptainLicense = () => {
   const [error, setError] = useState('');
   const [step, setStep] = useState(5);
   const [successMessage, setSuccessMessage] = useState('');
+  const { isLoggedIn, isLoading } = useAuth();
+  const previousPage = sessionStorage.getItem('previousPage');
+
   const router = useRouter();
 
   // Load business ID from localStorage
   useEffect(() => {
+    if (isLoading) return; // Kullanıcı durumu yüklenirken bekle
+
+    if (isLoggedIn) {
+      router.push('/');
+      return;
+    }
+    if (previousPage !== 'auth/registerCaptain') {
+      router.push('/auth/AccountSetup'); 
+    }
+    sessionStorage.setItem('previousPage', 'auth/captainLicense');    
     const storedBusinessId = localStorage.getItem('business_id');
     if (storedBusinessId) {
       setBusinessId(storedBusinessId);
@@ -20,8 +35,11 @@ const CaptainLicense = () => {
     } else {
       setError('Business ID not found. Please complete registration first.');
     }
-  }, []);
+  }, [router, isLoading, isLoggedIn]);
 
+  if (isLoggedIn ) {
+    return null; 
+  }
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setRegistrationPapers(e.target.files[0]);
