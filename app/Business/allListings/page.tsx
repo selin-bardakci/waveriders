@@ -1,8 +1,9 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../context/AuthContext"; // AuthContext'i kullanın
+import { useAuth } from "../../context/AuthContext"; // Use your AuthContext
 import BoatListingCard from "../../components/boatListingCard/BoatListingCard";
 
 const AllListings = () => {
@@ -15,24 +16,27 @@ const AllListings = () => {
   const [currentBoatId, setCurrentBoatId] = useState<number | null>(null);
 
   useEffect(() => {
-    if (isLoading) return; // Kullanıcı durumu yüklenirken bekle
+    if (isLoading) return; // Wait for auth status
 
     if (!isLoggedIn) {
-      router.push("/auth/sign-in"); // Kullanıcı giriş yapmamışsa giriş sayfasına yönlendir
+      router.push("/auth/sign-in");
       return;
     }
 
     if (user?.account_type !== "business") {
-      router.push("/"); // Kullanıcı 'business' değilse ana sayfaya yönlendir
+      router.push("/");
       return;
     }
 
     const fetchListings = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:8081/api/business/listings", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          "http://localhost:8081/api/business/listings",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
         if (response.status === 200) {
           setListings(response.data.boats);
@@ -51,11 +55,11 @@ const AllListings = () => {
   }, [isLoading, isLoggedIn, user, router]);
 
   if (isLoading) {
-    return <p>Loading...</p>; // Yükleniyor ekranı
+    return <p>Loading...</p>;
   }
 
   if (!isLoggedIn || user?.account_type !== "business") {
-    return null; // Kullanıcı uygun değilse hiçbir şey render etme
+    return null;
   }
 
   const openConfirmModal = (boat_id: number) => {
@@ -76,7 +80,9 @@ const AllListings = () => {
       await axios.delete(`http://localhost:8081/api/boats/${currentBoatId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setListings((prev) => prev.filter((boat: any) => boat.boat_id !== currentBoatId));
+      setListings((prev) =>
+        prev.filter((boat: any) => boat.boat_id !== currentBoatId)
+      );
     } catch (err) {
       console.error("Error removing listing:", err);
       alert("Failed to remove listing.");
@@ -92,7 +98,6 @@ const AllListings = () => {
     <div className="min-h-screen bg-gray-100 py-4">
       <div className="container mx-auto py-4 w-full md:w-3/4 lg:w-4/5">
         <h2 className="text-2xl font-bold text-gray-800 mb-8">Your Listings</h2>
-        {/* grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {listings.length > 0 ? (
             listings.map((boat: any) => (
@@ -105,12 +110,12 @@ const AllListings = () => {
                   Remove Listing
                 </button>
                 <div className="flex justify-center mt-4">
-                <button
-              onClick={() => router.push(`/listings/${boat.boat_id}/edit`)}
-              className="bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-400 transition"
-            >
-             Edit Your Listing
-              </button>
+                  <button
+                    onClick={() => router.push(`/listings/${boat.boat_id}/edit`)}
+                    className="bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+                  >
+                    Edit Your Listing
+                  </button>
                 </div>
               </div>
             ))
@@ -120,7 +125,6 @@ const AllListings = () => {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg text-center w-[400px] h-[150px]">
