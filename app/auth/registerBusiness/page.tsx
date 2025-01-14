@@ -1,27 +1,25 @@
 "use client";
 
-import { useState, useContext, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { BusinessProvider } from '../../context/BusinessContext';
 import { useAuth } from "../../context/AuthContext";
 
-
-const RegisterBusiness = () => {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [businessName, setBusinessName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [termsAgreed, setTermsAgreed] = useState(false);
-  const [error, setError] = useState('');
-  const [step, setStep] = useState(1); // Progress tracker
+const RegisterBusiness: React.FC = () => {
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+  const [businessName, setBusinessName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [phone, setPhone] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [termsAgreed, setTermsAgreed] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [step, setStep] = useState<number>(1); // Progress tracker
   const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoading) return; 
+    if (isLoading) return;
 
     if (isLoggedIn) {
       router.push('/');
@@ -33,8 +31,17 @@ const RegisterBusiness = () => {
   if (isLoggedIn) {
     return null;
   }
+
   // Handler to manage mutual exclusivity between individual and business fields
-  const handleFirstNameLastNameChange = (field: string, value: string) => {
+  const handleFirstNameLastNameChange = (field: 'firstName' | 'lastName', value: string) => {
+    // Prevent numbers in names
+    if (/\d/.test(value)) {
+      setError(`${field === 'firstName' ? 'First Name' : 'Last Name'} cannot contain numbers.`);
+      return;
+    } else {
+      setError('');
+    }
+
     if (field === 'firstName') {
       setFirstName(value);
     } else {
@@ -47,6 +54,14 @@ const RegisterBusiness = () => {
   };
 
   const handleBusinessNameChange = (value: string) => {
+    // Prevent numbers in business name
+    if (/\d/.test(value)) {
+      setError('Business Name cannot contain numbers.');
+      return;
+    } else {
+      setError('');
+    }
+
     setBusinessName(value);
     // Clear first and last name if business name is entered
     if (value) {
@@ -69,33 +84,51 @@ const RegisterBusiness = () => {
     return null;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default form submission behavior
-
-    // Validation
+  const validateForm = (): boolean => {
+    // Check if either individual or business information is provided
     if ((!firstName || !lastName) && !businessName) {
       setError('Please provide either First Name and Last Name, or Business Name.');
-      return;
+      return false;
     }
 
+    // Check required fields
     if (!email || !phone || !password) {
       setError('Email, Phone Number, and Password are required.');
-      return;
+      return false;
+    }
+
+    // Email Validation
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setError('Invalid email address.');
+      return false;
+    }
+
+    // Phone number validation: starts with 0 and has exactly 11 digits
+    if (!/^0\d{10}$/.test(phone)) {
+      setError('Invalid phone number. Please enter an 11-digit number starting with 0.');
+      return false;
     }
 
     // Password Validation
     const passwordError = validatePassword(password);
     if (passwordError) {
       setError(passwordError);
-      return;
+      return false;
     }
 
     if (!termsAgreed) {
       setError('You must agree to the terms and conditions to proceed.');
-      return;
+      return false;
     }
 
     setError('');
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // Prevent default form submission behavior
+
+    if (!validateForm()) return; // Validate the form
 
     try {
       const response = await axios.post('http://localhost:8081/api/auth/registerBusiness', {
@@ -108,7 +141,8 @@ const RegisterBusiness = () => {
         date_of_birth: '1970-01-01', // Default date of birth
         account_type: 'business' // Assuming account_type is required and set to 'business'
       });
-      //store business_id in context
+
+      // Store business_id in localStorage
       const businessId = response.data?.business_id;
       if (businessId !== undefined) {
         localStorage.setItem('business_id', businessId.toString());
@@ -118,17 +152,20 @@ const RegisterBusiness = () => {
         alert("Invalid business ID stored. Please try again.");
       }
 
-
-      // Simulate submission and navigate to the next step
-      console.log({
-        firstName, lastName, businessName, email, phone, password, termsAgreed
-      });
-
       // Navigate to the next step
       router.push('/auth/registerBoat');  // Example of next step
-    } catch (error) {
-      setError('An error occurred during registration. Please try again.');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'An error occurred during registration. Please try again.';
+      setError(errorMessage);
     }
+  };
+
+  // Allow only numeric input for phone number
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Remove all non-digit characters
+    const numericValue = value.replace(/\D/g, '');
+    setPhone(numericValue);
   };
 
   return (
@@ -146,7 +183,7 @@ const RegisterBusiness = () => {
 
       {/* Registration Container */}
       <div className="relative flex-grow flex items-center justify-end z-10">
-        <div className="w-1/3 bg-white p-8 border border-gray-300 rounded-lg shadow-md mr-10">
+        <div className="w-full max-w-lg bg-white p-8 border border-gray-300 rounded-lg shadow-md mr-10">
           {/* Progress Bar */}
           <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
             <div
@@ -161,7 +198,6 @@ const RegisterBusiness = () => {
             Register as a Business
           </h2>
 
-          {/* First Name, Last Name, or Business Name Box */}
           <form onSubmit={handleSubmit}>
             <div className="p-4 mb-6 border border-blue-500 bg-blue-50 rounded-lg">
               {/* First Name Input */}
@@ -221,9 +257,21 @@ const RegisterBusiness = () => {
                 type="tel"
                 placeholder="Phone Number"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={handlePhoneChange}
+                pattern="^0\d{10}$"
+                inputMode="numeric"
+                maxLength={11}
+                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
+                  /^0\d{10}$/.test(phone) || phone === ''
+                    ? 'border-gray-300 focus:ring-blue-500'
+                    : 'border-red-500 focus:ring-red-500'
+                }`}
+                title="Please enter an 11-digit phone number starting with 0."
               />
+              {/* Optional: Inline Phone Validation Message */}
+              {!/^0\d{10}$/.test(phone) && phone !== '' && (
+                <p className="text-red-500 text-sm mt-1">Phone number must start with 0 and be exactly 11 digits.</p>
+              )}
             </div>
 
             {/* Password Input */}
@@ -233,13 +281,20 @@ const RegisterBusiness = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${validatePassword(password) ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
-                  }`}
+                className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
+                  validatePassword(password) && password !== ''
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
               />
               {/* Password Requirements */}
               <div className="mt-2 text-sm text-gray-600">
                 Password must be at least 7 characters long, contain at least one uppercase letter, and one number.
               </div>
+              {/* Optional: Inline Password Validation Message */}
+              {validatePassword(password) && password !== '' && (
+                <p className="text-red-500 text-sm mt-1">{validatePassword(password)}</p>
+              )}
             </div>
 
             {/* Terms and Conditions Checkbox */}
@@ -264,7 +319,10 @@ const RegisterBusiness = () => {
             <div className="text-center">
               <button
                 type="submit"
-                className="w-full bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition"
+                className={`w-full ${
+                  termsAgreed ? 'bg-blue-500 hover:bg-blue-600' : 'bg-blue-300 cursor-not-allowed'
+                } text-white px-10 py-3 text-sm rounded-lg transition`}
+                disabled={!termsAgreed}
               >
                 Next
               </button>
