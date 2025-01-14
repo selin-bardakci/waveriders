@@ -394,35 +394,42 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
           </Swiper>
 
           {isOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-              <div className="relative bg-white p-4 rounded-lg max-w-3xl w-full">
-                <button
-                  onClick={closeModal}
-                  className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-6 h-6"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-                <img
-                  src={selectedImage}
-                  alt="Enlarged Boat"
-                  className="w-full h-auto object-contain rounded-lg shadow-md"
-                />
-              </div>
-            </div>
-          )}
+  <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+    <div className="relative bg-white p-4 rounded-lg max-w-4xl w-11/12 mx-auto shadow-lg">
+      {/* Close Button */}
+      <button
+        onClick={closeModal}
+        className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="1.5"
+          stroke="currentColor"
+          className="w-6 h-6"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+
+      {/* Image */}
+      <div className="flex justify-center items-center">
+        <img
+          src={selectedImage}
+          alt="Enlarged Display"
+          className="max-w-full max-h-[80vh] object-contain rounded-lg"
+        />
+      </div>
+    </div>
+  </div>
+)}
+
+
         </div>
 
         {/* About Section */}
