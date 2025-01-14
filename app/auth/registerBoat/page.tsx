@@ -1,9 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { useAuth } from "../../context/AuthContext"; // AuthContext'i kullanın
+import { useAuth } from "../../context/AuthContext"; // Ensure AuthContext is correctly set up
+import { Loader2 } from 'lucide-react'; // Ensure lucide-react is installed: npm install lucide-react
+
 const ports = [
   'Port of Aliağa',
   'Port of Alidaş',
@@ -56,6 +58,7 @@ const ports = [
   'Port of Zonguldak'
 ];
 
+
 const tripTypes = [
   { id: 1, name: 'Short Trips', description: '1–2 hours', image: '/images/short.png' },
   { id: 2, name: 'Day Trips', description: '3–6 hours', image: '/images/day.png' },
@@ -74,12 +77,17 @@ const RegisterBoat = () => {
   const [rentalPricePerDay, setRentalPricePerDay] = useState(''); // New rental price per day state
   const [photos, setPhotos] = useState<File[]>([]);
   const [selectedTrips, setSelectedTrips] = useState<number[]>([]); // For trip selection
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [error, setError] = useState(''); // Add error state
   const [step] = useState(2); // Progress tracker
   const { isLoggedIn, isLoading } = useAuth();
   const previousPage = sessionStorage.getItem('previousPage');
 
   const router = useRouter();
+
+  // **1. Introduce the `saving` state and `isSubmitting` ref**
+  const [saving, setSaving] = useState(false); // Tracks if the form is being submitted
+  const isSubmitting = useRef(false); // Ref to prevent multiple submissions
 
   const handleFiles = (files: FileList) => {
     const fileArray = Array.from(files);
@@ -112,18 +120,17 @@ const RegisterBoat = () => {
     setSelectedTrips((prev) =>
       prev.includes(tripId) ? prev.filter((id) => id !== tripId) : [...prev, tripId]
     );
-
   };
 
   useEffect(() => {
-    if (isLoading) return; // Kullanıcı durumu yüklenirken bekle
+    if (isLoading) return; // Wait while user status is loading
 
     if (isLoggedIn) {
       router.push('/');
       return;
     }
     if (previousPage !== 'auth/registerBusiness') {
-      router.push('/auth/AccountSetup'); // Eğer doğru sayfadan gelinmemişse ana sayfaya yönlendir
+      router.push('/auth/AccountSetup'); // Redirect if not coming from the correct page
     }
     sessionStorage.setItem('previousPage', 'auth/registerBoat');
     const storedbusinessid = localStorage.getItem('business_id');
@@ -144,58 +151,75 @@ const RegisterBoat = () => {
     return null; 
   }
 
-
+  // **2. Modify handleSubmit to manage the `saving` state and `isSubmitting` ref**
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // **Prevent submission if already submitting**
+    if (isSubmitting.current) {
+      return;
+    }
+
+    // Start submitting
+    isSubmitting.current = true;
+    setSaving(true);
 
     // Validation
     if (!boatName || !boatDescription || !port) {
       setError('All fields are required.');
+      resetSubmitting();
       return;
     }
     if (selectedTrips.length === 0) {
       setError('Please select at least one type of trip.');
+      resetSubmitting();
       return;
     }
     if (!boatType) {
       setError('Please select a boat type.');
+      resetSubmitting();
       return;
     }
     if (!maxCapacity || isNaN(Number(maxCapacity)) || Number(maxCapacity) <= 0) {
       setError('Please enter a valid max capacity.');
+      resetSubmitting();
       return;
     }
     if (!rentalPrice || isNaN(Number(rentalPrice)) || Number(rentalPrice) <= 0) {
       setError('Please enter a valid rental price.');
+      resetSubmitting();
       return;
     }
     if (photos.length === 0) {
       setError('Please upload at least 1 photo.');
+      resetSubmitting();
       return;
     }
 
+
     if (!business_id) {
       setError('Business ID is required. Please ensure you have registered a business.');
+      resetSubmitting();
       return;
     }
 
     // Reset error state
     setError('');
 
-    // Prepare FormData
-    const formData = new FormData();
-    formData.append('business_id', business_id.toString()); // Ensure business_id is added
-    formData.append('boat_name', boatName);
-    formData.append('description', boatDescription);
-    formData.append('trip_types', JSON.stringify(selectedTrips));
-    formData.append('price_per_hour', rentalPrice);
-    if (rentalPricePerDay) formData.append('price_per_day', rentalPricePerDay);
-    formData.append('capacity', maxCapacity);
-    formData.append('boat_type', boatType);
-    formData.append('location', port);
-    photos.forEach((photo) => formData.append('photos', photo));
-
     try {
+      // Prepare FormData
+      const formData = new FormData();
+      formData.append('business_id', business_id.toString()); // Ensure business_id is added
+      formData.append('boat_name', boatName);
+      formData.append('description', boatDescription);
+      formData.append('trip_types', JSON.stringify(selectedTrips));
+      formData.append('price_per_hour', rentalPrice);
+      if (rentalPricePerDay) formData.append('price_per_day', rentalPricePerDay);
+      formData.append('capacity', maxCapacity);
+      formData.append('boat_type', boatType);
+      formData.append('location', port);
+      photos.forEach((photo) => formData.append('photos', photo));
+
       console.log('FormData contents:', {
         business_id,
         boatName,
@@ -228,14 +252,24 @@ const RegisterBoat = () => {
       console.error('Error during boat registration:', err);
 
       let errorMessage = 'Registration failed. Please try again.';
-      if (err instanceof Error && 'response' in err) {
-        errorMessage = (err as any).response?.data?.message || errorMessage;
+      if (axios.isAxiosError(err) && err.response) {
+        errorMessage = err.response.data?.message || errorMessage;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
       }
 
       setError(errorMessage);
+    } finally {
+      // **End the saving process**
+      resetSubmitting();
     }
   };
 
+  // Function to reset the submitting flags
+  const resetSubmitting = () => {
+    isSubmitting.current = false;
+    setSaving(false);
+  };
 
   return (
     <div className="relative min-h-screen flex flex-col">
@@ -276,6 +310,7 @@ const RegisterBoat = () => {
                 value={boatName}
                 onChange={(e) => setBoatName(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={saving} // **Disable input while saving**
               />
             </div>
 
@@ -285,6 +320,7 @@ const RegisterBoat = () => {
                 value={boatType}
                 onChange={(e) => setBoatType(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={saving} // **Disable input while saving**
               >
                 <option value="">Select a boat type</option>
                 <option value="boat">Boat</option>
@@ -299,6 +335,7 @@ const RegisterBoat = () => {
                 value={boatDescription}
                 onChange={(e) => setBoatDescription(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={saving} // **Disable input while saving**
               />
             </div>
 
@@ -311,6 +348,7 @@ const RegisterBoat = () => {
                 onChange={(e) => setMaxCapacity(e.target.value)}
                 min="1"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={saving} // **Disable input while saving**
               />
             </div>
 
@@ -323,6 +361,7 @@ const RegisterBoat = () => {
                 onChange={(e) => setRentalPrice(e.target.value)}
                 min="1"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={saving} // **Disable input while saving**
               />
             </div>
 
@@ -332,6 +371,7 @@ const RegisterBoat = () => {
                 value={port}
                 onChange={(e) => setPort(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={saving} // **Disable input while saving**
               >
                 <option value="">Select a port</option>
                 {ports.map((port) => (
@@ -352,6 +392,7 @@ const RegisterBoat = () => {
                     checked={selectedTrips.includes(trip.id)}
                     onChange={() => handleTripSelection(trip.id)}
                     className="mr-2"
+                    disabled={saving} // **Disable input while saving**
                   />
                   <div className="flex items-center space-x-3">
                     <img src={trip.image} alt={trip.name} className="w-10 h-10" />
@@ -364,7 +405,6 @@ const RegisterBoat = () => {
               ))}
             </div>
 
-
             {/* Conditional Rental Price per Day Input */}
             {selectedTrips.includes(4) && (
               <div className="mb-4">
@@ -375,6 +415,7 @@ const RegisterBoat = () => {
                   onChange={(e) => setRentalPricePerDay(e.target.value)}
                   min="1"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={saving} // **Disable input while saving**
                 />
               </div>
             )}
@@ -403,11 +444,13 @@ const RegisterBoat = () => {
                   accept="image/*"
                   onChange={handlePhotoUpload}
                   className="hidden"
+                  disabled={saving} // **Disable input while saving**
                 />
                 <button
                   type="button"
                   onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
                   className="mt-2 bg-blue-500 text-white rounded-lg px-3 py-2 hover:bg-blue-600 transition"
+                  disabled={saving} // **Disable button while saving**
                 >
                   Choose a file
                 </button>
@@ -427,14 +470,24 @@ const RegisterBoat = () => {
               {/* Error Message */}
               {error && <p className="text-red-500 text-center mt-4">{error}</p>}
             </div>
-
-            {/* Submit Button */}
+           
+            {/* **3. Modify the Submit Button** */}
             <div className="text-center">
               <button
                 type="submit"
-                className="w-full bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition"
+                disabled={saving} // **Disable button while saving**
+                className={`w-full flex items-center justify-center bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition ${
+                  saving ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                Next
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Next'
+                )}
               </button>
             </div>
           </form>
