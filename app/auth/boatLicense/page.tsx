@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { useAuth } from "../../context/AuthContext"; 
-
+import { Loader2 } from 'lucide-react'; // Import a loading spinner (ensure you have lucide-react installed)
 
 const UploadBoatLicense = () => {
   const [license, setLicense] = useState<File | null>(null);
@@ -17,6 +17,9 @@ const UploadBoatLicense = () => {
   const previousPage = sessionStorage.getItem('previousPage');
   const router = useRouter();
 
+  // **1. Introduce the `saving` state**
+  const [saving, setSaving] = useState(false); // Tracks if the form is being submitted
+
   useEffect(() => {
     if (isLoading) return; 
 
@@ -26,9 +29,10 @@ const UploadBoatLicense = () => {
     }
 
     if (previousPage !== 'auth/registerBoat') {
-      router.push('/auth/AccountSetup'); // Eğer doğru sayfadan gelinmemişse ana sayfaya yönlendir
+      router.push('/auth/AccountSetup'); // Redirect if not coming from the correct page
     }
     sessionStorage.setItem('previousPage', 'auth/boatLicense');
+
     // Retrieve IDs from localStorage
     const storedBusinessId = localStorage.getItem('business_id');
     const storedBoatId = localStorage.getItem('boat_id');
@@ -55,7 +59,7 @@ const UploadBoatLicense = () => {
   }, [router, isLoading, isLoggedIn]);
 
   if (isLoggedIn) {
-    return null; // Kullanıcı uygun değilse hiçbir şey render etme
+    return null; // Render nothing if the user is logged in
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,11 +68,15 @@ const UploadBoatLicense = () => {
     }
   };
 
+  // **2. Modify handleSubmit to manage the `saving` state**
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Prevent submission if already saving
+    if (saving) return;
+
     if (!license) {
-      setError('Please upload a license file');
+      setError('Please upload a license file.');
       return;
     }
 
@@ -76,9 +84,16 @@ const UploadBoatLicense = () => {
     console.log("Business ID from localStorage:", storedBusinessId); // Debug log
 
     if (!storedBusinessId) {
-      setError('Business ID is required');
+      setError('Business ID is required.');
       return;
     }
+
+    // Reset error and success messages
+    setError('');
+    setSuccessMessage('');
+
+    // **Start the saving process**
+    setSaving(true);
 
     try {
       const formData = new FormData();
@@ -94,15 +109,20 @@ const UploadBoatLicense = () => {
       console.log("License upload response:", response.data); // Debug log
       setSuccessMessage('License uploaded successfully!');
       router.push('/auth/registerCaptain');
-
     } catch (err) {
       console.error('Error uploading license:', err);
-      setError('Failed to upload license.');
+      let errorMessage = 'Failed to upload license.';
+      if (axios.isAxiosError(err) && err.response) {
+        errorMessage = err.response.data?.message || errorMessage;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+    } finally {
+      // **End the saving process**
+      setSaving(false);
     }
   };
-
-
-
 
   return (
     <div className="relative min-h-screen flex flex-col">
@@ -135,14 +155,20 @@ const UploadBoatLicense = () => {
               </label>
               {/* Upload area design */}
               <div
-                className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 relative"
+                className={`flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 relative ${
+                  saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                }`}
                 onDrop={(e) => {
+                  if (saving) return; // Prevent file drops while saving
                   e.preventDefault();
                   if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                     setLicense(e.dataTransfer.files[0]);
                   }
                 }}
-                onDragOver={(e) => e.preventDefault()}
+                onDragOver={(e) => {
+                  if (saving) return; // Prevent file drags while saving
+                  e.preventDefault();
+                }}
               >
                 {/* Boat Icon */}
                 <div className="mb-4">
@@ -180,8 +206,15 @@ const UploadBoatLicense = () => {
                 <div className="mt-4">
                   <button
                     type="button"
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                    onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
+                    className={`bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition ${
+                      saving ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    onClick={() => {
+                      if (!saving) {
+                        (document.querySelector('input[type="file"]') as HTMLInputElement)?.click();
+                      }
+                    }}
+                    disabled={saving} // **Disable button while saving**
                   >
                     Choose File
                   </button>
@@ -191,11 +224,13 @@ const UploadBoatLicense = () => {
                   type="file"
                   accept=".pdf, .jpg, .png"
                   onChange={(e) => {
+                    if (saving) return; // Prevent file selection while saving
                     if (e.target.files && e.target.files[0]) {
                       setLicense(e.target.files[0]);
                     }
                   }}
                   className="hidden"
+                  disabled={saving} // **Disable input while saving**
                 />
                 {/* Upload feedback */}
                 {license ? (
@@ -209,13 +244,26 @@ const UploadBoatLicense = () => {
             {/* Error Message */}
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-            {/* Submit Button */}
+            {/* Success Message */}
+            {successMessage && <p className="text-green-500 text-center mb-4">{successMessage}</p>}
+
+            {/* **3. Modify the Submit Button** */}
             <div className="text-center">
               <button
                 type="submit"
-                className="w-full bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition"
+                disabled={saving} // **Disable button while saving**
+                className={`w-full flex items-center justify-center bg-blue-500 text-white px-10 py-3 text-sm rounded-lg hover:bg-blue-600 transition ${
+                  saving ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                Next
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Next'
+                )}
               </button>
             </div>
           </form>
