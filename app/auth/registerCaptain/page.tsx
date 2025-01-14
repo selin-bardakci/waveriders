@@ -8,22 +8,28 @@ import axios from 'axios';
 const RegisterCaptain = () => {
   const [captainName, setCaptainName] = useState('');
   const [captainLastName, setCaptainLastName] = useState('');
-  const [captainAge, setCaptainAge] = useState(''); // This will be the actual date of birth input
+  const [captainAge, setCaptainAge] = useState(''); // Date of birth
   const [experience, setExperience] = useState('');
   const [captainPhone, setCaptainPhone] = useState('');
   const [businessId, setBusinessId] = useState(''); 
-  const [registrationPapers, setRegistrationPapers] = useState<File | null>(null);
+  // Removed registrationPapers as it's handled on another page
   const [step, setStep] = useState(4); // Progress tracker
-  const [error, setError] = useState(''); // Error state
+  const [error, setError] = useState(''); // General Error state
   const [maxBirthDate, setMaxBirthDate] = useState(''); // For restricting date input
   const [successMessage, setSuccessMessage] = useState('');
+
+  // New state variables for individual field errors
+  const [captainNameError, setCaptainNameError] = useState('');
+  const [captainLastNameError, setCaptainLastNameError] = useState('');
+  const [captainPhoneError, setCaptainPhoneError] = useState('');
+
   const { isLoggedIn, isLoading } = useAuth();
   const previousPage = sessionStorage.getItem('previousPage');
 
   const router = useRouter();
   
   useEffect(() => {
-    if (isLoading) return; // Kullanıcı durumu yüklenirken bekle
+    if (isLoading) return; // Wait while user status is loading
 
     if (isLoggedIn) {
       router.push('/');
@@ -35,21 +41,21 @@ const RegisterCaptain = () => {
     }
     sessionStorage.setItem('previousPage', 'auth/registerCaptain');
     
-    const storedbusinessid = localStorage.getItem('business_id');
-    console.log('Business ID:', storedbusinessid);
-    if (storedbusinessid) {
-      const parsedBusinessID = parseInt(storedbusinessid, 10);
+    const storedBusinessId = localStorage.getItem('business_id');
+    console.log('Business ID:', storedBusinessId);
+    if (storedBusinessId) {
+      const parsedBusinessID = parseInt(storedBusinessId, 10);
       console.log('Parsed Business ID:', parsedBusinessID);
 
       if (isNaN(parsedBusinessID)) {
         setError('Invalid Business ID stored. Please try again.');
       } else {
-        setBusinessId(parsedBusinessID.toString()); // Set boat ID in context
+        setBusinessId(parsedBusinessID.toString()); // Set business ID
       }
     } else {
       setError('Business ID is not found. Please create a Business first.');
     }
-  }, [setBusinessId ,router, isLoading, isLoggedIn]);
+  }, [router, isLoading, isLoggedIn]);
 
   if (isLoggedIn) {
     return null; 
@@ -64,23 +70,87 @@ const RegisterCaptain = () => {
     setMaxBirthDate(`${year}-${month}-${day}`);
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setRegistrationPapers(e.target.files[0]);
-      console.log("Selected registration paper file:", e.target.files[0]);
+  // Validation Functions
+  const validateCaptainName = (name: string): string => {
+    if (!name.trim()) {
+      return "Captain's first name is required.";
     }
+    if (/\d/.test(name)) {
+      return "First name must not contain numbers.";
+    }
+    if (name.trim().length < 2) {
+      return "First name must be at least 2 characters long.";
+    }
+    return "";
+  };
+
+  const validateCaptainLastName = (lastname: string): string => {
+    if (!lastname.trim()) {
+      return "Captain's last name is required.";
+    }
+    if (/\d/.test(lastname)) {
+      return "Last name must not contain numbers.";
+    }
+    if (lastname.trim().length < 2) {
+      return "Last name must be at least 2 characters long.";
+    }
+    return "";
+  };
+
+  const validateCaptainPhone = (phone: string): string => {
+    if (!phone.trim()) {
+      return "Captain's phone number is required.";
+    }
+    if (!/^0\d{10}$/.test(phone)) {
+      return "Invalid phone number. Please enter an 11-digit number starting with 0.";
+    }
+    return "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!captainName || !captainLastName || !captainAge || !experience || !captainPhone) {
+    // Reset error messages
+    setError('');
+    setCaptainNameError('');
+    setCaptainLastNameError('');
+    setCaptainPhoneError('');
+    setSuccessMessage('');
+
+    // Perform validations
+    const nameError = validateCaptainName(captainName);
+    const lastNameError = validateCaptainLastName(captainLastName);
+    const phoneError = validateCaptainPhone(captainPhone);
+
+    let hasError = false;
+
+    if (nameError) {
+      setCaptainNameError(nameError);
+      hasError = true;
+    }
+
+    if (lastNameError) {
+      setCaptainLastNameError(lastNameError);
+      hasError = true;
+    }
+
+    if (phoneError) {
+      setCaptainPhoneError(phoneError);
+      hasError = true;
+    }
+
+    if (!captainAge || !experience) {
       setError('Please fill in all captain details.');
+      hasError = true;
+    }
+
+    if (hasError) {
       return;
     }
 
-    // Format the birthdate from DD.MM.YYYY to YYYY-MM-DD
-    const formattedBirthdate = captainAge.split('.').reverse().join('-');
+    // Format the birthdate from DD.MM.YYYY to YYYY-MM-DD if needed
+    // Assuming the input is already in YYYY-MM-DD format since type="date" is used
+    const formattedBirthdate = captainAge;
 
     try {
       const formData = new FormData();
@@ -90,10 +160,6 @@ const RegisterCaptain = () => {
       formData.append('phone_number', captainPhone);
       formData.append('date_of_birth', formattedBirthdate); // Append formatted birthdate
       formData.append('business_id', businessId);
-
-      if (registrationPapers) {
-        formData.append('registration_papers', registrationPapers);
-      }
 
       console.log('Submitting captain registration data:', {
         first_name: captainName,
@@ -119,12 +185,19 @@ const RegisterCaptain = () => {
 
       localStorage.setItem('captain_id', response.data.captain_id);
       router.push('/auth/captainLicense'); // Redirect to the license upload page
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error during captain registration:', err);
-      setError('Failed to register captain. Please try again.');
+      setError(err.response?.data?.message || 'Failed to register captain. Please try again.');
     }
   };
 
+  // Allow only numeric input for phone number
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Remove all non-digit characters
+    const numericValue = value.replace(/\D/g, '');
+    setCaptainPhone(numericValue);
+  };
 
   return (
     <div className="relative min-h-screen flex flex-col">
@@ -151,26 +224,35 @@ const RegisterCaptain = () => {
           </h2>
 
           <form onSubmit={handleSubmit}>
+            {/* Captain's First Name */}
             <div className="mb-4">
               <input
                 type="text"
                 placeholder="Captain's First Name"
                 value={captainName}
                 onChange={(e) => setCaptainName(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full p-3 border ${captainNameError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
+              {captainNameError && (
+                <p className="text-red-500 text-sm mt-1">{captainNameError}</p>
+              )}
             </div>
 
+            {/* Captain's Last Name */}
             <div className="mb-4">
               <input
                 type="text"
                 placeholder="Captain's Last Name"
                 value={captainLastName}
                 onChange={(e) => setCaptainLastName(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full p-3 border ${captainLastNameError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
+              {captainLastNameError && (
+                <p className="text-red-500 text-sm mt-1">{captainLastNameError}</p>
+              )}
             </div>
 
+            {/* Date of Birth */}
             <div className="mb-4">
               <input
                 type="date"
@@ -178,31 +260,42 @@ const RegisterCaptain = () => {
                 value={captainAge}
                 onChange={(e) => setCaptainAge(e.target.value)}
                 max={maxBirthDate} // Restrict the date to 18 years ago from today
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full p-3 border ${error.includes('Date of birth') ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
             </div>
 
+            {/* Years of Experience */}
             <div className="mb-4">
               <input
                 type="number"
                 placeholder="Years of Experience"
                 value={experience}
                 onChange={(e) => setExperience(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full p-3 border ${error.includes('experience') ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
             </div>
 
+            {/* Captain's Phone Number */}
             <div className="mb-4">
               <input
                 type="tel"
                 placeholder="Captain's Phone Number"
                 value={captainPhone}
-                onChange={(e) => setCaptainPhone(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={handlePhoneChange}
+                className={`w-full p-3 border ${captainPhoneError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                pattern="^0\d{10}$"
+                inputMode="numeric"
+                maxLength={11}
+                title="Please enter an 11-digit phone number starting with 0."
               />
+              {captainPhoneError && (
+                <p className="text-red-500 text-sm mt-1">{captainPhoneError}</p>
+              )}
             </div>
 
-            {/* Error Message */}
+            {/* Removed Registration Papers Section as it's handled on another page */}
+
+            {/* General Error Message */}
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
             {/* Success Message */}
