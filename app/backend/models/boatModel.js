@@ -80,6 +80,16 @@ export const Boat = {
   getBoat: (db, business_id, callback) => {
     const sql = 'SELECT * FROM boats WHERE business_id = ?';
     db.query(sql, [business_id], callback); // Wrap business_id in an array
+  },
+    getBoatById: (db, boat_id, callback) => {
+    const sql = 'SELECT * FROM boats WHERE boat_id = ?';
+    db.query(sql, [boat_id], (err, results) => {
+      if (err) {
+        console.error("Error fetching boat by ID:", err);
+        return callback(err, null);
+      }
+      callback(null, results);
+    });
   }
   
 };
