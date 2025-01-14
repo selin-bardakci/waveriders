@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { useAuth } from "../../context/AuthContext"; // AuthContext'i kullanın
 const ports = [
-'Port of Aliağa',
+  'Port of Aliağa',
   'Port of Alidaş',
   'Port of Altıntel',
   'Port of Ambarlı',
@@ -76,6 +77,8 @@ const RegisterBoat = () => {
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [error, setError] = useState(''); // Add error state
   const [step] = useState(2); // Progress tracker
+  const { isLoggedIn, isLoading } = useAuth();
+  const previousPage = sessionStorage.getItem('previousPage');
 
   const router = useRouter();
 
@@ -112,8 +115,18 @@ const RegisterBoat = () => {
     );
 
   };
-  
+
   useEffect(() => {
+    if (isLoading) return; // Kullanıcı durumu yüklenirken bekle
+
+    if (isLoggedIn) {
+      router.push('/');
+      return;
+    }
+    if (previousPage !== 'auth/registerBusiness') {
+      router.push('/auth/AccountSetup'); // Eğer doğru sayfadan gelinmemişse ana sayfaya yönlendir
+    }
+    sessionStorage.setItem('previousPage', 'auth/registerBoat');
     const storedbusinessid = localStorage.getItem('business_id');
     if (storedbusinessid) {
       const parsedBusinessID = parseInt(storedbusinessid, 10);
@@ -126,12 +139,16 @@ const RegisterBoat = () => {
     } else {
       setError("Business ID is not found. Please create a Business first.");
     }
-  }, []);
-  
+  }, [router, isLoading, isLoggedIn]);
+
+  if (isLoggedIn) {
+    return null; 
+  }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     // Validation
     if (!boatName || !boatDescription || !port) {
       setError('All fields are required.');
@@ -161,15 +178,15 @@ const RegisterBoat = () => {
       setError('You must agree to the terms and conditions.');
       return;
     }
-  
+
     if (!business_id) {
       setError('Business ID is required. Please ensure you have registered a business.');
       return;
     }
-  
+
     // Reset error state
     setError('');
-  
+
     // Prepare FormData
     const formData = new FormData();
     formData.append('business_id', business_id.toString()); // Ensure business_id is added
@@ -182,7 +199,7 @@ const RegisterBoat = () => {
     formData.append('boat_type', boatType);
     formData.append('location', port);
     photos.forEach((photo) => formData.append('photos', photo));
-  
+
     try {
       console.log('FormData contents:', {
         business_id,
@@ -196,13 +213,13 @@ const RegisterBoat = () => {
         port,
         photos,
       });
-  
+
       const response = await axios.post('http://localhost:8081/api/auth/registerBoat', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-  
+
       console.log('API Response:', response.data);
-  
+
       const boatId = response.data?.boat?.boat_id || response.data?.boat_id;
       if (boatId) {
         localStorage.setItem('boat_id', boatId.toString());
@@ -210,25 +227,25 @@ const RegisterBoat = () => {
       } else {
         console.warn('Boat ID not returned in response.');
       }
-  
+
       router.push('/auth/boatLicense');
     } catch (err) {
       console.error('Error during boat registration:', err);
-    
+
       let errorMessage = 'Registration failed. Please try again.';
       if (err instanceof Error && 'response' in err) {
         errorMessage = (err as any).response?.data?.message || errorMessage;
       }
-      
+
       setError(errorMessage);
     }
   };
-  
+
 
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Background Image */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center opacity-70"
         style={{ backgroundImage: 'url(/images/deneme2.jpg)' }}
       ></div>
