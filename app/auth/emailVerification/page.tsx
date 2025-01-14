@@ -1,9 +1,31 @@
 'use client'
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from "../../context/AuthContext"; 
+import axios from 'axios';
 
 const emailVerification = () => {
+  const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
 
+  useEffect(() => {
+    const previousPage = sessionStorage.getItem('previousPage');
+    if (isLoading) return; 
+
+    if (isLoggedIn) {
+      router.push('/');
+      return;
+    }
+
+    if (previousPage !== 'auth/captainLicense') {
+      router.push('/auth/AccountSetup'); 
+    }
+
+  }, [router, isLoading, isLoggedIn]);
+
+  if (isLoggedIn ) {
+    return null; 
+  }
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Background Image */}
