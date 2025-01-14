@@ -8,7 +8,7 @@ const UploadBoatLicense = () => {
   const [license, setLicense] = useState<File | null>(null);
   const [error, setError] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
-  const [step] = useState(2);
+  const [step] = useState(3);
   const [businessId, setBusinessId] = useState<number | null>(null);
   const [boatId, setBoatId] = useState<number | null>(null);
   const router = useRouter();
