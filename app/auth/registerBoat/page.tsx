@@ -74,7 +74,6 @@ const RegisterBoat = () => {
   const [rentalPricePerDay, setRentalPricePerDay] = useState(''); // New rental price per day state
   const [photos, setPhotos] = useState<File[]>([]);
   const [selectedTrips, setSelectedTrips] = useState<number[]>([]); // For trip selection
-  const [termsAgreed, setTermsAgreed] = useState(false);
   const [error, setError] = useState(''); // Add error state
   const [step] = useState(2); // Progress tracker
   const { isLoggedIn, isLoading } = useAuth();
@@ -172,10 +171,6 @@ const RegisterBoat = () => {
     }
     if (photos.length === 0) {
       setError('Please upload at least 1 photo.');
-      return;
-    }
-    if (!termsAgreed) {
-      setError('You must agree to the terms and conditions.');
       return;
     }
 
@@ -431,21 +426,6 @@ const RegisterBoat = () => {
 
               {/* Error Message */}
               {error && <p className="text-red-500 text-center mt-4">{error}</p>}
-            </div>
-
-            {/* Terms and Conditions Checkbox */}
-            <div className="mb-6">
-              <label className="inline-flex items-center">
-                <input
-                  type="checkbox"
-                  checked={termsAgreed}
-                  onChange={() => setTermsAgreed(!termsAgreed)}
-                  className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                />
-                <span className="ml-2 text-gray-700">
-                  I agree to the <a href="/terms" className="text-blue-600">terms and conditions</a>
-                </span>
-              </label>
             </div>
 
             {/* Submit Button */}
