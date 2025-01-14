@@ -3,17 +3,32 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { useAuth } from "../../context/AuthContext"; 
+
 
 const UploadBoatLicense = () => {
   const [license, setLicense] = useState<File | null>(null);
   const [error, setError] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
-  const [step] = useState(3);
+  const [step] = useState(2);
   const [businessId, setBusinessId] = useState<number | null>(null);
   const [boatId, setBoatId] = useState<number | null>(null);
+  const { isLoggedIn, isLoading } = useAuth();
+  const previousPage = sessionStorage.getItem('previousPage');
   const router = useRouter();
 
   useEffect(() => {
+    if (isLoading) return; 
+
+    if (isLoggedIn) {
+      router.push('/');
+      return;
+    }
+
+    if (previousPage !== 'auth/registerBoat') {
+      router.push('/auth/AccountSetup'); // Eğer doğru sayfadan gelinmemişse ana sayfaya yönlendir
+    }
+    sessionStorage.setItem('previousPage', 'auth/boatLicense');
     // Retrieve IDs from localStorage
     const storedBusinessId = localStorage.getItem('business_id');
     const storedBoatId = localStorage.getItem('boat_id');
@@ -36,10 +51,12 @@ const UploadBoatLicense = () => {
       } else {
         setError('Invalid boat ID stored. Please try again.');
       }
-    } else {
-      setError('Boat ID is not found. Please create a boat first.');
     }
-  }, []);
+  }, [router, isLoading, isLoggedIn]);
+
+  if (isLoggedIn) {
+    return null; // Kullanıcı uygun değilse hiçbir şey render etme
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -49,31 +66,31 @@ const UploadBoatLicense = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     if (!license) {
       setError('Please upload a license file');
       return;
     }
-  
+
     const storedBusinessId = localStorage.getItem('business_id');
     console.log("Business ID from localStorage:", storedBusinessId); // Debug log
-  
+
     if (!storedBusinessId) {
       setError('Business ID is required');
       return;
     }
-  
+
     try {
       const formData = new FormData();
       formData.append('id', storedBusinessId); // Ensure this matches the ID for boat photos
       formData.append('license', license);
-  
+
       const response = await axios.post('http://localhost:8081/api/auth/boatLicense', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-  
+
       console.log("License upload response:", response.data); // Debug log
       setSuccessMessage('License uploaded successfully!');
       router.push('/auth/registerCaptain');
@@ -83,14 +100,14 @@ const UploadBoatLicense = () => {
       setError('Failed to upload license.');
     }
   };
-  
 
 
-  
+
+
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Background Image */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center opacity-70"
         style={{ backgroundImage: 'url(/images/deneme2.jpg)' }}  // Update the path as needed
       ></div>
