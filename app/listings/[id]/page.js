@@ -46,6 +46,8 @@ const BoatListingDetails = () => {
   const [reviews, setReviews] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [warningMessage, setWarningMessage] = useState(null);
+
 
   useEffect(() => {
     const fetchListingAndFavoriteStatus = async () => {
@@ -245,19 +247,51 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
     console.log("User is authenticated, showing review modal");
     setShowReview(true);
   };
+  const validateTripDuration = (tripType, hours) => {
+    switch (tripType) {
+      case mapTripTypesToDescriptions.short:
+        return hours >= 1 && hours <= 2;
+      case mapTripTypesToDescriptions.day:
+        return hours >= 3 && hours <= 6;
+      case mapTripTypesToDescriptions.sunrise:
+        return hours >= 7 && hours <= 12;
+      case mapTripTypesToDescriptions.overnight:
+        return hours > 12; // Overnight trips should be more than 12 hours
+      default:
+        return false; // Invalid trip type
+    }
+  };
 
   const confirmBooking = async () => {
-    // Ensure that selectedDate and endDate are not null
     if (!selectedDate) {
-      alert("Please select a start date.");
+      setWarningMessage("Please select a start date.");
       return;
     }
-
+  
     if (selectedTripType === mapTripTypesToDescriptions.overnight && !endDate) {
-      alert("Please select an end date for the overnight trip.");
+      setWarningMessage("Please select an end date for the overnight trip.");
       return;
     }
-
+  
+    // Validate the number of guests
+    if (numberOfGuests > capacity) {
+      setWarningMessage(`The maximum capacity for this boat is ${capacity} guests. Please adjust the number of guests.`);
+      return;
+    }
+  
+    // Validate trip duration for non-overnight trips
+    if (selectedTripType !== mapTripTypesToDescriptions.overnight) {
+      const [startHours, startMinutes] = selectedTime.split(':').map(Number);
+      const [endHours, endMinutes] = endTime.split(':').map(Number);
+      const totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
+      const totalHours = totalMinutes / 60;
+  
+      if (!validateTripDuration(selectedTripType, totalHours)) {
+        setWarningMessage(`Invalid time duration for ${selectedTripType}. Please adhere to the duration limits.`);
+        return;
+      }
+    }
+  
     const rentalData = {
       boat_id: id,
       start_date: formatDate(selectedDate),
@@ -267,34 +301,31 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
       end_time: endTime || "23:59",
       number_of_guests: Number(numberOfGuests),
     };
-
+  
     try {
       const response = await axios.post('http://localhost:8081/api/rentals/create', rentalData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-
+  
       if (response.status === 201) {
         setConfirmationMessage('Your booking was successful!');
-        console.log("Booking successful");
-        // Optionally, you can reset the form here
         setSelectedDate(null);
         setEndDate(null);
         setSelectedTime("");
         setEndTime("");
         setNumberOfGuests(1);
       } else {
-        alert(response.data.message || 'Failed to create rental.');
+        setWarningMessage(response.data.message || 'Failed to create rental.');
       }
     } catch (error) {
       console.error('Error creating rental:', error);
-      alert(error.response?.data?.message || 'An error occurred while creating the rental.');
+      setWarningMessage(error.response?.data?.message || 'An error occurred while creating the rental.');
     }
-
-    setShowReview(false);
   };
-
+  
+  
   const calculateAverageRating = (attribute) => {
     if (!Array.isArray(reviews) || reviews.length === 0) {
       return "0.0";
@@ -548,6 +579,25 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
         {/* Booking Form */}
         <section className="bg-white p-6 rounded-lg shadow max-w-5xl mx-auto">
           <h3 className="text-xl font-semibold mb-4">Select a date, time, and trip type</h3>
+            {/* Warning Message */}
+  {warningMessage && (
+    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+      <span className="block sm:inline">{warningMessage}</span>
+      <button
+        onClick={() => setWarningMessage(null)}
+        className="absolute top-0 bottom-0 right-0 px-4 py-3"
+      >
+        <svg
+          className="fill-current h-6 w-6 text-red-500"
+          role="button"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+        >
+          <path d="M14.348 14.849a1 1 0 01-1.414 0L10 11.414 7.066 14.35a1 1 0 01-1.415-1.415l2.934-2.934L5.65 7.067a1 1 0 111.415-1.415L10 8.586l2.934-2.934a1 1 0 011.415 1.415l-2.934 2.934 2.934 2.934a1 1 0 010 1.415z" />
+        </svg>
+      </button>
+    </div>
+  )}
           <form onSubmit={handleBookingSubmit}>
             <label className="block text-gray-700 font-medium mb-2">Choose Trip Type</label>
             <select
