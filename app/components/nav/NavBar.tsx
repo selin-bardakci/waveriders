@@ -148,7 +148,7 @@ const NavBar = () => {
             Rent a boat
           </Link>
           <Link
-            href="/newBoat/addNewBoat"
+            href="/newBoat/RegisterBoat"
             className="px-5 py-2 bg-blue-500 text-white text-base font-medium rounded-lg hover:bg-blue-600 transition"
           >
             Add Boat
