@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext"; 
+import { Loader2 } from 'lucide-react'; // Import a loading spinner (ensure you have lucide-react installed)
 
 const RegisterBusiness: React.FC = () => {
   const [firstName, setFirstName] = useState<string>('');
@@ -12,10 +13,14 @@ const RegisterBusiness: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  // Removed termsAgreed state
   const [error, setError] = useState<string>('');
   const [step, setStep] = useState<number>(1); // Progress tracker
   const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
+
+  // **1. Introduce the `saving` state**
+  const [saving, setSaving] = useState<boolean>(false); // Tracks if the form is being submitted
 
   useEffect(() => {
     if (isLoading) return;
@@ -114,14 +119,22 @@ const RegisterBusiness: React.FC = () => {
       setError(passwordError);
       return false;
     }
+
     setError('');
     return true;
   };
 
+  // **2. Modify handleSubmit to manage the `saving` state**
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // Prevent default form submission behavior
 
+    // Prevent submission if already saving
+    if (saving) return;
+
     if (!validateForm()) return; // Validate the form
+
+    // **Start the saving process**
+    setSaving(true);
 
     try {
       const response = await axios.post('http://localhost:8081/api/auth/registerBusiness', {
@@ -150,6 +163,9 @@ const RegisterBusiness: React.FC = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'An error occurred during registration. Please try again.';
       setError(errorMessage);
+    } finally {
+      // **End the saving process**
+      setSaving(false);
     }
   };
 
@@ -192,7 +208,8 @@ const RegisterBusiness: React.FC = () => {
           </h2>
 
           <form onSubmit={handleSubmit}>
-            <div className="p-4 mb-6 border border-blue-500 bg-blue-50 rounded-lg">
+            {/* Individual Information Section */}
+            <div className={`p-4 mb-6 border rounded-lg bg-blue-50 border-blue-500 ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}>
               {/* First Name Input */}
               <div className="mb-4">
                 <input
@@ -200,7 +217,7 @@ const RegisterBusiness: React.FC = () => {
                   placeholder="First Name"
                   value={firstName}
                   onChange={(e) => handleFirstNameLastNameChange('firstName', e.target.value)}
-                  disabled={!!businessName} // Disable if business name is entered
+                  disabled={!!businessName || saving} // Disable if business name is entered or saving
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -212,7 +229,7 @@ const RegisterBusiness: React.FC = () => {
                   placeholder="Last Name"
                   value={lastName}
                   onChange={(e) => handleFirstNameLastNameChange('lastName', e.target.value)}
-                  disabled={!!businessName} // Disable if business name is entered
+                  disabled={!!businessName || saving} // Disable if business name is entered or saving
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -227,7 +244,7 @@ const RegisterBusiness: React.FC = () => {
                   placeholder="Business Name"
                   value={businessName}
                   onChange={(e) => handleBusinessNameChange(e.target.value)}
-                  disabled={!!firstName || !!lastName} // Disable if first or last name is entered
+                  disabled={!!firstName || !!lastName || saving} // Disable if first or last name is entered or saving
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -240,6 +257,7 @@ const RegisterBusiness: React.FC = () => {
                 placeholder="Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={saving} // Disable if saving
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -254,6 +272,7 @@ const RegisterBusiness: React.FC = () => {
                 pattern="^0\d{10}$"
                 inputMode="numeric"
                 maxLength={11}
+                disabled={saving} // Disable if saving
                 className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
                   /^0\d{10}$/.test(phone) || phone === ''
                     ? 'border-gray-300 focus:ring-blue-500'
@@ -261,7 +280,7 @@ const RegisterBusiness: React.FC = () => {
                 }`}
                 title="Please enter an 11-digit phone number starting with 0."
               />
-              {/* Optional: Inline Phone Validation Message */}
+              {/* Inline Phone Validation Message */}
               {!/^0\d{10}$/.test(phone) && phone !== '' && (
                 <p className="text-red-500 text-sm mt-1">Phone number must start with 0 and be exactly 11 digits.</p>
               )}
@@ -274,6 +293,7 @@ const RegisterBusiness: React.FC = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={saving} // Disable if saving
                 className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
                   validatePassword(password) && password !== ''
                     ? 'border-red-500 focus:ring-red-500'
@@ -284,13 +304,13 @@ const RegisterBusiness: React.FC = () => {
               <div className="mt-2 text-sm text-gray-600">
                 Password must be at least 7 characters long, contain at least one uppercase letter, and one number.
               </div>
-              {/* Optional: Inline Password Validation Message */}
+              {/* Inline Password Validation Message */}
               {validatePassword(password) && password !== '' && (
                 <p className="text-red-500 text-sm mt-1">{validatePassword(password)}</p>
               )}
             </div>
 
-            {/* Terms and Conditions Checkbox */}
+          
             {/* Error Message */}
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
@@ -298,12 +318,21 @@ const RegisterBusiness: React.FC = () => {
             <div className="text-center">
               <button
                 type="submit"
-                className={`w-full ${
-                  termsAgreed ? 'bg-blue-500 hover:bg-blue-600' : 'bg-blue-300 cursor-not-allowed'
-                } text-white px-10 py-3 text-sm rounded-lg transition`}
-                disabled={!termsAgreed}
+                disabled={saving} // Disabled only when saving
+                className={`w-full flex items-center justify-center text-white px-10 py-3 text-sm rounded-lg transition ${
+                  saving
+                    ? 'bg-blue-300 cursor-not-allowed'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }`}
               >
-                Next
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Next'
+                )}
               </button>
             </div>
           </form>
