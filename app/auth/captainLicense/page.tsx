@@ -11,6 +11,7 @@ const CaptainLicense = () => {
   const [error, setError] = useState('');
   const [step, setStep] = useState(5);
   const [successMessage, setSuccessMessage] = useState('');
+   const [termsAgreed, setTermsAgreed] = useState(false);
   const { isLoggedIn, isLoading } = useAuth();
   const previousPage = sessionStorage.getItem('previousPage');
 
@@ -52,6 +53,10 @@ const CaptainLicense = () => {
   
     if (!registrationPapers) {
       setError('Please upload registration papers');
+      return;
+    }
+        if (!termsAgreed) {
+      setError('You must agree to the terms and conditions.');
       return;
     }
   
@@ -170,6 +175,20 @@ const CaptainLicense = () => {
                   <p className="text-sm text-gray-500 mt-2">No file uploaded</p>
                 )}
               </div>
+            </div>
+                                    {/* Terms and Conditions Checkbox */}
+                        <div className="mb-6">
+              <label className="inline-flex items-center">
+                <input
+                  type="checkbox"
+                  checked={termsAgreed}
+                  onChange={() => setTermsAgreed(!termsAgreed)}
+                  className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                />
+                <span className="ml-2 text-gray-700">
+                  I agree to the <a href="/terms" className="text-blue-600">terms and conditions</a>
+                </span>
+              </label>
             </div>
 
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
