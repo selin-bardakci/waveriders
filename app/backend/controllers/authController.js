@@ -534,19 +534,33 @@ export const registerBoat = async (req, res) => {
 };
 
 
-
-
 export const getBoat = (req, res) => {
-  const { business_id } = req.query;
-  console.log("Business ID:", business_id);
-  Boat.getBoat(db, business_id ,(err, results) => {
-    if (err) {
-      console.error('Error fetching boats:', err);
-      return res.status(500).json({ message: 'Error fetching boats' });
-    }
-    console.log("Boat Results:", results);
-    res.status(200).json({ boats: results });
-  });
+  const { boat_id, business_id } = req.query; // Hem boat_id hem de business_id alınır.
+  
+  if (boat_id) {
+    // Eğer boat_id verilmişse, sadece bu ID'ye göre sorgula.
+    Boat.getBoatById(db, boat_id, (err, results) => {
+      if (err) {
+        console.error('Error fetching boat by ID:', err);
+        return res.status(500).json({ message: 'Error fetching boat' });
+      }
+      if (results.length === 0) {
+        return res.status(404).json({ message: 'Boat not found' });
+      }
+      res.status(200).json({ boats: results });
+    });
+  } else if (business_id) {
+    // Eğer sadece business_id verilmişse, business'a ait tüm botları getir.
+    Boat.getBoat(db, business_id, (err, results) => {
+      if (err) {
+        console.error('Error fetching boats by business ID:', err);
+        return res.status(500).json({ message: 'Error fetching boats' });
+      }
+      res.status(200).json({ boats: results });
+    });
+  } else {
+    res.status(400).json({ message: 'Either boat_id or business_id is required' });
+  }
 };
 
 export const getCaptain = (req, res) => {
