@@ -12,7 +12,6 @@ const RegisterBusiness: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [termsAgreed, setTermsAgreed] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [step, setStep] = useState<number>(1); // Progress tracker
   const { isLoggedIn, isLoading } = useAuth();
@@ -115,12 +114,6 @@ const RegisterBusiness: React.FC = () => {
       setError(passwordError);
       return false;
     }
-
-    if (!termsAgreed) {
-      setError('You must agree to the terms and conditions to proceed.');
-      return false;
-    }
-
     setError('');
     return true;
   };
@@ -298,20 +291,6 @@ const RegisterBusiness: React.FC = () => {
             </div>
 
             {/* Terms and Conditions Checkbox */}
-            <div className="mb-6">
-              <label className="inline-flex items-center">
-                <input
-                  type="checkbox"
-                  checked={termsAgreed}
-                  onChange={() => setTermsAgreed(!termsAgreed)}
-                  className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                />
-                <span className="ml-2 text-gray-700">
-                  I agree to the <a href="/terms" className="text-blue-600">terms and conditions</a>
-                </span>
-              </label>
-            </div>
-
             {/* Error Message */}
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
