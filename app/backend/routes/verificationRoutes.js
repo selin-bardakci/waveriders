@@ -4,6 +4,7 @@ import {
   approveBoat,
   rejectBoat,
   getUserDetailsByBoat,
+  getVerificationStatustwo,
 } from '../controllers/verificationController.js';
 
 const router = express.Router();
@@ -19,6 +20,6 @@ router.post('/reject', rejectBoat);
 
 // Route: Fetch user details via boat -> business -> user chain
 router.get('/userDetails', getUserDetailsByBoat);
-
+router.get('/status/:boat_id', getVerificationStatustwo);
 
 export default router;
