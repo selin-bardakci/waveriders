@@ -233,7 +233,7 @@ const BusinessDashboard = () => {
               Welcome back, {businessOwner}!
             </h1>
             <p className="text-white text-lg mt-2">
-              Here's a look at your recent rentals!
+              Here&apos;s a look at your recent rentals!
             </p>
           </div>
         </div>
