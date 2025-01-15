@@ -61,7 +61,7 @@ const AddNewBoatAndLicense = () => {
 
       try {
         if (user?.id) {
-          const response = await axios.get(`http://localhost:8081/api/newBoat/${user.id}`);
+          const response = await axios.get(`https://api.waveriders.com.tr/api/newBoat/${user.id}`);
           setBusinessId(response.data.business_id);
         }
       } catch (error) {
@@ -187,7 +187,7 @@ const AddNewBoatAndLicense = () => {
   
 
     try {
-      const response = await axios.post('http://localhost:8081/api/newBoat/registerBoat', formData, {
+      const response = await axios.post('https://api.waveriders.com.tr/api/newBoat/registerBoat', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
   
