@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from "../../context/AuthContext"; 
 import axios from 'axios';
 
-const emailVerification = () => {
+const EmailVerification = () => {
   const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
 
@@ -71,4 +71,4 @@ const emailVerification = () => {
   );
 };
 
-export default emailVerification;
+export default EmailVerification;
