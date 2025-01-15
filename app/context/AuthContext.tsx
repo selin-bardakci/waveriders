@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await axios.get('http://localhost:8081/api/users/profile', {
+          const response = await axios.get('https://api.waveriders.com.tr/api/users/profile', {
             headers: { Authorization: `Bearer ${token}` },
           });
           setUser(response.data);
