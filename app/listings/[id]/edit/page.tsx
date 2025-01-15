@@ -51,7 +51,7 @@ export default function EditBoatListing() {
       try {
         const token = localStorage.getItem('token');
         const response = await axios.get(
-          `http://localhost:8081/api/boats/${params.id}`,
+          `https://api.waveriders.com.tr/api/boats/${params.id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -176,7 +176,7 @@ export default function EditBoatListing() {
       }
 
       await axios.put(
-        `http://localhost:8081/api/boats/${params.id}`,
+        `https://api.waveriders.com.tr/api/boats/${params.id}`,
         formDataToSend,
         {
           headers: {
