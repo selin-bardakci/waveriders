@@ -326,6 +326,41 @@ export const getUserDetailsByBoat = async (req, res) => {
     res.status(500).json({ message: 'Server error.' });
   }
 };
+export const getVerificationStatustwo = async (req, res) => {
+  const { boat_id } = req.params;
+
+  if (!boat_id) {
+    return res.status(400).json({ message: 'Boat ID is required' });
+  }
+
+  try {
+    const sql = `
+      SELECT 
+        v.verification_status as status,
+        b.business_id,
+        b.boat_id
+      FROM boats b
+      LEFT JOIN verification v ON b.boat_id = v.boat_id
+      WHERE b.boat_id = ?;
+    `;
+
+    db.query(sql, [boat_id], (err, results) => {
+      if (err) {
+        console.error('Error fetching boat verification status:', err);
+        return res.status(500).json({ message: 'Error fetching boat verification status' });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ message: 'Boat not found' });
+      }
+
+      res.status(200).json(results[0]);
+    });
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 export const getVerificationStatus = async (req, res) => {
   const { boat_id } = req.params; // Retrieve boat_id from URL parameters
 
