@@ -69,7 +69,7 @@ const BoatListingCard: React.FC<BoatListingCardProps> = ({ boat_id }) => {
   // Decide how to display price
   let priceDisplay = "";
   if (hasOvernight && hasHourlyTrip) {
-    priceDisplay = `From $${Number(price_per_hour).toFixed(2)}/hour or $${Number(
+    priceDisplay = `$${Number(price_per_hour).toFixed(2)}/hour or $${Number(
       price_per_day
     ).toFixed(2)}/day`;
   } else if (hasOvernight) {
