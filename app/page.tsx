@@ -102,7 +102,7 @@ export default function Home() {
         // Fetch random boat listings
         const fetchRandomListings = async () => {
             try {
-                const response = await axios.get('http://localhost:8081/api/listings/random');
+                const response = await axios.get('http://api.waveriders.com.tr/api/listings/random');
                 setBoatListings(response.data);
             } catch (err) {
                 console.error("Error fetching random listings:", err);
