@@ -10,6 +10,7 @@ interface Boat {
   boat_id: number;
   boat_name: string;
   business_id: number;
+  boat_license_path?: string; // Mark as optional if it may not always exist
 }
 
 interface User {
