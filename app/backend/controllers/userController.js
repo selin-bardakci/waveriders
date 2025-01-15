@@ -41,3 +41,44 @@ export const updateUserProfile = (req, res) => {
         res.status(200).json({ message: 'User profile updated successfully.' });
     });
 };
+
+export const getBusinessProfile = (req, res) => {
+    const { id } = req.user;
+
+    const sql = `
+        SELECT 
+            b.business_id, 
+            b.business_name,
+            b.user_id
+        FROM businesses b
+        WHERE b.user_id = ?;
+    `;
+
+    db.query(sql, [id], (err, results) => {
+        if (err) {
+            console.error('Error fetching business profile:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Error fetching business profile.' 
+            });
+        }
+
+        // If no business profile is found, return null values
+        if (results.length === 0) {
+            return res.status(200).json({
+                success: true,
+                business_id: null,
+                business_name: null,
+                user_id: null
+            });
+        }
+
+        const business = results[0];
+        res.status(200).json({
+            success: true,
+            business_id: business.business_id,
+            business_name: business.business_name,
+            user_id: business.user_id
+        });
+    });
+};
