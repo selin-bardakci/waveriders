@@ -32,7 +32,7 @@ const AllListings = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:8081/api/business/listings",
+          "https://api.waveriders.com.tr/api/business/listings",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -77,7 +77,7 @@ const AllListings = () => {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:8081/api/boats/${currentBoatId}`, {
+      await axios.delete(`https://api.waveriders.com.tr/api/boats/${currentBoatId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setListings((prev) =>
