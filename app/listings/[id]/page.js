@@ -230,6 +230,15 @@ const BoatListingDetails = () => {
       const token = localStorage.getItem('token');
       console.log("Toggling favorite with token:", token);
 
+        if (!token) {
+        // User is not authenticated
+        const currentPath = `/listings/${id}`;
+        console.log("Storing redirect path in sessionStorage:", currentPath);
+        sessionStorage.setItem('redirectAfterLogin', currentPath);
+        router.push('/auth/sign-in'); // Ensure this path matches your Sign-In page route
+        return;
+      }
+
       if (isFavorite) {
         await axios.delete('http://localhost:8081/api/favorites', {
           headers: { Authorization: `Bearer ${token}` },
