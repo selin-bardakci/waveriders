@@ -30,7 +30,7 @@ const Favourites = () => {
     const fetchFavorites = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:8081/api/favorites", {
+        const response = await axios.get("https://api.waveriders.com.tr/api/favorites", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -69,7 +69,7 @@ const Favourites = () => {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.delete("http://localhost:8081/api/favorites", {
+      await axios.delete("https://api.waveriders.com.tr/api/favorites", {
         headers: { Authorization: `Bearer ${token}` },
         data: { boat_id: currentBoatId },
       });
