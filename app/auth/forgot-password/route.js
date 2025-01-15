@@ -55,7 +55,7 @@ db.query(insertTokenSQL, [token, email, tokenExpiration], (err) => {
       },
     });
 
-    const resetLink = `https://api.waveriders.com.tr/auth/sign-in/ResetPassword?token=${token}`;
+    const resetLink = `https://waveriders.com.tr/auth/sign-in/ResetPassword?token=${token}`;
     await transporter.sendMail({
       from: `"WaveRiders" <${process.env.EMAIL_USER}>`,
       to: email,
