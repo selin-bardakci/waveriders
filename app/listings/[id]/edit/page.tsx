@@ -69,11 +69,13 @@ export default function EditBoatListing() {
 
         // boat.trip_types might be "short, day" or similar
         const mappedTripTypes = boat?.trip_types
-          ? boat.trip_types
-              .split(',')
-              .map((type: string) => tripTypeMap[type.trim()])
-              .filter(Boolean)
-          : [];
+        ? boat.trip_types.split(',')
+            .map((type: string) => {
+              const trimmedType = type.trim();
+              return trimmedType in tripTypeMap ? tripTypeMap[trimmedType as keyof typeof tripTypeMap] : null;
+            })
+            .filter(Boolean)
+        : [];
 
         setFormData({
           boat_name: boat?.boat_name || '',
