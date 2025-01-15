@@ -10,7 +10,7 @@ import BoatListingCard from '../../components/boatListingCard/BoatListingCard';
 import Link from 'next/link';
 import { IoIosFunnel } from 'react-icons/io';
 
-const ListingsPage = () => {
+const ListingsPageComponent = () => {
   const router = useRouter();
   const searchParams = useSearchParams(); // Get search parameters from URL
   const [boatIds, setBoatIds] = useState<number[]>([]);
@@ -410,4 +410,4 @@ const ListingsPage = () => {
   );
 };
 
-export default ListingsPage;
+export default ListingsPageComponent;
