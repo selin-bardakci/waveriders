@@ -39,13 +39,13 @@ const Dashboard = () => {
 
 
         const [businessOwnerResponse, favoriteBoatsResponse, recentActivitiesResponse] = await Promise.all([
-          fetch('http://localhost:8081/api/business/dashboard', {
+          fetch('https://api.waveriders.com.tr/api/business/dashboard', {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('http://localhost:8081/api/favorites/dashboard', {
+          fetch('https://api.waveriders.com.tr/api/favorites/dashboard', {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('http://localhost:8081/api/rentals/dashboard', {
+          fetch('https://api.waveriders.com.tr/api/rentals/dashboard', {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
