@@ -215,21 +215,26 @@ const ControlPage = () => {
           <p><strong>Name:</strong> {selectedBoat.boat_name}</p>
           <p><strong>Boat ID:</strong> {selectedBoat.boat_id}</p>
 
-          {userDetails && (
-            <>
-              <h3 className="text-xl font-bold mt-6">User Details</h3>
-              <p><strong>Name:</strong> {userDetails.first_name} {userDetails.last_name}</p>
-              <p><strong>Email:</strong> {userDetails.email}</p>
-              <p><strong>Phone:</strong> {userDetails.phone_number}</p>
-              <p><strong>Account Type:</strong> {userDetails.account_type}</p>
-              <p>
-                <strong>Account Created:</strong> {new Date(userDetails.created_at).toLocaleString()}
-              </p>
-              <p>
-                <strong>Date of Birth:</strong> {new Date(userDetails.date_of_birth).toLocaleDateString()}
-              </p>
-            </>
-          )}
+                {userDetails && (
+                  <>
+                    <h3 className="text-xl font-bold mt-6">User Details</h3>
+                    <p>
+                      <strong>Name:</strong>{' '}
+                      {userDetails.first_name && userDetails.last_name
+                        ? `${userDetails.first_name} ${userDetails.last_name}`
+                        : userDetails.business_name || 'N/A'}
+                    </p>
+                    <p><strong>Email:</strong> {userDetails.email}</p>
+                    <p><strong>Phone:</strong> {userDetails.phone_number}</p>
+                    <p><strong>Account Type:</strong> {userDetails.account_type}</p>
+                    <p>
+                      <strong>Account Created:</strong> {new Date(userDetails.created_at).toLocaleString()}
+                    </p>
+                    <p>
+                      <strong>Date of Birth:</strong> {new Date(userDetails.date_of_birth).toLocaleDateString()}
+                    </p>
+                  </>
+                )}
 
           <h3 className="text-xl font-bold mt-6">Boat License</h3>
           {selectedBoat?.boat_license_path ? (
