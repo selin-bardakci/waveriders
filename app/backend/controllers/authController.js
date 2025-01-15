@@ -128,7 +128,7 @@ export const registerUser = async (req, res) => {
     return res.status(200).json({ message: 'Registration successful. Please verify your email.' });
   } catch (error) {
     console.error('Error in registerUser:', error.message);
-    return res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'This email is in use. Please try another email.' });
   }
 };
 
