@@ -29,7 +29,6 @@ const RegisterBusiness: React.FC = () => {
       router.push('/');
       return;
     }
-    sessionStorage.setItem('previousPage', 'auth/registerBusiness');
   }, [router, isLoading, isLoggedIn]);
 
   if (isLoggedIn) {
