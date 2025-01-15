@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 
@@ -79,6 +78,13 @@ const ControlPage = () => {
 
     fetchInReviewBoats();
   }, []);
+
+  const closeModal = () => {
+    setIsModalOpen(false); // Modal'ı kapat
+    setRejectReason(''); // Reddetme sebebini temizle
+    setShowRejectTextBox(false); // Reject kutusunu gizle
+  };
+
 
   // Kullanıcı ve kaptan bilgilerini çek
   const fetchDetails = async (boat: Boat) => {
@@ -170,6 +176,9 @@ const ControlPage = () => {
   const showDetails = async (boat: Boat) => {
     setSelectedBoat(boat);
     setIsModalOpen(true);
+    setRejectReason(''); // Reddetme sebebini sıfırla
+    setShowRejectTextBox(false); // Reject kutusunu gizle
+    setIsModalOpen(true); // Modal'ı aç
     await fetchDetails(boat);
   };
 
@@ -202,11 +211,10 @@ const ControlPage = () => {
 
       {isModalOpen && selectedBoat && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-          <div
-            className="w-full max-w-lg bg-white p-8 border border-gray-300 rounded-lg shadow-lg relative overflow-y-auto max-h-[90vh]"
-          >
+          <div className="w-full max-w-lg bg-white p-8 border border-gray-300 rounded-lg shadow-lg relative overflow-y-auto max-h-[90vh]">
+            {/* Kapatma Butonu */}
             <button
-              onClick={() => setIsModalOpen(false)}
+              onClick={closeModal} // Yeni closeModal fonksiyonunu çağır
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
             >
               &times;
@@ -243,7 +251,7 @@ const ControlPage = () => {
                 <h3 className="text-xl font-bold mt-6">Boat License</h3>
                 {selectedBoat?.boat_license_path ? (
                   <div className="mt-4">
-                    <Image
+                    <img
                       src={selectedBoat.boat_license_path}
                       alt="Boat License"
                       className="w-full h-auto rounded-lg border border-gray-200 hover:shadow-lg transition cursor-pointer"
@@ -267,7 +275,7 @@ const ControlPage = () => {
 
                     <h3 className="text-xl font-bold mt-6">Captain License</h3>
                     <div className="mt-4">
-                      <Image
+                      <img
                         src={captainDetails.registration_papers}
                         alt="Captain License"
                         className="w-full h-auto rounded-lg border border-gray-200 hover:shadow-lg transition cursor-pointer"
