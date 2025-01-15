@@ -26,7 +26,7 @@ export const sendVerificationEmail = async (email) => {
         });
       });
   
-      const verificationLink = `http://localhost:3000/auth/VerifyEmailPage?token=${token}`;
+      const verificationLink = `http://waveriders.com.tr/auth/VerifyEmailPage?token=${token}`;
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
