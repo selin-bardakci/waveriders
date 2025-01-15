@@ -83,7 +83,7 @@ const ReviewsPage = () => {
                   <strong>{review.author || 'Anonymous'}</strong>
                   <span className="text-gray-400"> - {new Date(review.created_at).toLocaleDateString()}</span>
                 </p>
-                <p className="text-sm text-gray-500 italic mb-4">"{review.review_text}"</p>
+                <p className="text-sm text-gray-500 italic mb-4">&quot;{review.review_text}&quot;</p>
                 <div className="text-sm text-gray-600">
                   <p>Overall Rating: ⭐ {review.overall_rating}</p>
                   <p>Driver Rating: ⭐ {review.driver_rating}</p>
