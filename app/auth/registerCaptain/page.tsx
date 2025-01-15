@@ -87,7 +87,7 @@ const RegisterCaptain = () => {
         console.log(`${key}: ${value}`);
       });
 
-      const response = await axios.post('http://localhost:8081/api/auth/registerCaptain', formData, {
+      const response = await axios.post('https://api.waveriders.com.tr/api/auth/registerCaptain', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
