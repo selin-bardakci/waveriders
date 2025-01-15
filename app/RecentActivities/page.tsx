@@ -107,7 +107,7 @@ const CustomerRecentActivities = () => {
           return;
         }
 
-        const response = await axios.get("http://localhost:8081/api/rentals/recent", {
+        const response = await axios.get("https://api.waveriders.com.tr/api/rentals/recent", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -162,7 +162,7 @@ const CustomerRecentActivities = () => {
         return;
       }
 
-      const response = await axios.get(`http://localhost:8081/api/rentals/${activity.rental_id}`, {
+      const response = await axios.get(`https://api.waveriders.com.tr/api/rentals/${activity.rental_id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -213,7 +213,7 @@ const CustomerRecentActivities = () => {
         return;
       }
 
-      await axios.delete(`http://localhost:8081/api/rentals/${currentActivity.rental_id}`, {
+      await axios.delete(`https://api.waveriders.com.tr/api/rentals/${currentActivity.rental_id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -263,7 +263,7 @@ const CustomerRecentActivities = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:8081/api/rentals/review",
+        "https://api.waveriders.com.tr/api/rentals/review",
         {
           rental_id: currentActivity.rental_id,
           general_rating: generalRating,
@@ -313,7 +313,7 @@ const CustomerRecentActivities = () => {
         return;
       }
 
-      await axios.delete(`http://localhost:8081/api/rentals/review/${rental_id}`, {
+      await axios.delete(`https://api.waveriders.com.tr/api/rentals/review/${rental_id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
