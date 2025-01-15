@@ -624,44 +624,115 @@ Back
 {/* Conditional rendering of the Booking Form */}
  {/* Booking Form or Your Listing Message */}
  {canRentBoat ? (
-          <section className="bg-white p-6 rounded-lg shadow max-w-5xl mx-auto">
-            <h3 className="text-xl font-semibold mb-4">Select a date, time, and trip type</h3>
-            <form onSubmit={handleBookingSubmit}>
-              <label className="block text-gray-700 font-medium mb-2">Select Start Date</label>
-              <DatePicker
-                selected={selectedDate}
-                onChange={(date) => setSelectedDate(date)}
-                minDate={new Date()}
-                className="w-full p-2 mb-4 border rounded"
-                required
-              />
-              {selectedTripType === 'overnight' && (
-                <>
-                  <label className="block text-gray-700 font-medium mb-2">Select End Date</label>
-                  <DatePicker
-                    selected={endDate}
-                    onChange={(date) => setEndDate(date)}
-                    minDate={selectedDate || new Date()}
-                    className="w-full p-2 mb-4 border rounded"
-                    required
-                  />
-                </>
-              )}
-              <div className="flex justify-center">
-                <button type="submit" className="w-1/2 bg-blue-500 text-white p-2 rounded">
-                  Book the trip!
-                </button>
-              </div>
-            </form>
-          </section>
-        ) : userBusinessId === listing?.business_id ? (
-          <section className="bg-blue-50 p-6 rounded-lg shadow max-w-5xl mx-auto">
-            <div className="text-center">
-              <h3 className="text-xl font-semibold mb-2 text-blue-800">Your Listing</h3>
-              <p className="text-blue-700">This is your boat listing. You can manage it from your business dashboard.</p>
-            </div>
-          </section>
-        ) : null}
+  <section className="bg-white p-6 rounded-lg shadow max-w-5xl mx-auto">
+  <h3 className="text-xl font-semibold mb-4">Select a date, time, and trip type</h3>
+  {/* Warning Message */}
+  {warningMessage && (
+    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+      <span className="block sm:inline">{warningMessage}</span>
+      <button
+        onClick={() => setWarningMessage(null)}
+        className="absolute top-0 bottom-0 right-0 px-4 py-3"
+      >
+        <svg
+          className="fill-current h-6 w-6 text-red-500"
+          role="button"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+        >
+          <path d="M14.348 14.849a1 1 0 01-1.414 0L10 11.414 7.066 14.35a1 1 0 01-1.415-1.415l2.934-2.934L5.65 7.067a1 1 0 111.415-1.415L10 8.586l2.934-2.934a1 1 0 011.415 1.415l-2.934 2.934 2.934 2.934a1 1 0 010 1.415z" />
+        </svg>
+      </button>
+    </div>
+  )}
+  <form onSubmit={handleBookingSubmit}>
+    <label className="block text-gray-700 font-medium mb-2">Choose Trip Type</label>
+    <select
+      value={selectedTripType}
+      onChange={(e) => {
+        setSelectedTripType(e.target.value);
+        setEndDate(null);
+      }}
+      className="w-full p-2 mb-4 border rounded"
+      required
+    >
+      <option value="" disabled>Select a trip type</option>
+      {formattedTripTypes.map((type, index) => (
+        <option key={index} value={type}>{type}</option>
+      ))}
+    </select>
+
+    <label className="block text-gray-700 font-medium mb-2">Select Start Date</label>
+    <DatePicker
+      selected={selectedDate}
+      onChange={(date) => setSelectedDate(date)}
+      excludeDates={excludedDates}
+      minDate={new Date()}
+      dateFormat="yyyy-MM-dd"
+      className="w-full p-2 mb-4 border rounded"
+      required
+    />
+
+    {selectedTripType === mapTripTypesToDescriptions.overnight ? (
+      <>
+        <label className="block text-gray-700 font-medium mb-2">Select End Date</label>
+        <DatePicker
+          selected={endDate}
+          onChange={(date) => setEndDate(date)}
+          minDate={selectedDate || new Date()}
+          excludeDates={excludedDates}
+          dateFormat="yyyy-MM-dd"
+          className="w-full p-2 mb-4 border rounded"
+          required
+        />
+      </>
+    ) : (
+      <>
+        <label className="block text-gray-700 font-medium mb-2">Select Start Time</label>
+        <input
+          type="time"
+          className="w-full p-2 mb-4 border rounded"
+          value={selectedTime}
+          onChange={(e) => setSelectedTime(e.target.value)}
+          required
+        />
+        <label className="block text-gray-700 font-medium mb-2">Select End Time</label>
+        <input
+          type="time"
+          className="w-full p-2 mb-4 border rounded"
+          value={endTime}
+          onChange={(e) => setEndTime(e.target.value)}
+          required
+        />
+      </>
+    )}
+
+    <label className="block text-gray-700 font-medium mb-2">Select Number of Guests</label>
+    <input
+      type="number"
+      className="w-full p-2 mb-4 border rounded"
+      placeholder="Number of Guests"
+      min="1"
+      value={numberOfGuests}
+      onChange={(e) => setNumberOfGuests(e.target.value)}
+      required
+    />
+
+    <div className="flex justify-center">
+      <button type="submit" className="w-1/2 bg-blue-500 text-white p-2 rounded">
+        Book the trip!
+      </button>
+    </div>
+  </form>
+</section>
+) : userBusinessId === listing?.business_id ? (
+  <section className="bg-blue-50 p-6 rounded-lg shadow max-w-5xl mx-auto">
+    <div className="text-center">
+      <h3 className="text-xl font-semibold mb-2 text-blue-800">Your Listing</h3>
+      <p className="text-blue-700">This is your boat listing. You can manage it from your business dashboard.</p>
+    </div>
+  </section>
+) : null}
     {/* Review Modal */}
     {showReview && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
