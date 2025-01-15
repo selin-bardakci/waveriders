@@ -231,7 +231,7 @@ const RegisterForm = () => {
                   disabled={saving} // Disable checkbox while saving
                 />
                 <span className="ml-2 text-gray-700">
-                  I accept the <a href="/terms" className="text-blue-600">Terms and Conditions</a>
+                  I accept the <a href="/terms" className="text-blue-600">Terms and Conditions</a>.
                 </span>
               </label>
             </div>
