@@ -234,7 +234,7 @@ const RegisterBoat = () => {
         photos,
       });
 
-      const response = await axios.post('http://localhost:8081/api/auth/registerBoat', formData, {
+      const response = await axios.post('https://api.waveriders.com.tr/api/auth/registerBoat', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
