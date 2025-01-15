@@ -10,7 +10,7 @@ const UploadBoatLicense = () => {
   const [license, setLicense] = useState<File | null>(null);
   const [error, setError] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
-  const [step] = useState(2);
+  const [step] = useState(3);
   const [businessId, setBusinessId] = useState<number | null>(null);
   const [boatId, setBoatId] = useState<number | null>(null);
   const { isLoggedIn, isLoading } = useAuth();
@@ -20,34 +20,26 @@ const UploadBoatLicense = () => {
   const [saving, setSaving] = useState(false); // Tracks if the form is being submitted
 
   useEffect(() => {
-    if (typeof window === "undefined" || isLoading) return;
+    if (isLoading) return; 
 
-    // Check for `previousPage` only in the browser
-    const previousPage = sessionStorage.getItem("previousPage");
     if (isLoggedIn) {
-      router.push("/");
+      router.push('/');
       return;
     }
 
-    if (previousPage !== "auth/registerBoat") {
-      router.push("/auth/AccountSetup");
-      return;
-    }
-    sessionStorage.setItem("previousPage", "auth/boatLicense");
-
-    // Fetch stored IDs from localStorage
-    const storedBusinessId = localStorage.getItem("business_id");
-    const storedBoatId = localStorage.getItem("boat_id");
+    // Retrieve IDs from localStorage
+    const storedBusinessId = localStorage.getItem('business_id');
+    const storedBoatId = localStorage.getItem('boat_id');
 
     if (storedBusinessId) {
       const parsedBusinessId = parseInt(storedBusinessId, 10);
       if (!isNaN(parsedBusinessId)) {
         setBusinessId(parsedBusinessId);
       } else {
-        setError("Invalid business ID stored. Please try again.");
+        setError('Invalid business ID stored. Please try again.');
       }
     } else {
-      setError("Business ID not found. Please create a business first.");
+      setError('Business ID is not found. Please create a business first.');
     }
 
     if (storedBoatId) {
@@ -55,7 +47,7 @@ const UploadBoatLicense = () => {
       if (!isNaN(parsedBoatId)) {
         setBoatId(parsedBoatId);
       } else {
-        setError("Invalid boat ID stored. Please try again.");
+        setError('Invalid boat ID stored. Please try again.');
       }
     }
   }, [router, isLoading, isLoggedIn]);
@@ -102,7 +94,7 @@ const UploadBoatLicense = () => {
       formData.append('id', storedBusinessId); // Ensure this matches the ID for boat photos
       formData.append('license', license);
 
-      const response = await axios.post('https://api.waveriders.com.tr/api/auth/boatLicense', formData, {
+      const response = await axios.post('http://api.waveriders.com.tr/api/auth/boatLicense', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
