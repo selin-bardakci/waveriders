@@ -81,8 +81,6 @@ const RegisterBoat = () => {
   const [error, setError] = useState(''); // Add error state
   const [step] = useState(2); // Progress tracker
   const { isLoggedIn, isLoading } = useAuth();
-  const previousPage = sessionStorage.getItem('previousPage');
-
   const router = useRouter();
 
   // **1. Introduce the `saving` state and `isSubmitting` ref**
@@ -123,22 +121,25 @@ const RegisterBoat = () => {
   };
 
   useEffect(() => {
-    if (isLoading) return; // Wait while user status is loading
+    if (typeof window === "undefined" || isLoading) return;
 
+    const previousPage = sessionStorage.getItem("previousPage");
     if (isLoggedIn) {
-      router.push('/');
+      router.push("/");
       return;
     }
-    if (previousPage !== 'auth/registerBusiness') {
-      router.push('/auth/AccountSetup'); // Redirect if not coming from the correct page
+    if (previousPage !== "auth/registerBusiness") {
+      router.push("/auth/AccountSetup");
+      return;
     }
-    sessionStorage.setItem('previousPage', 'auth/registerBoat');
-    const storedbusinessid = localStorage.getItem('business_id');
-    if (storedbusinessid) {
-      const parsedBusinessID = parseInt(storedbusinessid, 10);
-      if (!isNaN(parsedBusinessID)) {
-        setBusinessId(parsedBusinessID);
-        console.log("Business ID retrieved from localStorage:", parsedBusinessID);
+
+    sessionStorage.setItem("previousPage", "auth/registerBoat");
+
+    const storedBusinessId = localStorage.getItem("business_id");
+    if (storedBusinessId) {
+      const parsedBusinessId = parseInt(storedBusinessId, 10);
+      if (!isNaN(parsedBusinessId)) {
+        setBusinessId(parsedBusinessId);
       } else {
         setError("Invalid Business ID stored. Please try again.");
       }
