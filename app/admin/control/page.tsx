@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext'; 
+import { useAuth } from '../../context/AuthContext';
 
 interface Boat {
   verification_id: number;
@@ -21,7 +21,9 @@ interface User {
   account_type: string;
   created_at: string;
   date_of_birth: string;
+  business_name?: string; // Add business_name as optional
 }
+
 
 interface Captain {
   captain_id: number;
@@ -84,23 +86,23 @@ const ControlPage = () => {
         params: { boat_id: boat.boat_id },
       });
       setUserDetails(userResponse.data);
-  
+
       // Captain bilgilerini çek
       const captainResponse = await axios.get('http://localhost:8081/api/auth/captain', {
         params: { business_id: boat.business_id },
       });
-  
+
       if (captainResponse.data.captains && captainResponse.data.captains.length > 0) {
         setCaptainDetails(captainResponse.data.captains[0]);
       } else {
         setCaptainDetails(null);
       }
-  
+
       // Bot lisansını çek (boat_id ile sorgula)
       const boatResponse = await axios.get('http://localhost:8081/api/auth/boat', {
         params: { boat_id: boat.boat_id }, // Burada boat_id kullanıyoruz.
       });
-  
+      console.log('User Details Response:', userResponse.data);
       if (boatResponse.data.boats && boatResponse.data.boats.length > 0) {
         const currentBoat = boatResponse.data.boats[0];
         setSelectedBoat({
@@ -122,14 +124,14 @@ const ControlPage = () => {
       console.error('handleApprove - No boat selected or boat_id is missing.');
       return alert('Boat ID is required to approve.');
     }
-  
+
     try {
       const response = await axios.post('http://localhost:8081/api/verification/approve', {
         boat_id: selectedBoat.boat_id, // boat_id gönderiliyor
       });
-  
+
       console.log('handleApprove - Response:', response.data);
-  
+
       setBoats((prevBoats) => prevBoats.filter((b) => b.boat_id !== selectedBoat.boat_id));
       setIsModalOpen(false);
     } catch (err) {
@@ -137,23 +139,23 @@ const ControlPage = () => {
       alert('Failed to approve boat.');
     }
   };
-  
+
 
   const handleReject = async () => {
     if (!selectedBoat || !selectedBoat.boat_id || !rejectReason.trim()) {
       console.error('handleReject - Boat ID or rejection reason is missing.');
       return alert('Boat ID and rejection reason are required to reject.');
     }
-  
+
     try {
       const response = await axios.post('http://localhost:8081/api/verification/reject', {
         boat_id: selectedBoat.boat_id,
         reason: rejectReason,
       });
-  
+
       console.log('handleReject - Response:', response.data);
-  
-      alert('Boat rejected successfully.');
+
+
       setBoats((prevBoats) => prevBoats.filter((b) => b.boat_id !== selectedBoat.boat_id));
       setIsModalOpen(false);
     } catch (err) {
@@ -161,7 +163,7 @@ const ControlPage = () => {
       alert('Failed to reject boat.');
     }
   };
-  
+
 
   const showDetails = async (boat: Boat) => {
     setSelectedBoat(boat);
@@ -195,25 +197,25 @@ const ControlPage = () => {
       ) : (
         <p>No boats under review.</p>
       )}
-  
-  {isModalOpen && selectedBoat && (
-  <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-    <div
-      className="w-full max-w-lg bg-white p-8 border border-gray-300 rounded-lg shadow-lg relative overflow-y-auto max-h-[90vh]"
-    >
-      <button
-        onClick={() => setIsModalOpen(false)}
-        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-      >
-        &times;
-      </button>
-      <div className="modal-content p-4">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-          Boat Details
-        </h2>
-        <div className="modal-body">
-          <p><strong>Name:</strong> {selectedBoat.boat_name}</p>
-          <p><strong>Boat ID:</strong> {selectedBoat.boat_id}</p>
+
+      {isModalOpen && selectedBoat && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+          <div
+            className="w-full max-w-lg bg-white p-8 border border-gray-300 rounded-lg shadow-lg relative overflow-y-auto max-h-[90vh]"
+          >
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              &times;
+            </button>
+            <div className="modal-content p-4">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+                Boat Details
+              </h2>
+              <div className="modal-body">
+                <p><strong>Name:</strong> {selectedBoat.boat_name}</p>
+                <p><strong>Boat ID:</strong> {selectedBoat.boat_id}</p>
 
                 {userDetails && (
                   <>
@@ -236,86 +238,86 @@ const ControlPage = () => {
                   </>
                 )}
 
-          <h3 className="text-xl font-bold mt-6">Boat License</h3>
-          {selectedBoat?.boat_license_path ? (
-            <div className="mt-4">
-              <img
-                src={selectedBoat.boat_license_path}
-                alt="Boat License"
-                className="w-full h-auto rounded-lg border border-gray-200 hover:shadow-lg transition cursor-pointer"
-                onClick={() => window.open(selectedBoat.boat_license_path, '_blank', 'noopener,noreferrer')}
-              />
-            </div>
-          ) : (
-            <p>No boat license available.</p>
-          )}
+                <h3 className="text-xl font-bold mt-6">Boat License</h3>
+                {selectedBoat?.boat_license_path ? (
+                  <div className="mt-4">
+                    <img
+                      src={selectedBoat.boat_license_path}
+                      alt="Boat License"
+                      className="w-full h-auto rounded-lg border border-gray-200 hover:shadow-lg transition cursor-pointer"
+                      onClick={() => window.open(selectedBoat.boat_license_path, '_blank', 'noopener,noreferrer')}
+                    />
+                  </div>
+                ) : (
+                  <p>No boat license available.</p>
+                )}
 
-          {captainDetails && (
-            <>
-              <h3 className="text-xl font-bold mt-6">Captain Details</h3>
-              <p><strong>Name:</strong> {captainDetails.first_name} {captainDetails.last_name}</p>
-              <p><strong>Phone:</strong> {captainDetails.phone_number}</p>
-              <p>
-                <strong>Date of Birth:</strong>{' '}
-                {new Date(captainDetails.date_of_birth).toLocaleDateString()}
-              </p>
-              <p><strong>Experience:</strong> {captainDetails.experience_years} years</p>
+                {captainDetails && (
+                  <>
+                    <h3 className="text-xl font-bold mt-6">Captain Details</h3>
+                    <p><strong>Name:</strong> {captainDetails.first_name} {captainDetails.last_name}</p>
+                    <p><strong>Phone:</strong> {captainDetails.phone_number}</p>
+                    <p>
+                      <strong>Date of Birth:</strong>{' '}
+                      {new Date(captainDetails.date_of_birth).toLocaleDateString()}
+                    </p>
+                    <p><strong>Experience:</strong> {captainDetails.experience_years} years</p>
 
-              <h3 className="text-xl font-bold mt-6">Captain License</h3>
-              <div className="mt-4">
-                <img
-                  src={captainDetails.registration_papers}
-                  alt="Captain License"
-                  className="w-full h-auto rounded-lg border border-gray-200 hover:shadow-lg transition cursor-pointer"
-                  onClick={() =>
-                    window.open(captainDetails.registration_papers, '_blank', 'noopener,noreferrer')
-                  }
-                />
+                    <h3 className="text-xl font-bold mt-6">Captain License</h3>
+                    <div className="mt-4">
+                      <img
+                        src={captainDetails.registration_papers}
+                        alt="Captain License"
+                        className="w-full h-auto rounded-lg border border-gray-200 hover:shadow-lg transition cursor-pointer"
+                        onClick={() =>
+                          window.open(captainDetails.registration_papers, '_blank', 'noopener,noreferrer')
+                        }
+                      />
+                    </div>
+                  </>
+                )}
               </div>
-            </>
-          )}
-        </div>
-        <div className="modal-footer mt-6 flex justify-between">
-          <button
-            onClick={handleApprove}
-            className="w-1/2 mr-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
-          >
-            Approve
-          </button>
-          <button
-            onClick={() => setShowRejectTextBox(true)}
-            className="w-1/2 ml-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
-          >
-            Reject
-          </button>
-        </div>
-        {showRejectTextBox && (
-          <div className="mt-4">
-            <textarea
-              placeholder="Enter rejection reason..."
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
-            ></textarea>
-            <button
-              onClick={handleReject}
-              className="mt-2 w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
-            >
-              Reject and Send
-            </button>
+              <div className="modal-footer mt-6 flex justify-between">
+                <button
+                  onClick={handleApprove}
+                  className="w-1/2 mr-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => setShowRejectTextBox(true)}
+                  className="w-1/2 ml-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+                >
+                  Reject
+                </button>
+              </div>
+              {showRejectTextBox && (
+                <div className="mt-4">
+                  <textarea
+                    placeholder="Enter rejection reason..."
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
+                  ></textarea>
+                  <button
+                    onClick={handleReject}
+                    className="mt-2 w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+                  >
+                    Reject and Send
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+        </div>
+      )}
 
     </div>
   );
-  
-  
-  
-  
+
+
+
+
 };
 
 export default ControlPage;
