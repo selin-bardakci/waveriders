@@ -69,7 +69,7 @@ const ListingsPageComponent = () => {
       console.log('[DEBUG] Final query string:', queryString.toString(), tripTypeQuery);
   
       const response = await axios.get(
-        `http://localhost:8081/api/listings/paginated?page=${currentPage}&limit=${listingsPerPage}&${queryString.toString()}${tripTypeQuery}`
+        `https://api.waveriders.com.tr/api/listings/paginated?page=${currentPage}&limit=${listingsPerPage}&${queryString.toString()}${tripTypeQuery}`
       );
   
       if (response.status === 200) {
