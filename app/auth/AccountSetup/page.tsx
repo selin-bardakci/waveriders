@@ -71,7 +71,7 @@ const AccountSetup = () => {
                   onChange={handleOptionChange}
                   className="form-radio h-4 w-4 text-blue-500 transition duration-150 ease-in-out mr-3"
                 />
-                <span className="text-gray-800">I'm a customer looking to rent a boat</span>
+                <span className="text-gray-800">I&apos;m a customer looking to rent a boat</span>
               </label>
             </div>
 
@@ -86,7 +86,7 @@ const AccountSetup = () => {
                   onChange={handleOptionChange}
                   className="form-radio h-4 w-4 text-blue-500 transition duration-150 ease-in-out mr-3"
                 />
-                <span className="text-gray-800">I'm a business looking to rent out my boat</span>
+                <span className="text-gray-800">I&apos;m a business looking to rent out my boat</span>
               </label>
             </div>
 
