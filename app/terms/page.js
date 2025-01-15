@@ -35,7 +35,7 @@ const TermsAndConditions = () => {
         <h2 className="text-xl font-semibold mb-4">3. Payments</h2>
         <p className="mb-6 text-gray-700 leading-relaxed">
           Payments for services are managed solely by the business providing the service. Our platform does not process
-          payments or act as a mediator in financial disputes. Please ensure you understand the business's payment terms
+          payments or act as a mediator in financial disputes. Please ensure you understand the business&apos;s payment terms
           before proceeding.
         </p>
 
