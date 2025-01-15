@@ -15,7 +15,7 @@ const BoatListingCard: React.FC<BoatListingCardProps> = ({ boat_id }) => {
   useEffect(() => {
     const fetchBoatDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:8081/api/listings/${boat_id}`);
+        const response = await axios.get(`https://api.waveriders.com.tr/api/listings/${boat_id}`);
         if (response.status === 200) {
           setBoat(response.data);
         } else {
