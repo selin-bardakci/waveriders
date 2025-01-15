@@ -22,8 +22,22 @@ const app = express();
 console.log('Loaded Environment Variables:', process.env);
 
 
-// Middleware for CORS and JSON parsing
-app.use(cors());
+const allowedOrigins = ['https://waveriders.com.tr', 'http://localhost:3000']; // Add your allowed origins
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true); // Allow requests from allowed origins
+    } else {
+      callback(new Error('Not allowed by CORS')); // Reject requests from other origins
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allowed request headers
+  credentials: true, // Allow credentials (e.g., cookies or Authorization headers)
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' })); // Increase JSON body size limit
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Increase URL-encoded body size limit
 app.use(attachDBMiddleware);
