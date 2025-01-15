@@ -13,6 +13,11 @@ const HomeBanner = () => {
         zoom: 12,
     });
 
+    const [location, setLocation] = useState<string>(""); // Location state
+    const [guests, setGuests] = useState<number>(1); // Number of guests state
+    const [startDate, setStartDate] = useState<string>(""); // Start date state (as string)
+    const [endDate, setEndDate] = useState<string>(""); // End date state (as string)
+
     // Set user's current location
     useEffect(() => {
         navigator.geolocation.getCurrentPosition((position) => {
@@ -23,6 +28,12 @@ const HomeBanner = () => {
             });
         });
     }, []);
+
+    const handleSearch = (data: any) => {
+        console.log("Search data:", data);
+        // Add logic for handling the search here
+      };
+      
 
     return (
         <div className="relative w-full">
@@ -49,7 +60,17 @@ const HomeBanner = () => {
                     
                     {/* Use the custom SearchBar here */}
                     <div className="w-full">
-                        <SearchBar />
+                    <SearchBar
+            onSearch={handleSearch}
+            location={location}
+            setLocation={setLocation}
+            guests={guests}
+            setGuests={setGuests}
+            startDate={startDate}
+            setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
+          />
                     </div>
                 </div>
             </div>
