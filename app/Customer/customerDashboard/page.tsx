@@ -99,7 +99,7 @@ const Dashboard = () => {
             <h1 className="text-white text-4xl font-bold">
               Welcome back, {businessOwner}!
             </h1>
-            <p className="text-white text-lg mt-2">Here's a look at your recent rentals!</p>
+            <p className="text-white text-lg mt-2">Here&apos;s a look at your recent rentals!</p>
           </div>
         </div>
       </div>
