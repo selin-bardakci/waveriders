@@ -25,7 +25,7 @@ const SignInPage = () => {
     setLoading(true); 
 
     try {
-      const response = await axios.post('http://localhost:8081/api/auth/login', {
+      const response = await axios.post('https://api.waveriders.com.tr/api/auth/login', {
         email,
         password,
       });
