@@ -94,7 +94,7 @@ const UploadBoatLicense = () => {
       formData.append('id', storedBusinessId); // Ensure this matches the ID for boat photos
       formData.append('license', license);
 
-      const response = await axios.post('http://api.waveriders.com.tr/api/auth/boatLicense', formData, {
+      const response = await axios.post('https://api.waveriders.com.tr/api/auth/boatLicense', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
