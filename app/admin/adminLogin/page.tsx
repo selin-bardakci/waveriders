@@ -18,7 +18,7 @@ const AdminLogin = () => {
     if (token) {
       // Eğer token varsa giriş yapmış bir kullanıcıyı kontrol et
       axios
-        .get('http://localhost:8081/api/users/profile', {
+        .get('https://api.waveriders.com.tr/api/users/profile', {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((response) => {
@@ -40,7 +40,7 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8081/api/auth/login', {
+      const response = await axios.post('https://api.waveriders.com.tr/api/auth/login', {
         email,
         password,
       });
