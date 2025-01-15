@@ -15,7 +15,7 @@ const ReviewsPage = () => {
   useEffect(() => {
     const fetchReviews = async () => {
         try {
-            const response = await axios.get(`http://localhost:8081/api/boats/${id}/reviews`);
+            const response = await axios.get(`https://api.waveriders.com.tr/api/boats/${id}/reviews`);
             setReviews(response.data.reviews);
         } catch (err) {
             console.error('Error fetching reviews:', err.message);
