@@ -246,7 +246,7 @@ const RegisterForm = () => {
             <div className="text-center">
               <button
                 type="submit"
-                disabled={saving || !isChecked || successMessage} // Buton tıklanamaz olacak
+                disabled={!!(saving || !isChecked || successMessage)} 
                 className={`w-full flex items-center justify-center ${saving || !isChecked || successMessage
                     ? 'bg-blue-300 cursor-not-allowed'
                     : 'bg-blue-500 hover:bg-blue-600'
