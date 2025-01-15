@@ -16,7 +16,7 @@ const NavBar = () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await fetch('http://localhost:8081/api/users/profile', {
+          const response = await fetch('https://api.waveriders.com.tr/api/users/profile', {
             headers: { Authorization: `Bearer ${token}` },
           });
 
