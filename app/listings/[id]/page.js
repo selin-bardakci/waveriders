@@ -50,6 +50,7 @@ const BoatListingDetails = () => {
   const [userBusinessId, setUserBusinessId] = useState(null);
   const [canRentBoat, setCanRentBoat] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState(null); 
+  const [loading, setLoading] = useState(false); 
 
 
 useEffect(() => {
@@ -354,6 +355,7 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
     };
   
     try {
+      setLoading(true); 
       const response = await axios.post('http://localhost:8081/api/rentals/create', rentalData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -361,6 +363,7 @@ console.log('Mapped trip types (descriptions):', formattedTripTypes);
       });
   
       if (response.status === 201) {
+        setShowReview(false);
         setConfirmationMessage('Your booking was successful!');
         setSelectedDate(null);
         setEndDate(null);
@@ -733,29 +736,33 @@ Back
     </div>
   </section>
 ) : null}
-    {/* Review Modal */}
-    {showReview && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
-          <p>Your selected booking details:</p>
-          <p>
-            {selectedTripType === mapTripTypesToDescriptions.overnight
-              ? `From ${selectedDate?.toLocaleDateString()} to ${endDate?.toLocaleDateString()}`
-              : `${selectedDate?.toLocaleDateString()} from ${selectedTime} to ${endTime}`}
-          </p>
-          <p className="mt-2">Guests: {numberOfGuests}</p>
-          <p className="mt-2 text-blue-600">Total Price: ${calculateTotalPrice()}</p>
-          <div className="mt-4 flex justify-between">
-            <button onClick={() => setShowReview(false)} className="bg-gray-400 text-white px-4 py-2 rounded">
-              Cancel
-            </button>
-            <button onClick={confirmBooking} className="bg-blue-500 text-white px-4 py-2 rounded">
-              Confirm
-            </button>
+        {/* Review Modal */}
+        {showReview && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
+              <p>Your selected booking details:</p>
+              <p>
+                {selectedTripType === mapTripTypesToDescriptions.overnight
+                  ? `From ${selectedDate?.toLocaleDateString()} to ${endDate?.toLocaleDateString()}`
+                  : `${selectedDate?.toLocaleDateString()} from ${selectedTime} to ${endTime}`}
+              </p>
+              <p className="mt-2">Guests: {numberOfGuests}</p>
+              <p className="mt-2 text-blue-600">Total Price: ${calculateTotalPrice()}</p>
+              <div className="mt-4 flex justify-between">
+                <button onClick={() => setShowReview(false)} className="bg-gray-400 text-white px-4 py-2 rounded">
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBooking}
+                  className={`bg-blue-500 text-white px-4 py-2 rounded ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={loading} // Butonu devre dışı bırak
+                >
+                  {loading ? 'Processing...' : 'Confirm'}
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    )}
+        )}
 
     {/* Confirmation Message */}
     {confirmationMessage && (
