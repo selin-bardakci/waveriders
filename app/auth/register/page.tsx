@@ -16,6 +16,7 @@ const RegisterForm = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [buttonText, setButtonText] = useState('Register'); 
   const router = useRouter();
 
   // **1. Introduce the `saving` state**
@@ -90,6 +91,7 @@ const RegisterForm = () => {
     try {
       // **Start the saving process**
       setSaving(true);
+      setButtonText('Check your e-mail');
 
       const response = await axios.post('https://api.waveriders.com.tr/api/auth/signup', {
         name,
@@ -109,6 +111,7 @@ const RegisterForm = () => {
     } catch (err: any) {
       console.error('Registration error:', err);
       const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
+      setButtonText('Register');
       setError(errorMessage);
     } finally {
       // **End the saving process**
@@ -124,6 +127,7 @@ const RegisterForm = () => {
     setPhone(numericValue);
   };
 
+ 
   return (
     <div className="relative min-h-screen flex">
       {/* Background Image */}
@@ -148,7 +152,7 @@ const RegisterForm = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={saving} // **Disable input while saving**
+                disabled={saving} // Disable input while saving
               />
             </div>
 
@@ -160,7 +164,7 @@ const RegisterForm = () => {
                 value={lastname}
                 onChange={(e) => setLastName(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={saving} // **Disable input while saving**
+                disabled={saving} // Disable input while saving
               />
             </div>
 
@@ -172,7 +176,7 @@ const RegisterForm = () => {
                 onChange={(e) => setBirthDate(e.target.value)}
                 max={maxBirthDate} // Restrict the date to 18 years ago from today
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={saving} // **Disable input while saving**
+                disabled={saving} // Disable input while saving
               />
             </div>
 
@@ -184,7 +188,7 @@ const RegisterForm = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={saving} // **Disable input while saving**
+                disabled={saving} // Disable input while saving
               />
             </div>
 
@@ -200,7 +204,7 @@ const RegisterForm = () => {
                 maxLength={11}
                 title="Please enter an 11-digit phone number starting with 0."
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={saving} // **Disable input while saving**
+                disabled={saving} // Disable input while saving
               />
             </div>
 
@@ -212,7 +216,7 @@ const RegisterForm = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={saving} // **Disable input while saving**
+                disabled={saving} // Disable input while saving
               />
             </div>
 
@@ -224,7 +228,7 @@ const RegisterForm = () => {
                   checked={isChecked}
                   onChange={() => setIsChecked(!isChecked)}
                   className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                  disabled={saving} // **Disable checkbox while saving**
+                  disabled={saving} // Disable checkbox while saving
                 />
                 <span className="ml-2 text-gray-700">
                   I accept the <a href="/terms" className="text-blue-600">Terms and Conditions</a>
@@ -234,30 +238,33 @@ const RegisterForm = () => {
 
             {/* Error Message */}
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+
             {/* Success Message */}
             {successMessage && <p className="text-green-500 text-center mb-4">{successMessage}</p>}
 
-            {/* **Submit Button** */}
+            {/* Submit Button */}
             <div className="text-center">
               <button
                 type="submit"
-                disabled={saving || !isChecked} // **Disable button while saving or terms not accepted**
-                className={`w-full flex items-center justify-center ${
-                  saving || !isChecked
+                disabled={saving || !isChecked || successMessage} // Buton tıklanamaz olacak
+                className={`w-full flex items-center justify-center ${saving || !isChecked || successMessage
                     ? 'bg-blue-300 cursor-not-allowed'
                     : 'bg-blue-500 hover:bg-blue-600'
-                } text-white px-10 py-3 text-sm rounded-lg transition`}
+                  } text-white px-10 py-3 text-sm rounded-lg transition`}
               >
                 {saving ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" /> {/* Loading Spinner */}
                     Saving...
                   </>
+                ) : successMessage ? (
+                  'Check your e-mail' 
                 ) : (
                   'Register'
                 )}
               </button>
             </div>
+
           </form>
         </div>
       </div>
