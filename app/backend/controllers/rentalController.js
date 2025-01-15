@@ -1,4 +1,5 @@
 import { connectDB } from '../config/db.js';
+import nodemailer from "nodemailer";
 const db = connectDB();
 
 export const getUnavailableDates = async (req, res) => {
@@ -37,34 +38,99 @@ export const getUnavailableDates = async (req, res) => {
 };
 
 
+
 export const createRental = async (req, res) => {
   const { boat_id, start_date, end_date, rental_price, start_time, end_time } = req.body;
-  const customer_id = req.user.id; 
+  const customer_id = req.user.id;
 
   if (!boat_id || !start_date || !rental_price) {
     return res.status(400).json({ message: 'Boat ID, start date, and rental price are required.' });
   }
 
   try {
-    // Status default "ongoing"
     const status = 'ongoing';
-
     const calculated_end_date = end_date || start_date;
 
-    const sql = `
+    const rentalSql = `
       INSERT INTO rentals (customer_id, boat_id, start_date, end_date, rental_price, status, start_time, end_time)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     db.query(
-      sql,
+      rentalSql,
       [customer_id, boat_id, start_date, calculated_end_date, rental_price, status, start_time, end_time],
-      (err, result) => {
+      async (err, result) => {
         if (err) {
           console.error('Error inserting rental:', err);
           return res.status(500).json({ message: 'Error creating rental.' });
         }
-        res.status(201).json({ message: 'Rental created successfully!', rental_id: result.insertId });
+
+        const rental_id = result.insertId;
+
+        // Fetch boat, business, and captain details
+        const boatQuery = `
+          SELECT b.boat_name, b.location, b.business_id, bus.business_name, u.first_name AS business_first_name,
+                 u.last_name AS business_last_name, u.phone_number AS business_phone, c.first_name AS captain_first_name,
+                 c.last_name AS captain_last_name, c.phone_number AS captain_phone
+          FROM boats b
+          LEFT JOIN businesses bus ON b.business_id = bus.business_id
+          LEFT JOIN users u ON bus.user_id = u.user_id
+          LEFT JOIN captains c ON b.business_id = c.business_id
+          WHERE b.boat_id = ?
+        `;
+
+        db.query(boatQuery, [boat_id], async (err, boatResults) => {
+          if (err || boatResults.length === 0) {
+            console.error("Error fetching boat details:", err);
+            return res.status(500).json({ message: "Error fetching boat details for email." });
+          }
+
+          const boatDetails = boatResults[0];
+          const { boat_name, location, business_name, business_first_name, business_last_name, business_phone, captain_first_name, captain_last_name, captain_phone } = boatDetails;
+
+          // Compose email content
+          const emailSubject = "Booking Details";
+          const emailBody = `
+            <p>We are happy to have you here! Here are your booking details:</p>
+            <ul>
+              <li><strong>Boat name:</strong> ${boat_name}</li>
+              <li><strong>Date:</strong> ${start_date}</li>
+              <li><strong>Time:</strong> ${start_time} - ${end_time}</li>
+              <li><strong>Port:</strong> ${location}</li>
+            </ul>
+            <h3>Business Contact Information</h3>
+            <p>${business_name || `${business_first_name} ${business_last_name}`} - ${business_phone}</p>
+            <h3>Captain Contact Information</h3>
+            <p>${captain_first_name} ${captain_last_name} - ${captain_phone}</p>
+            <p>Thank you for choosing Waveriders!</p>
+            <p><strong>Waveriders Team</strong></p>
+          `;
+
+          // Send the email
+          const transporter = nodemailer.createTransport({
+            service: 'gmail', // or your preferred email service
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASS,
+            },
+          });
+
+          const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: req.user.email, // Ensure user's email is available in `req.user`
+            subject: emailSubject,
+            html: emailBody,
+          };
+
+          try {
+            await transporter.sendMail(mailOptions);
+            console.log("Email sent successfully.");
+          } catch (emailError) {
+            console.error("Error sending email:", emailError);
+          }
+
+          res.status(201).json({ message: 'Rental created successfully!', rental_id });
+        });
       }
     );
   } catch (error) {
