@@ -26,7 +26,7 @@ const AboutUs = () => {
             Who We Are
           </h2>
           <p className="text-gray-700 leading-relaxed text-center max-w-3xl">
-            Welcome to WaveRiders! Our platform bridges the gap between yacht businesses and customers seeking unforgettable adventures on the water. Whether you're planning a serene cruise, a yacht party, or a fishing trip, we simplify the process of finding the perfect boat.
+            Welcome to WaveRiders! Our platform bridges the gap between yacht businesses and customers seeking unforgettable adventures on the water. Whether you&apos;re planning a serene cruise, a yacht party, or a fishing trip, we simplify the process of finding the perfect boat.
           </p>
         </div>
       </section>
