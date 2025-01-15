@@ -24,7 +24,7 @@
     "mapbox-gl": "^3.7.0",
     "jsonwebtoken": "^9.0.2",
     "bcryptjs": "^2.4.3",
-    "mime": "^4.0.4",
+    "mime": "^4.0.6",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.5",
     "next": "14.2.14",
@@ -45,5 +45,8 @@
     "react-chartjs-2": "^5.2.0",
     "chart.js": "^4.4.7",
     "typescript": "5.6.2"
+  },
+  "resolutions": {
+    "mime": "^4.0.6"
   }
 }
