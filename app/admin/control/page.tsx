@@ -66,7 +66,7 @@ const ControlPage = () => {
     const fetchInReviewBoats = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get('http://localhost:8081/api/verification/inReview');
+        const response = await axios.get('https://api.waveriders.com.tr/api/verification/inReview');
         setBoats(response.data);
       } catch (err) {
         console.error('Failed to fetch boats under review:', err);
@@ -90,13 +90,13 @@ const ControlPage = () => {
   const fetchDetails = async (boat: Boat) => {
     try {
       // Kullanıcı bilgilerini çek
-      const userResponse = await axios.get('http://localhost:8081/api/verification/userDetails', {
+      const userResponse = await axios.get('https://api.waveriders.com.tr/api/verification/userDetails', {
         params: { boat_id: boat.boat_id },
       });
       setUserDetails(userResponse.data);
 
       // Captain bilgilerini çek
-      const captainResponse = await axios.get('http://localhost:8081/api/auth/captain', {
+      const captainResponse = await axios.get('https://api.waveriders.com.tr/api/auth/captain', {
         params: { business_id: boat.business_id },
       });
 
@@ -107,7 +107,7 @@ const ControlPage = () => {
       }
 
       // Bot lisansını çek (boat_id ile sorgula)
-      const boatResponse = await axios.get('http://localhost:8081/api/auth/boat', {
+      const boatResponse = await axios.get('https://api.waveriders.com.tr/api/auth/boat', {
         params: { boat_id: boat.boat_id }, // Burada boat_id kullanıyoruz.
       });
       console.log('User Details Response:', userResponse.data);
@@ -134,7 +134,7 @@ const ControlPage = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8081/api/verification/approve', {
+      const response = await axios.post('https://api.waveriders.com.tr/api/verification/approve', {
         boat_id: selectedBoat.boat_id, // boat_id gönderiliyor
       });
 
@@ -156,7 +156,7 @@ const ControlPage = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8081/api/verification/reject', {
+      const response = await axios.post('https://api.waveriders.com.tr/api/verification/reject', {
         boat_id: selectedBoat.boat_id,
         reason: rejectReason,
       });
