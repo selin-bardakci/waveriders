@@ -22,34 +22,20 @@ const CaptainLicense = () => {
 
   // Load business ID from localStorage
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Access sessionStorage safely in the browser
-      const previousPage = sessionStorage.getItem("previousPage");
+    if (isLoading) return; // Wait while user status is loading
 
-      if (isLoading) return; // Wait while user status is loading
-
-      if (isLoggedIn) {
-        router.push("/");
-        return;
-      }
-
-      if (previousPage !== "auth/registerCaptain") {
-        router.push("/auth/AccountSetup");
-      }
-
-      sessionStorage.setItem("previousPage", "auth/captainLicense");
-
-      const storedBusinessId = localStorage.getItem("business_id");
-      if (storedBusinessId) {
-        setBusinessId(storedBusinessId);
-        console.log("Loaded business ID:", storedBusinessId);
-      } else {
-        setError("Business ID not found. Please complete registration first.");
-      }
+    if (isLoggedIn) {
+      router.push('/');
+      return;
+    }
+    const storedBusinessId = localStorage.getItem('business_id');
+    if (storedBusinessId) {
+      setBusinessId(storedBusinessId);
+      console.log('Loaded business ID:', storedBusinessId);
+    } else {
+      setError('Business ID not found. Please complete registration first.');
     }
   }, [router, isLoading, isLoggedIn]);
-  
-  
 
   if (isLoggedIn ) {
     return null; 
@@ -102,7 +88,7 @@ const CaptainLicense = () => {
 
       console.log('Submitting captain license data:', { id, registration_papers: registrationPapers?.name });
 
-      const response = await axios.post('https://api.waveriders.com.tr/api/auth/captainLicense', formData, {
+      const response = await axios.post('http://api.waveriders.com.tr/api/auth/captainLicense', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
