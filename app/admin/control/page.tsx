@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 
@@ -242,7 +243,7 @@ const ControlPage = () => {
                 <h3 className="text-xl font-bold mt-6">Boat License</h3>
                 {selectedBoat?.boat_license_path ? (
                   <div className="mt-4">
-                    <img
+                    <Image
                       src={selectedBoat.boat_license_path}
                       alt="Boat License"
                       className="w-full h-auto rounded-lg border border-gray-200 hover:shadow-lg transition cursor-pointer"
@@ -266,7 +267,7 @@ const ControlPage = () => {
 
                     <h3 className="text-xl font-bold mt-6">Captain License</h3>
                     <div className="mt-4">
-                      <img
+                      <Image
                         src={captainDetails.registration_papers}
                         alt="Captain License"
                         className="w-full h-auto rounded-lg border border-gray-200 hover:shadow-lg transition cursor-pointer"
