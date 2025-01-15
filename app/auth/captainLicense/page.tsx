@@ -88,7 +88,7 @@ const CaptainLicense = () => {
 
       console.log('Submitting captain license data:', { id, registration_papers: registrationPapers?.name });
 
-      const response = await axios.post('http://api.waveriders.com.tr/api/auth/captainLicense', formData, {
+      const response = await axios.post('https://api.waveriders.com.tr/api/auth/captainLicense', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
