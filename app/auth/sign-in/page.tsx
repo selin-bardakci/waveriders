@@ -20,7 +20,7 @@ const SignInPage = () => {
     }
   }, [router]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true); 
 
@@ -50,10 +50,17 @@ const SignInPage = () => {
         setError('Invalid email or password.');
       }
     } catch (err) {
-      console.error('Sign-in error:', err);
-      setError(err.response?.data?.message || 'An unexpected error occurred.');
+      if (axios.isAxiosError(err)) {
+        // Handle Axios error
+        console.error('Sign-in error:', err);
+        setError(err.response?.data?.message || 'An unexpected error occurred.');
+      } else {
+        // Handle non-Axios error
+        console.error('An unexpected error occurred:', err);
+        setError('An unexpected error occurred.');
+      }
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
