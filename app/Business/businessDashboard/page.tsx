@@ -68,19 +68,19 @@ const BusinessDashboard = () => {
 
         // API çağrılarını paralel olarak başlat
         const [businessOwnerResponse, customerCountsResponse, dashboardListingsResponse, favoriteBoatsResponse, recentActivitiesResponse] = await Promise.all([
-          fetch('http://localhost:8081/api/business/dashboard', {
+          fetch('https://api.waveriders.com.tr/api/business/dashboard', {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('http://localhost:8081/api/business/dashboard/monthly-rentals', {
+          fetch('https://api.waveriders.com.tr/api/business/dashboard/monthly-rentals', {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('http://localhost:8081/api/business/dashboard/listings', {
+          fetch('https://api.waveriders.com.tr/api/business/dashboard/listings', {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('http://localhost:8081/api/favorites/dashboard', {
+          fetch('https://api.waveriders.com.tr/api/favorites/dashboard', {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('http://localhost:8081/api/rentals/dashboard', { // <== recent activities request
+          fetch('https://api.waveriders.com.tr/api/rentals/dashboard', { // <== recent activities request
             headers: { Authorization: `Bearer ${token}` }, // Token ekleniyor
           }),
         ]);
