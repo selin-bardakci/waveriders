@@ -59,7 +59,7 @@ const BoatListingDetails = () => {
       try {
         console.log('Fetching listing details...');
 
-        const listingResponse = await axios.get(`http://localhost:8081/api/listings/${id}`);
+        const listingResponse = await axios.get(`https://api.waveriders.com.tr/api/listings/${id}`);
         if (listingResponse.status === 200) {
           const fetchedListing = listingResponse.data;
 
@@ -79,7 +79,7 @@ const BoatListingDetails = () => {
           setListing(fetchedListing);
 
           // Fetch verification status
-          const verificationResponse = await axios.get(`http://localhost:8081/api/verification/status/${fetchedListing.boat_id}`);
+          const verificationResponse = await axios.get(`https://api.waveriders.com.tr/api/verification/status/${fetchedListing.boat_id}`);
           console.log('Verification Status Response:', verificationResponse.data);
 
           const verificationStatus = verificationResponse.data.status;
@@ -96,7 +96,7 @@ const BoatListingDetails = () => {
             if (token) {
               try {
 
-                const userResponse = await axios.get('http://localhost:8081/api/business/profile', {
+                const userResponse = await axios.get('https://api.waveriders.com.tr/api/business/profile', {
                   headers: { Authorization: `Bearer ${token}` },
                 });
 
@@ -162,7 +162,7 @@ const BoatListingDetails = () => {
   useEffect(() => {
     const fetchUnavailableDates = async () => {
       try {
-        const response = await axios.get(`http://localhost:8081/api/rentals/unavailable-dates?boat_id=${id}`);
+        const response = await axios.get(`https://api.waveriders.com.tr/api/rentals/unavailable-dates?boat_id=${id}`);
         if (response.status === 200) {
           setUnavailableDates(response.data.unavailableDates);
         } else {
@@ -179,7 +179,7 @@ const BoatListingDetails = () => {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await axios.get(`http://localhost:8081/api/boats/${id}/reviews`);
+        const response = await axios.get(`https://api.waveriders.com.tr/api/boats/${id}/reviews`);
         if (response.status === 200 && response.data.reviews) {
           setReviews(response.data.reviews);
         } else {
@@ -240,7 +240,7 @@ const BoatListingDetails = () => {
       }
 
       if (isFavorite) {
-        await axios.delete('http://localhost:8081/api/favorites', {
+        await axios.delete('https://api.waveriders.com.tr/api/favorites', {
           headers: { Authorization: `Bearer ${token}` },
           data: { boat_id: id },
         });
@@ -248,7 +248,7 @@ const BoatListingDetails = () => {
         console.log("Boat removed from favorites.");
       } else {
         await axios.post(
-          'http://localhost:8081/api/favorites',
+          'https://api.waveriders.com.tr/api/favorites',
           { boat_id: id },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -365,7 +365,7 @@ const BoatListingDetails = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post('http://localhost:8081/api/rentals/create', rentalData, {
+      const response = await axios.post('https://api.waveriders.com.tr/api/rentals/create', rentalData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
