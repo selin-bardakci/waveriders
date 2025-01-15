@@ -281,46 +281,84 @@ export const rejectBoat = async (req, res) => {
 
 // Fetch user details via boat -> business -> user chain
 export const getUserDetailsByBoat = async (req, res) => {
-    const { boat_id } = req.query;
-  
-    if (!boat_id) {
-      return res.status(400).json({ message: 'Boat ID is required.' });
-    }
-  
-    try {
-      const sql = `
+  const { boat_id } = req.query;
+
+  if (!boat_id) {
+    return res.status(400).json({ message: 'Boat ID is required.' });
+  }
+
+  try {
+    const sql = `
+      SELECT 
+        u.user_id, 
+        u.first_name, 
+        u.last_name, 
+        u.email, 
+        u.phone_number, 
+        u.account_type, 
+        u.created_at, 
+        u.date_of_birth,
+        b.business_name
+      FROM users u
+      JOIN businesses b ON u.user_id = b.user_id
+      JOIN boats bt ON b.business_id = bt.business_id
+      WHERE bt.boat_id = ?;
+    `;
+
+    console.log('Executing SQL:', sql, 'with parameter:', boat_id);
+
+    db.query(sql, [boat_id], (err, results) => {
+      if (err) {
+        console.error('SQL Error:', err); // Log SQL errors
+        return res.status(500).json({ message: 'Error executing SQL query.' });
+      }
+
+      console.log('Query Results:', results); // Log query results
+
+      if (results.length === 0) {
+        return res.status(404).json({ message: 'No user or business found for this boat.' });
+      }
+
+      res.status(200).json(results[0]); // Send the first result as the response
+    });
+  } catch (error) {
+    console.error('Unexpected Error:', error); // Log unexpected errors
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+export const getVerificationStatus = async (req, res) => {
+  const { boat_id } = req.params; // Retrieve boat_id from URL parameters
+
+  if (!boat_id) {
+    return res.status(400).json({ message: 'Boat ID is required.' });
+  }
+
+  try {
+    const sql = `
         SELECT 
-          u.user_id, 
-          u.first_name, 
-          u.last_name, 
-          u.email, 
-          u.phone_number, 
-          u.account_type, 
-          u.created_at, 
-          u.date_of_birth
-        FROM users u
-        JOIN businesses b ON u.user_id = b.user_id
-        JOIN boats bt ON b.business_id = bt.business_id
-        WHERE bt.boat_id = ?;
+          v.verification_status, 
+          v.boat_approvement 
+        FROM verification v
+        WHERE v.boat_id = ?;
       `;
-  
-      db.query(sql, [boat_id], (err, results) => {
-        if (err) {
-          console.error('Error fetching user details:', err);
-          return res.status(500).json({ message: 'Error fetching user details.' });
-        }
-  
-        if (results.length === 0) {
-          return res.status(404).json({ message: 'No user found for this boat.' });
-        }
-  
-        res.status(200).json(results[0]);
-      });
-    } catch (error) {
-      console.error('Error:', error);
-      res.status(500).json({ message: 'Server error.' });
-    }
-  };
+
+    db.query(sql, [boat_id], (err, results) => {
+      if (err) {
+        console.error('Error fetching verification status:', err);
+        return res.status(500).json({ message: 'Error fetching verification status.' });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ message: 'No verification record found for this boat ID.' });
+      }
+
+      res.status(200).json(results[0]);
+    });
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
 
   export const getCaptainDetails = async (req, res) => {
     const { business_id } = req.query;
