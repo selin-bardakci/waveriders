@@ -91,7 +91,7 @@ const RegisterForm = () => {
       // **Start the saving process**
       setSaving(true);
 
-      const response = await axios.post('http://localhost:8081/api/auth/signup', {
+      const response = await axios.post('https://api.waveriders.com.tr/api/auth/signup', {
         name,
         lastname,
         email,
