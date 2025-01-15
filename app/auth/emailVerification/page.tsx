@@ -9,16 +9,12 @@ const EmailVerification = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const previousPage = sessionStorage.getItem('previousPage');
+
     if (isLoading) return; 
 
     if (isLoggedIn) {
       router.push('/');
       return;
-    }
-
-    if (previousPage !== 'auth/captainLicense') {
-      router.push('/auth/AccountSetup'); 
     }
 
   }, [router, isLoading, isLoggedIn]);
