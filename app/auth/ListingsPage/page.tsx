@@ -1,7 +1,8 @@
 'use client';
-
+import { Suspense } from "react";
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation'; 
+import { useCallback } from 'react';
 import axios from 'axios';
 import SearchBar from '../../components/SearchBar/SearchBar';
 import FilterSidebar from '../../components/SideBar/FilterSidebar';
@@ -41,6 +42,53 @@ const ListingsPage = () => {
   const isFirstLoad = useRef(true);
   const listingsPerPage = 15;
 
+  const fetchBoatIds = useCallback(async () => {
+    console.log('[DEBUG] fetchBoatIds called with:', { activeFilters, location, guests, startDate, endDate, currentPage });
+    setLoading(true);
+    setError('');
+    setIsDataLoaded(false); // Set to false when a new fetch starts
+  
+    try {
+      const tripTypes = activeFilters.tripType.length > 0 ? activeFilters.tripType : [];
+      const tripTypeQuery = tripTypes.length
+        ? `&${tripTypes.map((type) => `trip_type=${type}`).join('&')}`
+        : '';
+  
+      const queryString = new URLSearchParams({
+        price_min: activeFilters.priceRange[0].toString(),
+        price_max: activeFilters.priceRange[1].toString(),
+        vehicle_type: activeFilters.vehicleType,
+        sortField: sortOption === 'price_per_hour_asc' ? 'price_per_hour' : sortOption === 'price_per_hour_desc' ? 'price_per_hour' : '',
+        sortOrder: sortOption === 'price_per_hour_asc' ? 'asc' : sortOption === 'price_per_hour_desc' ? 'desc' : '',
+        location: location || '',
+        guests: guests.toString(),
+        start_date: startDate || '',
+        end_date: endDate || '',
+      });
+  
+      console.log('[DEBUG] Final query string:', queryString.toString(), tripTypeQuery);
+  
+      const response = await axios.get(
+        `http://localhost:8081/api/listings/paginated?page=${currentPage}&limit=${listingsPerPage}&${queryString.toString()}${tripTypeQuery}`
+      );
+  
+      if (response.status === 200) {
+        const ids = response.data.rows.map((boat: { boat_id: any; }) => boat.boat_id);
+        setBoatIds(ids);
+        setTotalPages(Math.ceil(response.data.total / listingsPerPage));
+        setIsDataLoaded(true); // Mark data as successfully loaded
+      } else {
+        throw new Error(`Unexpected status: ${response.status}`);
+      }
+    } catch (err) {
+      console.error('[DEBUG] Error in fetchBoatIds:', err);
+      setError('Failed to load listings. Please try again later.');
+      setIsDataLoaded(false); // Reset data loaded state on error
+    } finally {
+      setLoading(false);
+    }
+  }, [activeFilters, location, guests, startDate, endDate, currentPage, sortOption, listingsPerPage]);
+
   useEffect(() => {
     // Retrieve 'search_initiated' flag from sessionStorage
     const searchInitiatedFromHomepage = sessionStorage.getItem('search_initiated') === 'true';
@@ -76,15 +124,8 @@ const ListingsPage = () => {
     // Reset search initiated flag after processing
     setIsRestored(true); // Mark state as restored
     setIsStateInitialized(true); // Indicate state restoration is complete
-  }, [searchParams]);  // Trigger whenever searchParams change
+  }, [fetchBoatIds, searchParams]);  // Trigger whenever searchParams change
 
-  useEffect(() => {
-    if (!isRestored) return; // Prevent fetch until state restoration is complete
-  
-    // Fetch listings when page changes or filters are applied
-    console.log('[DEBUG] fetchBoatIds triggered for page change or updated filters');
-    fetchBoatIds();
-  }, [currentPage, activeFilters, location, guests, startDate, endDate, sortOption, isRestored]);
   
   
 
@@ -108,52 +149,14 @@ const ListingsPage = () => {
     sessionStorage.setItem('listingsPageState', JSON.stringify(state));
   }, [currentPage, activeFilters, sortOption, location, guests, startDate, endDate, isRestored]);
 
-  const fetchBoatIds = async () => {
-    console.log('[DEBUG] fetchBoatIds called with:', { activeFilters, location, guests, startDate, endDate, currentPage });
-    setLoading(true);
-    setError('');
-    setIsDataLoaded(false); // Set to false when a new fetch starts
 
-    try {
-      const tripTypes = activeFilters.tripType.length > 0 ? activeFilters.tripType : [];
-      const tripTypeQuery = tripTypes.length
-        ? `&${tripTypes.map((type) => `trip_type=${type}`).join('&')}`
-        : '';
 
-      const queryString = new URLSearchParams({
-        price_min: activeFilters.priceRange[0].toString(),
-        price_max: activeFilters.priceRange[1].toString(),
-        vehicle_type: activeFilters.vehicleType,
-        sortField: sortOption === 'price_per_hour_asc' ? 'price_per_hour' : sortOption === 'price_per_hour_desc' ? 'price_per_hour' : '',
-        sortOrder: sortOption === 'price_per_hour_asc' ? 'asc' : sortOption === 'price_per_hour_desc' ? 'desc' : '',
-        location: location || '',
-        guests: guests.toString(),
-        start_date: startDate || '',
-        end_date: endDate || '',
-      });
-
-      console.log('[DEBUG] Final query string:', queryString.toString(), tripTypeQuery);
-
-      const response = await axios.get(
-        `http://localhost:8081/api/listings/paginated?page=${currentPage}&limit=${listingsPerPage}&${queryString.toString()}${tripTypeQuery}`
-      );
-
-      if (response.status === 200) {
-        const ids = response.data.rows.map((boat: { boat_id: any; }) => boat.boat_id);
-        setBoatIds(ids);
-        setTotalPages(Math.ceil(response.data.total / listingsPerPage));
-        setIsDataLoaded(true); // Mark data as successfully loaded
-      } else {
-        throw new Error(`Unexpected status: ${response.status}`);
-      }
-    } catch (err) {
-      console.error('[DEBUG] Error in fetchBoatIds:', err);
-      setError('Failed to load listings. Please try again later.');
-      setIsDataLoaded(false); // Reset data loaded state on error
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (!isRestored) return; // Prevent fetch until state restoration is complete
+    console.log('[DEBUG] fetchBoatIds triggered for page change or updated filters');
+    fetchBoatIds();
+  }, [fetchBoatIds, isRestored]); // Add fetchBoatIds as a dependency
+  
 
   const restoreStateFromSession = () => {
     const savedState = sessionStorage.getItem('listingsPageState');
@@ -235,7 +238,7 @@ const ListingsPage = () => {
       fetchBoatIds(); // Now that filters are updated, we fetch the data
       console.log('[DEBUG] fetchBoatIds with updated filters');
     }
-  }, [activeFilters, location, guests, startDate, endDate, currentPage, isStateInitialized]); // Add relevant dependencies
+  }, [fetchBoatIds, activeFilters, location, guests, startDate, endDate, currentPage, isStateInitialized]); // Add relevant dependencies
    
 
   useEffect(() => {
@@ -249,7 +252,7 @@ const ListingsPage = () => {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, []);
+  }, [fetchBoatIds]);
 
   useEffect(() => {
     if (!isStateInitialized) return; // Ensure state is ready before saving
@@ -326,6 +329,7 @@ const ListingsPage = () => {
   };
   
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white p-4 shadow-md flex justify-between items-center">
         <div className="flex items-center gap-2">
@@ -402,6 +406,7 @@ const ListingsPage = () => {
         />
       </main>
     </div>
+    </Suspense>
   );
 };
 
