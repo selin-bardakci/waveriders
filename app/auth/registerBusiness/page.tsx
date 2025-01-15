@@ -137,7 +137,7 @@ const RegisterBusiness: React.FC = () => {
     setSaving(true);
 
     try {
-      const response = await axios.post('http://localhost:8081/api/auth/registerBusiness', {
+      const response = await axios.post('https://api.waveriders.com.tr/api/auth/registerBusiness', {
         first_name: firstName || null,
         last_name: lastName || null,
         business_name: businessName || null,
