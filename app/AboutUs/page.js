@@ -76,7 +76,7 @@ const AboutUs = () => {
       Need Help?
     </h2>
     <p className="text-gray-700 leading-relaxed text-center max-w-3xl">
-      If you have questions about how the platform works, feel free to <a href="mailto:waveriders.help@gmail.com" className="text-blue-500">contact us</a>. We're here to ensure your experience is smooth and enjoyable.
+      If you have questions about how the platform works, feel free to <a href="mailto:waveriders.help@gmail.com" className="text-blue-500">contact us</a>. We&apos;re here to ensure your experience is smooth and enjoyable.
     </p>
   </div>
 </section>
