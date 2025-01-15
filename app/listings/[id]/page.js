@@ -125,6 +125,18 @@ const BoatListingDetails = () => {
             console.log('Boat is not approved, status:', verificationStatus);
             canRent = false;
           }
+          
+          const token = localStorage.getItem('token');
+          console.log("Fetched token:", token);
+          if (token) {
+            const favoriteResponse = await axios.get('https://api.waveriders.com.tr/api/favorites', {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const isFavoriteBoat = favoriteResponse.data.favorites.some((boat) => boat.boat_id === Number(id));
+            setIsFavorite(isFavoriteBoat);
+            console.log("Is favorite boat:", isFavoriteBoat);
+          }          
 
           console.log('Final canRent value:', canRent);
           setCanRentBoat(canRent);
