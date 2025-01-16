@@ -194,7 +194,7 @@ const UploadBoatLicense = () => {
                 {/* Dashed box for dragging or selecting files */}
                 <div className="mb-4 text-gray-600 text-center">
                   <p>Choose a file or drag & drop it here</p>
-                  <p className="text-xs text-gray-500">JPEG, PNG, PDF formats, up to 50MB</p>
+                  <p className="text-xs text-gray-500">JPEG, PNG formats, up to 5MB</p>
                 </div>
                 {/* Browse File Button INSIDE the drag-and-drop box */}
                 <div className="mt-4">
@@ -216,7 +216,7 @@ const UploadBoatLicense = () => {
                 {/* Hidden File Input */}
                 <input
                   type="file"
-                  accept=".pdf, .jpg, .png"
+                  accept=".jpg, .png"
                   onChange={(e) => {
                     if (saving) return; // Prevent file selection while saving
                     if (e.target.files && e.target.files[0]) {
