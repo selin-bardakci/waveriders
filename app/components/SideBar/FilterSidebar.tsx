@@ -151,7 +151,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
         </div>
 
         {/* Apply Filters Button */}
-        <div className="flex justify-center mt-48">
+        <div className="flex justify-center mt-20">
           <button
             onClick={handleApplyFilters}
             className="bg-blue-500 text-white rounded-md p-3 hover:bg-blue-600 transition"
