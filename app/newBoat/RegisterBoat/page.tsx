@@ -402,7 +402,7 @@ const AddNewBoatAndLicense = () => {
                 <input
                   type="file"
                   id="boat-license-input"  // Use a unique ID for boat license
-                  accept=".pdf, .jpg, .png"
+                  accept=".jpg, .png"
                   onChange={handleLicenseChange}  // Handle the license change event
                   className="hidden"
                 />
