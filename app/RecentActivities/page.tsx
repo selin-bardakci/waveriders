@@ -194,7 +194,8 @@ const CustomerRecentActivities = () => {
     setShowReviewConfirmationModal(false);
   };
 
-  const openBookingCancelModal = () => {
+  const openBookingCancelModal = (activity: BookingDetails) => {
+    setCurrentActivity(activity);
     setShowBookingCancelModal(true);
   };
 
@@ -397,7 +398,7 @@ const CustomerRecentActivities = () => {
                       See Booking Details
                     </button>
                     <button
-                      onClick={openBookingCancelModal}
+                      onClick={() => openBookingCancelModal(activity)}
                       className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 text-sm rounded hover:bg-red-600 transition"
                     >
                       Cancel Booking
