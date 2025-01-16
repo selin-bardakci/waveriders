@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Line } from 'react-chartjs-2';
 import { useAuth } from '../../context/AuthContext';
-import Image from 'next/image';
 import BoatListingCard from "../../components/boatListingCard/BoatListingCard";
 import BoatListingCard2 from "../../components/boatListingCard2/boatListingCard2";
 
@@ -265,7 +264,7 @@ const BusinessDashboard = () => {
             <div className="grid grid-cols-2 gap-2">
               {dashboardListings.map((listing) => (
                 <div key={listing.boat_id} className="w-20 h-20 rounded-lg overflow-hidden shadow-md">
-                  <Image
+                  <img
                     src={listing.photos ? listing.photos[0] : "/images/placeholder.png"}
                     alt={listing.boat_name}
                     className="w-full h-full object-cover"
