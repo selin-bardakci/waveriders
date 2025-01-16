@@ -5,8 +5,8 @@ import path from 'path';
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
     credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'AKI',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'wN',
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'AKIA',
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'wN1',
     },
   });
 
@@ -34,13 +34,13 @@ const s3Client = new S3Client({
     try {
       const uploadPromises = files.map(async (file, index) => {
         // Generate a unique name based on timestamp and random string
-        const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+        const uniqueName = ${Date.now()}-${Math.random().toString(36).substring(2, 15)};
         const fileExt = path.extname(file.originalname);
-        const fileName = `${uniqueName}${fileExt}`; // Unique file name
+        const fileName = ${uniqueName}${fileExt}; // Unique file name
         console.log('Uploading file:', fileName);
         // Create S3 key with proper structure (business and boat context)
         const key = `business-${businessId}/${type}/${fileName}`;
-        
+
         const fileContent = fs.readFileSync(file.path);
         const params = {
           Bucket: bucketName,
@@ -51,23 +51,22 @@ const s3Client = new S3Client({
   
         const command = new PutObjectCommand(params);
         await s3Client.send(command);
-        
+
         // Clean up the local file after upload
         fs.unlinkSync(file.path);
   
         // Return the public URL for the uploaded file
         return `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
       });
-  
-      return Promise.all(uploadPromises);
+
+ return Promise.all(uploadPromises);
     } catch (error) {
       console.error('S3 upload error:', error);
       throw new Error(`Error uploading files to S3: ${error.message}`);
     }
   };
-  //deneme
 
-  export const uploadToS3 = async (filePath, bucketName, businessId, type) => {
+ export const uploadToS3 = async (filePath, bucketName, businessId, type) => {
     console.log('Starting S3 Upload:', { filePath, bucketName, businessId, type });
   
     try {
@@ -89,7 +88,7 @@ const s3Client = new S3Client({
         Bucket: bucketName,
         Key: `business-${businessId}/${type}/${fileName}`, // Organized path
         Body: fileContent,
-        ContentType: getMimeType(file.path), 
+        ContentType: getMimeType(filePath), 
       };
   
       console.log('S3 Upload Params:', params);
@@ -97,8 +96,7 @@ const s3Client = new S3Client({
       // Perform the S3 upload
       const command = new PutObjectCommand(params);
       const response = await s3Client.send(command);
-  
-      console.log('S3 Upload Response:', response);
+console.log('S3 Upload Response:', response);
   
       // Construct and return the S3 URL
       const s3Url = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
@@ -113,7 +111,7 @@ const s3Client = new S3Client({
         type,
         error: error.message,
       });
-      throw new Error(`Error uploading file to S3: ${error.message}`);
+      throw new Error(Error uploading file to S3: ${error.message});
     }
   };
   
@@ -129,11 +127,10 @@ const s3Client = new S3Client({
       };
   
       const command = new DeleteObjectCommand(params);
-      await s3Client.send(command);
+   await s3Client.send(command);
     } catch (error) {
       console.error('S3 delete error:', error);
       throw new Error(`Error deleting file from S3: ${error.message}`);
     }
   };
-  
   
