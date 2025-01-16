@@ -761,6 +761,21 @@ const BoatListingDetails = () => {
               </div>
             </form>
           </section>
+        ) : !localStorage.getItem('token') ? (
+          <section className="bg-red-50 p-6 rounded-lg shadow max-w-5xl mx-auto">
+            <div className="text-center">
+              <h3 className="text-xl font-semibold mb-2 text-red-800">Register to Book</h3>
+              <p className="text-red-700">
+                Please sign up to book this boat and enjoy your adventure.
+              </p>
+              <button
+                onClick={() => router.push('/auth/sign-in')} // Update to your login/sign-up route
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600"
+              >
+                Sign Up
+              </button>
+            </div>
+          </section>
         ) : userBusinessId === listing?.business_id ? (
           <section className="bg-blue-50 p-6 rounded-lg shadow max-w-5xl mx-auto">
             <div className="text-center">
