@@ -65,7 +65,7 @@ const s3Client = new S3Client({
       throw new Error(`Error uploading files to S3: ${error.message}`);
     }
   };
-
+  //deneme
 
   export const uploadToS3 = async (filePath, bucketName, businessId, type) => {
     console.log('Starting S3 Upload:', { filePath, bucketName, businessId, type });
