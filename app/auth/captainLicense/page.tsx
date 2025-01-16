@@ -175,7 +175,7 @@ const CaptainLicense = () => {
                 </div>
                 <div className="mb-4 text-gray-600 text-center">
                   <p>Choose a file or drag & drop it here</p>
-                  <p className="text-xs text-gray-500">JPEG, PNG, PDF formats, up to 50MB</p>
+                  <p className="text-xs text-gray-500">JPEG, PNG formats, up to 5MB</p>
                 </div>
                 <div className="mt-4">
                   <button
@@ -195,7 +195,7 @@ const CaptainLicense = () => {
                 </div>
                 <input
                   type="file"
-                  accept=".pdf, .jpg, .png"
+                  accept=".jpg, .png"
                   onChange={handleFileChange} // Correctly call handleFileChange here
                   className="hidden"
                   disabled={saving} // **Disable input while saving**
