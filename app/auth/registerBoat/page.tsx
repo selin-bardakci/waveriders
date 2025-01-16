@@ -434,7 +434,7 @@ const RegisterBoat = () => {
                 </svg>
 
                 <p className="mt-2 text-gray-500">Drag & drop your files here</p>
-                <p className="text-xs text-gray-400">JPEG, PNG formats, up to 50MB</p>
+                <p className="text-xs text-gray-400">JPEG, PNG formats, up to 5MB</p>
                 <input
                   type="file"
                   multiple
