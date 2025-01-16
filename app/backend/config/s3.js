@@ -1,7 +1,6 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import fs from 'fs';
 import path from 'path';
-import mime from 'mime';
 
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
@@ -10,6 +9,26 @@ const s3Client = new S3Client({
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'wN',
     },
   });
+
+  const mimeTypeMap = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.pdf': 'application/pdf',
+    '.txt': 'text/plain',
+    '.json': 'application/json',
+    '.csv': 'text/csv',
+    '.html': 'text/html',
+    '.css': 'text/css',
+    '.js': 'application/javascript',
+  };
+  
+  const getMimeType = (filePath) => {
+    const ext = path.extname(filePath).toLowerCase();
+    return mimeTypeMap[ext] || 'application/octet-stream'; // Default to binary stream if unknown
+  };
 
   export const uploadMultiplePhotos = async (files, bucketName, businessId, boatId, type) => {
     try {
@@ -27,7 +46,7 @@ const s3Client = new S3Client({
           Bucket: bucketName,
           Key: key,
           Body: fileContent,
-          ContentType: mime.getType(file.path) || 'application/octet-stream',
+          ContentType: getMimeType(file.path), 
         };
   
         const command = new PutObjectCommand(params);
@@ -70,7 +89,7 @@ const s3Client = new S3Client({
         Bucket: bucketName,
         Key: `business-${businessId}/${type}/${fileName}`, // Organized path
         Body: fileContent,
-        ContentType: mime.getType(filePath) || 'application/octet-stream',
+        ContentType: getMimeType(file.path), 
       };
   
       console.log('S3 Upload Params:', params);
