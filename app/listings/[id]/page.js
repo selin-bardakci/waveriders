@@ -768,6 +768,15 @@ const BoatListingDetails = () => {
               <p className="text-blue-700">This is your boat listing. You can manage it from your business dashboard.</p>
             </div>
           </section>
+        ) : verificationStatus !== 'approved' ? (
+          <section className="bg-yellow-50 p-6 rounded-lg shadow max-w-5xl mx-auto">
+            <div className="text-center">
+              <h3 className="text-xl font-semibold mb-2 text-yellow-800">This Boat is Under Review</h3>
+              <p className="text-yellow-700">
+                This boat is currently under review and cannot be booked at this time. Please check back later.
+              </p>
+            </div>
+          </section>
         ) : null}
         {/* Review Modal */}
         {showReview && (
