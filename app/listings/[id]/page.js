@@ -766,14 +766,13 @@ const BoatListingDetails = () => {
             <div className="text-center">
               <h3 className="text-xl font-semibold mb-2 text-red-800">Register to Book</h3>
               <p className="text-red-700">
-                Please sign up to book this boat and enjoy your adventure.
+                Please <a
+                  href="/auth/sign-in"
+                  className="text-blue-500 underline hover:text-blue-700"
+                >
+                  <strong>sign up</strong>
+                </a> to book this boat and enjoy your adventure.
               </p>
-              <button
-                onClick={() => router.push('/auth/sign-in')} // Update to your login/sign-up route
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600"
-              >
-                Sign Up
-              </button>
             </div>
           </section>
         ) : userBusinessId === listing?.business_id ? (
