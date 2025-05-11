@@ -59,3 +59,5 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
 # WaveRiders
 # waveriders
+
+FINAL DEPLOYED VERSION: https://drive.google.com/file/d/1z6VSBD2B09eh60_hI6V-6J-219VbR2m5/view?usp=sharing
